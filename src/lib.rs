@@ -30,8 +30,13 @@ mod curv;
 
 mod test;
 
-use crate::paillier::{DecryptionKey, RawPlaintext, RawCiphertext, Paillier, traits::Decrypt};
-use crate::curv::{FE, GE, BigInt, elliptic::curves::traits::ECPoint};
+pub use crate::paillier::{EncryptionKey, DecryptionKey, RawPlaintext, RawCiphertext, Paillier, traits::*};
+pub use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi, RangeProofError, CorrectKeyProofError};
+pub use crate::curv::{FE, GE, BigInt, elliptic::curves::traits::ECPoint};
+pub use crate::curv::elliptic::curves::secp256_k1::{Secp256k1Point, Secp256k1Scalar};
+pub use crate::curv::cryptographic_primitives::proofs::{sigma_ec_ddh::ECDDHProof, ProofError};
+pub use crate::mta::{MessageB, MessageA};
+pub use crate::centipede::juggling::proof_system::{Witness, Helgamalsegmented, Helgamal};
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PartyPrivate {
     u_i: FE,
