@@ -13,7 +13,7 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
-#![allow(warnings)]
+#![allow(unused_parens, unused_imports, deprecated, unused_mut)]
 const SECURITY_BITS: usize = 256;
 
 #[macro_use]
