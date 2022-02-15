@@ -3,9 +3,9 @@
 #[cfg(test)]
 mod tests {
 
-    use curv::arithmetic::traits::Samplable;
-    use curv::elliptic::curves::traits::*;
-    use curv::BigInt;
+    use crate::curv::arithmetic::traits::Samplable;
+    use crate::curv::elliptic::curves::traits::*;
+    use crate::curv::BigInt;
     use crate::*;
 
     #[test]

@@ -14,22 +14,22 @@
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
 use super::SECURITY_BITS;
-use curv::arithmetic::traits::*;
+use crate::curv::arithmetic::traits::*;
 use std::ops::Shl;
 
-use curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
-use curv::cryptographic_primitives::commitments::traits::Commitment;
-use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
-use curv::cryptographic_primitives::hashing::traits::Hash;
-use curv::cryptographic_primitives::proofs::sigma_dlog::*;
-use curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
-use curv::cryptographic_primitives::proofs::ProofError;
+use crate::curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
+use crate::curv::cryptographic_primitives::commitments::traits::Commitment;
+use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use crate::curv::cryptographic_primitives::hashing::traits::Hash;
+use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
+use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
+use crate::curv::cryptographic_primitives::proofs::ProofError;
 
-use curv::elliptic::curves::traits::*;
+use crate::curv::elliptic::curves::traits::*;
 
-use curv::BigInt;
-use curv::FE;
-use curv::GE;
+use crate::curv::BigInt;
+use crate::curv::FE;
+use crate::curv::GE;
 use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;

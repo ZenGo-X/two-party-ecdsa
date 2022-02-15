@@ -1,6 +1,6 @@
 //! Key generation following standard recommendations.
 
-use curv::arithmetic::traits::*;
+use crate::curv::arithmetic::traits::*;
 use super::traits::*;
 use super::{BigInt, Keypair, Paillier};
 

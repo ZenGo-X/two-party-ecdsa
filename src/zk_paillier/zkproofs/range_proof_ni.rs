@@ -13,8 +13,8 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/zk-paillier/blob/master/LICENSE>
 */
-use curv::arithmetic::traits::Samplable;
-use curv::BigInt;
+use crate::curv::arithmetic::traits::Samplable;
+use crate::curv::BigInt;
 use crate::paillier::{EncryptWithChosenRandomness, EncryptionKey, Paillier};
 use std::error::Error;
 use std::fmt;

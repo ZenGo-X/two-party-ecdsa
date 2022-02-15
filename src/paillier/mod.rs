@@ -16,7 +16,7 @@ use std::borrow::Cow;
 /// Main struct onto which most operations are added.
 pub struct Paillier;
 
-pub use curv::arithmetic::big_gmp::BigInt;
+pub use crate::curv::arithmetic::big_gmp::BigInt;
 
 /// Keypair from which encryption and decryption keys can be derived.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

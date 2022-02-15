@@ -1,6 +1,6 @@
 pub mod bigint {
 
-    use curv::BigInt;
+    use crate::curv::BigInt;
     use serde::{de, ser};
     use std::fmt;
 
@@ -30,7 +30,7 @@ pub mod bigint {
 
 pub mod vecbigint {
 
-    use curv::BigInt;
+    use crate::curv::BigInt;
     use serde::de::SeqAccess;
     use serde::ser::SerializeSeq;
     use serde::{de, ser};

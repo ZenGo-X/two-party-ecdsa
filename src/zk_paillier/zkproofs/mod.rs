@@ -40,7 +40,7 @@ mod correct_message;
 pub use self::correct_message::CorrectMessageProof;
 pub use self::correct_message::CorrectMessageProofError;
 
-use curv::BigInt;
+use crate::curv::BigInt;
 use ring::digest::{Context, SHA256};
 use std::borrow::Borrow;
 

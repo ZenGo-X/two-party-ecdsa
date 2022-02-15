@@ -15,12 +15,12 @@ version 3 of the License, or (at your option) any later version.
 @license GPL-3.0+ <https://github.com/KZen-networks/centipede/blob/master/LICENSE>
 */
 
-use curv::{FE,GE,BigInt};
-use curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_encryption_of_dlog::{HomoELGamalDlogProof,HomoElGamalDlogWitness,HomoElGamalDlogStatement};
-use curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_enc::{HomoELGamalProof,HomoElGamalWitness,HomoElGamalStatement};
-use curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
-use curv::cryptographic_primitives::hashing::traits::*;
-use curv::arithmetic::traits::Converter;
+use crate::curv::{FE,GE,BigInt};
+use crate::curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_encryption_of_dlog::{HomoELGamalDlogProof,HomoElGamalDlogWitness,HomoElGamalDlogStatement};
+use crate::curv::cryptographic_primitives::proofs::sigma_correct_homomorphic_elgamal_enc::{HomoELGamalProof,HomoElGamalWitness,HomoElGamalStatement};
+use crate::curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
+use crate::curv::cryptographic_primitives::hashing::traits::*;
+use crate::curv::arithmetic::traits::Converter;
 use crate::bulletproofs::proofs::range_proof::{RangeProof,generate_random_point};
 use super::segmentation::Msegmentation;
 use crate::centipede::Errors::{self, ErrorProving};
@@ -210,8 +210,8 @@ impl Proof {
 
 #[cfg(test)]
 mod tests {
-    use curv::elliptic::curves::traits::*;
-    use curv::{FE, GE};
+    use crate::curv::elliptic::curves::traits::*;
+    use crate::curv::{FE, GE};
     use crate::centipede::juggling::proof_system::*;
     use crate::centipede::juggling::segmentation::Msegmentation;
     use crate::centipede::wallet::SecretShare;

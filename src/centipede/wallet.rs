@@ -15,11 +15,11 @@ version 3 of the License, or (at your option) any later version.
 @license GPL-3.0+ <https://github.com/KZen-networks/centipede/blob/master/LICENSE>
 */
 
-use curv::arithmetic::traits::{Converter, Modulo};
-use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
-use curv::cryptographic_primitives::hashing::traits::*;
-use curv::elliptic::curves::traits::*;
-use curv::{BigInt, FE, GE};
+use crate::curv::arithmetic::traits::{Converter, Modulo};
+use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use crate::curv::cryptographic_primitives::hashing::traits::*;
+use crate::curv::elliptic::curves::traits::*;
+use crate::curv::{BigInt, FE, GE};
 
 pub struct SecretShare {
     pub secret: FE,
@@ -59,7 +59,7 @@ pub fn generate_random_point(bytes: &[u8]) -> GE {
 
 #[cfg(test)]
 mod tests {
-    use curv::BigInt;
+    use crate::curv::BigInt;
     use super::SecretShare;
     #[test]
     fn test_randomness() {

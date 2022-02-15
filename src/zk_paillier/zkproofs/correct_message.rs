@@ -13,8 +13,8 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/zk-paillier/blob/master/LICENSE>
 */
-use curv::arithmetic::traits::{Modulo, Samplable};
-use curv::BigInt;
+use crate::curv::arithmetic::traits::{Modulo, Samplable};
+use crate::curv::BigInt;
 use crate::paillier::{EncryptWithChosenRandomness, EncryptionKey, Paillier, Randomness, RawPlaintext};
 
 const B: usize = 256;

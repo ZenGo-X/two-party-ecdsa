@@ -36,7 +36,7 @@ where
 mod tests {
 
     use super::*;
-    use curv::BigInt;
+    use crate::curv::BigInt;
     use crate::paillier::Encrypt;
     use crate::paillier::Keypair;
     use crate::paillier::Open;

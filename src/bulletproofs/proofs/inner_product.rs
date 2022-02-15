@@ -16,12 +16,12 @@ version 3 of the License, or (at your option) any later version.
 */
 
 // based on the paper: https://eprint.iacr.org/2017/1066.pdf
-use curv::arithmetic::traits::Modulo;
-use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
-use curv::cryptographic_primitives::hashing::traits::*;
-use curv::elliptic::curves::traits::*;
-use curv::BigInt;
-use curv::{FE, GE};
+use crate::curv::arithmetic::traits::Modulo;
+use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use crate::curv::cryptographic_primitives::hashing::traits::*;
+use crate::curv::elliptic::curves::traits::*;
+use crate::curv::BigInt;
+use crate::curv::{FE, GE};
 
 use crate::bulletproofs::Errors::{self, InnerProductError};
 
@@ -237,12 +237,12 @@ fn inner_product(a: &[BigInt], b: &[BigInt]) -> BigInt {
 
 #[cfg(test)]
 mod tests {
-    use curv::arithmetic::traits::{Converter, Modulo};
-    use curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
-    use curv::cryptographic_primitives::hashing::traits::*;
-    use curv::elliptic::curves::traits::*;
-    use curv::BigInt;
-    use curv::{FE, GE};
+    use crate::curv::arithmetic::traits::{Converter, Modulo};
+    use crate::curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
+    use crate::curv::cryptographic_primitives::hashing::traits::*;
+    use crate::curv::elliptic::curves::traits::*;
+    use crate::curv::BigInt;
+    use crate::curv::{FE, GE};
     use crate::bulletproofs::proofs::inner_product::InnerProductArg;
     use crate::bulletproofs::proofs::range_proof::generate_random_point;
 

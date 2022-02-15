@@ -26,12 +26,12 @@ mod bulletproofs;
 mod paillier;
 mod zk_paillier;
 mod mta;
-
+mod curv;
 
 mod test;
 
 use crate::paillier::{DecryptionKey, RawPlaintext, RawCiphertext, Paillier, traits::Decrypt};
-use curv::{FE, GE, BigInt, elliptic::curves::traits::ECPoint};
+use crate::curv::{FE, GE, BigInt, elliptic::curves::traits::ECPoint};
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PartyPrivate {
     u_i: FE,

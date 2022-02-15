@@ -21,17 +21,17 @@ use std::ops::Shl;
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 
 use super::SECURITY_BITS;
-pub use curv::arithmetic::traits::*;
+pub use crate::curv::arithmetic::traits::*;
 
-use curv::elliptic::curves::traits::*;
+use crate::curv::elliptic::curves::traits::*;
 
-use curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
-use curv::cryptographic_primitives::commitments::traits::Commitment;
-use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
-use curv::cryptographic_primitives::hashing::traits::Hash;
-pub use curv::cryptographic_primitives::proofs::sigma_dlog::*;
-use curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
-use curv::cryptographic_primitives::proofs::ProofError;
+use crate::curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
+use crate::curv::cryptographic_primitives::commitments::traits::Commitment;
+use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use crate::curv::cryptographic_primitives::hashing::traits::Hash;
+pub use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
+use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
+use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::party_two::EphKeyGenFirstMsg as Party2EphKeyGenFirstMessage;
 use crate::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
 use crate::party_two::PDLFirstMessage as Party2PDLFirstMessage;
@@ -41,9 +41,9 @@ use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::mta::MessageB;
 
-use curv::BigInt;
-use curv::FE;
-use curv::GE;
+use crate::curv::BigInt;
+use crate::curv::FE;
+use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 

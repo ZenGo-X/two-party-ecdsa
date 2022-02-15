@@ -2,7 +2,7 @@ pub mod bigint {
 
     use serde::{de, ser};
     use std::fmt;
-    use curv::BigInt;
+    use crate::curv::BigInt;
 
     pub fn serialize<S: ser::Serializer>(x: &BigInt, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&x.to_str_radix(10))
@@ -34,7 +34,7 @@ pub mod vecbigint {
     use serde::ser::SerializeSeq;
     use serde::{de, ser};
     use std::fmt;
-    use curv::BigInt;
+    use crate::curv::BigInt;
 
     pub fn serialize<S: ser::Serializer>(
         x: &Vec<BigInt>,

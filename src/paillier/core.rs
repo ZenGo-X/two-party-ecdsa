@@ -5,7 +5,7 @@ use std::borrow::{Borrow, Cow};
 use rayon::join;
 use serde::*;
 
-use curv::arithmetic::traits::*;
+use crate::curv::arithmetic::traits::*;
 use super::traits::*;
 use super::{
     BigInt, DecryptionKey, EncryptionKey, Keypair, MinimalDecryptionKey, MinimalEncryptionKey,

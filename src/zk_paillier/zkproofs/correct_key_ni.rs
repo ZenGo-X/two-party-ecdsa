@@ -16,8 +16,8 @@
 use std::iter;
 use std::ops::Shl;
 
-use curv::arithmetic::traits::*;
-use curv::BigInt;
+use crate::curv::arithmetic::traits::*;
+use crate::curv::BigInt;
 use crate::paillier::{extract_nroot, DecryptionKey, EncryptionKey};
 use rayon::prelude::*;
 // This protocol is based on the NIZK protocol in https://eprint.iacr.org/2018/057.pdf
