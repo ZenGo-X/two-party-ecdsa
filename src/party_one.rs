@@ -175,7 +175,7 @@ impl KeyGenFirstMsg {
             CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share.clone(),
+                public_share: ec_key_pair.public_share,
                 d_log_proof,
             },
             ec_key_pair,
@@ -188,7 +188,7 @@ impl KeyGenFirstMsg {
         //in Lindell's protocol range proof works only for x1<q/3
         let sk_bigint = secret_share.to_big_int();
         let q_third = FE::q();
-        assert!(&sk_bigint < &q_third.div_floor(&BigInt::from(3)));
+        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3)));
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -220,7 +220,7 @@ impl KeyGenFirstMsg {
             CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share.clone(),
+                public_share: ec_key_pair.public_share,
                 d_log_proof,
             },
             ec_key_pair,
@@ -245,7 +245,7 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 impl Party1Private {
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
         Party1Private {
-            x1: ec_key.secret_share.clone(),
+            x1: ec_key.secret_share,
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
@@ -262,12 +262,12 @@ impl Party1Private {
     ) {
         let (ek_new, dk_new) = Paillier::keypair().keys();
         let randomness = Randomness::sample(&ek_new);
-        let factor_fe: FE = ECScalar::from(&factor);
-        let x1_new = party_one_private.x1.clone() * &factor_fe;
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new = party_one_private.x1 * factor_fe;
         let three = BigInt::from(3);
         let c_key_new = Paillier::encrypt_with_chosen_randomness(
             &ek_new,
-            RawPlaintext::from(x1_new.to_big_int().clone()),
+            RawPlaintext::from(x1_new.to_big_int()),
             &randomness,
         )
         .0
@@ -276,15 +276,15 @@ impl Party1Private {
 
         let range_proof_new = RangeProofNi::prove(
             &ek_new,
-            &(FE::q() * three.clone()),
+            &(FE::q() * three),
             &c_key_new,
             &x1_new.to_big_int(),
             &randomness.0,
         );
 
         let party_one_private_new = Party1Private {
-            x1: x1_new.clone(),
-            paillier_priv: dk_new.clone(),
+            x1: x1_new,
+            paillier_priv: dk_new,
             c_key_randomness: randomness.0,
         };
 
@@ -305,7 +305,7 @@ impl Party1Private {
         pub_ke_y: &GE,
         g: &GE,
     ) -> (Witness, Helgamalsegmented) {
-        Msegmentation::to_encrypted_segments(&self.x1, &segment_size, num_of_segments, pub_ke_y, g)
+        Msegmentation::to_encrypted_segments(&self.x1, segment_size, num_of_segments, pub_ke_y, g)
     }
 
     // used to transform lindell master key to gg18 master key
@@ -362,14 +362,13 @@ impl PaillierKeyPair {
         paillier_context: &PaillierKeyPair,
         party_one_private: &Party1Private,
     ) -> RangeProofNi {
-        let range_proof = RangeProofNi::prove(
+        RangeProofNi::prove(
             &paillier_context.ek,
             &FE::q(),
             &paillier_context.encrypted_share.clone(),
             &party_one_private.x1.to_big_int(),
             &paillier_context.randomness,
-        );
-        range_proof
+        )
     }
 
     pub fn generate_ni_proof_correct_key(paillier_context: &PaillierKeyPair) -> NICorrectKeyProof {
@@ -383,11 +382,11 @@ impl PaillierKeyPair {
         let c_tag = pdl_first_message.c_tag.clone();
         let alpha = Paillier::decrypt(
             &party_one_private.paillier_priv.clone(),
-            &RawCiphertext::from(c_tag.clone()),
+            &RawCiphertext::from(c_tag),
         );
         let alpha_fe: FE = ECScalar::from(&alpha.0);
         let g: GE = ECPoint::generator();
-        let q_hat = g * &alpha_fe;
+        let q_hat = g * alpha_fe;
         let blindness = BigInt::sample_below(&FE::q());
         let c_hat = HashCommitment::create_commitment_with_user_defined_randomness(
             &q_hat.bytes_compressed_to_big_int(),
@@ -406,7 +405,7 @@ impl PaillierKeyPair {
         party_one_private: Party1Private,
         pdl_decommit: PDLdecommit,
         alpha: BigInt,
-    ) -> Result<(PDLSecondMessage), ()> {
+    ) -> Result<PDLSecondMessage, ()> {
         let a = pdl_party_two_second_message.decommit.a.clone();
         let b = pdl_party_two_second_message.decommit.b.clone();
         let blindness = pdl_party_two_second_message.decommit.blindness.clone();
@@ -414,8 +413,8 @@ impl PaillierKeyPair {
         let ab_concat = a.clone() + b.clone().shl(a.bit_length());
         let c_tag_tag_test =
             HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
-        let ax1 = a.clone() * party_one_private.x1.to_big_int();
-        let alpha_test = ax1 + b.clone();
+        let ax1 = a * party_one_private.x1.to_big_int();
+        let alpha_test = ax1 + b;
         if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
             Ok(PDLSecondMessage {
                 decommit: pdl_decommit,
@@ -430,21 +429,21 @@ impl EphKeyGenFirstMsg {
     pub fn create() -> (EphKeyGenFirstMsg, EphEcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
-        let public_share = &base * &secret_share;
+        let public_share = base * secret_share;
         let h: GE = GE::base_point2();
         let w = ECDDHWitness {
-            x: secret_share.clone(),
+            x: secret_share,
         };
-        let c = &h * &secret_share;
+        let c = h * secret_share;
         let delta = ECDDHStatement {
-            g1: base.clone(),
-            h1: public_share.clone(),
-            g2: h.clone(),
-            h2: c.clone(),
+            g1: base,
+            h1: public_share,
+            g2: h,
+            h2: c,
         };
         let d_log_proof = ECDDHProof::prove(&w, &delta);
         let ec_key_pair = EphEcKeyPair {
-            public_share: public_share.clone(),
+            public_share,
             secret_share,
         };
         (
@@ -476,10 +475,10 @@ impl EphKeyGenSecondMsg {
         match party_two_pk_commitment
             == &HashCommitment::create_commitment_with_user_defined_randomness(
                 &party_two_public_share.bytes_compressed_to_big_int(),
-                &party_two_pk_commitment_blind_factor,
+                party_two_pk_commitment_blind_factor,
             ) {
             false => flag = false,
-            true => flag = flag,
+            true => (),
         };
         match party_two_zk_pok_commitment
             == &HashCommitment::create_commitment_with_user_defined_randomness(
@@ -488,17 +487,17 @@ impl EphKeyGenSecondMsg {
                     &party_two_d_log_proof.a2,
                 ])
                 .to_big_int(),
-                &party_two_zk_pok_blind_factor,
+                party_two_zk_pok_blind_factor,
             ) {
             false => flag = false,
-            true => flag = flag,
+            true => (),
         };
         assert!(flag);
         let delta = ECDDHStatement {
             g1: GE::generator(),
-            h1: party_two_public_share.clone(),
+            h1: *party_two_public_share,
             g2: GE::base_point2(),
-            h2: party_two_second_message.comm_witness.c.clone(),
+            h2: party_two_second_message.comm_witness.c,
         };
         party_two_d_log_proof.verify(&delta)?;
         Ok(EphKeyGenSecondMsg {})
@@ -513,7 +512,7 @@ impl Signature {
         ephemeral_other_public_share: &GE,
     ) -> Signature {
         //compute r = k2* R1
-        let mut r = ephemeral_other_public_share.clone();
+        let mut r = *ephemeral_other_public_share;
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&FE::q());
@@ -526,8 +525,8 @@ impl Signature {
             &party_one_private.paillier_priv,
             &RawCiphertext::from(partial_sig_c3),
         );
-        let s_tag_tag = BigInt::mod_mul(&k1_inv, &s_tag.0, &FE::q());
-        let s = cmp::min(s_tag_tag.clone(), FE::q().clone() - s_tag_tag.clone());
+        let s_tag_tag = BigInt::mod_mul(k1_inv, &s_tag.0, &FE::q());
+        let s = cmp::min(s_tag_tag.clone(), FE::q() - s_tag_tag);
         Signature { s, r: rx }
     }
 
@@ -538,7 +537,7 @@ impl Signature {
         ephemeral_other_public_share: &GE,
     ) -> SignatureRecid {
         //compute r = k2* R1
-        let mut r = ephemeral_other_public_share.clone();
+        let mut r = *ephemeral_other_public_share;
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&FE::q());
@@ -552,8 +551,8 @@ impl Signature {
             &party_one_private.paillier_priv,
             &RawCiphertext::from(partial_sig_c3),
         );
-        let s_tag_tag = BigInt::mod_mul(&k1_inv, &s_tag.0, &FE::q());
-        let s = cmp::min(s_tag_tag.clone(), FE::q().clone() - s_tag_tag.clone());
+        let s_tag_tag = BigInt::mod_mul(k1_inv, &s_tag.0, &FE::q());
+        let s = cmp::min(s_tag_tag.clone(), FE::q() - s_tag_tag.clone());
 
         /*
          Calculate recovery id - it is not possible to compute the public key out of the signature
@@ -563,8 +562,8 @@ impl Signature {
         */
         let is_ry_odd = ry.tstbit(0);
         let mut recid = if is_ry_odd { 1 } else { 0 };
-        if s_tag_tag.clone() > FE::q() - s_tag_tag.clone() {
-            recid = recid ^ 1;
+        if s_tag_tag > (FE::q() - &s_tag_tag) {
+            recid ^= 1;
         }
 
         SignatureRecid { s, r: rx, recid }
@@ -584,7 +583,7 @@ pub fn verify(signature: &Signature, pubkey: &GE, message: &BigInt) -> Result<()
     let rx_bytes = &BigInt::to_vec(&signature.r)[..];
     let u1_plus_u2_bytes = &BigInt::to_vec(&(u1 + u2).x_coor().unwrap())[..];
 
-    if rx_bytes.ct_eq(&u1_plus_u2_bytes).unwrap_u8() == 1
+    if rx_bytes.ct_eq(u1_plus_u2_bytes).unwrap_u8() == 1
         && signature.s < FE::q() - signature.s.clone()
     {
         Ok(())

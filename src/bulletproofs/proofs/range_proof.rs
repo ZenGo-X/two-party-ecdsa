@@ -96,7 +96,7 @@ impl RangeProof {
             }
         });
 
-        A = h_vec.iter().zip(secret_bits.clone()).fold(A, |acc, x| {
+        A = h_vec.iter().zip(secret_bits).fold(A, |acc, x| {
             if !x.1 {
                 acc.sub_point(&x.0.get_element())
             } else {
@@ -108,31 +108,31 @@ impl RangeProof {
         let SL = (0..nm).map(|_| ECScalar::new_random()).collect::<Vec<FE>>();
 
         S = SL.iter().zip(&SR).fold(S, |acc, x| {
-            let g_vec_i_SLi = &g_vec[index] * x.0;
-            let h_vec_i_SRi = &h_vec[index] * x.1;
-            index = index + 1;
+            let g_vec_i_SLi = g_vec[index] * x.0;
+            let h_vec_i_SRi = h_vec[index] * x.1;
+            index += 1;
             let SRhi_plus_SLgi = h_vec_i_SRi + g_vec_i_SLi;
             acc + SRhi_plus_SLgi
         });
 
         let y = HSha256::create_hash_from_ge(&[&A, &S]);
         let base_point: GE = ECPoint::generator();
-        let yG: GE = base_point * &y;
+        let yG: GE = base_point * y;
         let z = HSha256::create_hash_from_ge(&[&yG]);
         let z_bn = z.to_big_int();
 
         let one_fe: FE = ECScalar::from(&one);
-        let yi = iterate(one_fe.clone(), |i| i.clone() * &y)
+        let yi = iterate(one_fe, |&i| i * y)
             .take(nm)
             .collect::<Vec<FE>>();
 
         let t2 = (0..nm)
-            .map(|i| SR[i].clone() * &yi[i] * &SL[i])
+            .map(|i| SR[i] * yi[i] * SL[i])
             .fold(FE::zero(), |acc, x| acc + x);
         let t2 = t2.to_big_int();
 
         let two_fe: FE = ECScalar::from(&two);
-        let vec_2n = iterate(one_fe.clone(), |i| i.clone() * &two_fe)
+        let vec_2n = iterate(one_fe, |&i| i * two_fe)
             .take(bit_length)
             .collect::<Vec<FE>>();
 
@@ -208,7 +208,7 @@ impl RangeProof {
         let challenge_x: FE = ECScalar::from(&challenge_x);
         let Gx = G * &challenge_x;
         // P' = u^{xc}
-        let P = &Gx * &tx_fe;
+        let P = Gx * tx_fe;
 
         let yi_inv = (0..nm)
             .map(|i| {
@@ -218,7 +218,7 @@ impl RangeProof {
             })
             .collect::<Vec<FE>>();
 
-        let hi_tag = (0..nm).map(|i| &h_vec[i] * &yi_inv[i]).collect::<Vec<GE>>();
+        let hi_tag = (0..nm).map(|i| h_vec[i] * yi_inv[i]).collect::<Vec<GE>>();
 
         // P' = P' g^l
         let P = g_vec.iter().zip(&Lp).fold(P, |acc, x| {
@@ -238,7 +238,7 @@ impl RangeProof {
         let inner_product_proof =
             InnerProductArg::prove(&g_vec, &hi_tag, &Gx, &P, &Lp, &Rp, L_vec, R_vec);
 
-        return RangeProof {
+        RangeProof {
             A,
             S,
             T1,
@@ -247,7 +247,7 @@ impl RangeProof {
             miu,
             tx: tx_fe,
             inner_product_proof,
-        };
+        }
     }
 
     pub fn verify(
@@ -264,7 +264,7 @@ impl RangeProof {
 
         let y = HSha256::create_hash_from_ge(&[&self.A, &self.S]);
         let base_point: GE = ECPoint::generator();
-        let yG: GE = base_point * &y;
+        let yG: GE = base_point * y;
         let z = HSha256::create_hash_from_ge(&[&yG]);
         let z_bn = z.to_big_int();
         let order = FE::q();
@@ -274,7 +274,7 @@ impl RangeProof {
         // delta(x,y):
         let one_bn = BigInt::one();
         let one_fe: FE = ECScalar::from(&one_bn);
-        let yi = iterate(one_fe.clone(), |i| i.clone() * &y)
+        let yi = iterate(one_fe, |&i| i * y)
             .take(nm)
             .collect::<Vec<FE>>();
 
@@ -283,7 +283,7 @@ impl RangeProof {
         let two = BigInt::from(2);
 
         let two_fe: FE = ECScalar::from(&two);
-        let vec_2n = iterate(one_fe.clone(), |i| i.clone() * &two_fe)
+        let vec_2n = iterate(one_fe, |&i| i * two_fe)
             .take(bit_length)
             .collect::<Vec<FE>>();
 
@@ -304,7 +304,7 @@ impl RangeProof {
 
         let yi_inv = (0..nm).map(|i| yi[i].invert()).collect::<Vec<FE>>();
 
-        let hi_tag = (0..nm).map(|i| &h_vec[i] * &yi_inv[i]).collect::<Vec<GE>>();
+        let hi_tag = (0..nm).map(|i| h_vec[i] * yi_inv[i]).collect::<Vec<GE>>();
 
         let fs_challenge = HSha256::create_hash_from_ge(&[&self.T1, &self.T2, G, H]);
         let fs_challenge_square = fs_challenge.mul(&fs_challenge.get_element());
@@ -315,14 +315,14 @@ impl RangeProof {
         let left_side = Gtx + Htaux;
         let delta_fe: FE = ECScalar::from(&delta);
         let Gdelta = G * &delta_fe;
-        let Tx = &self.T1 * &fs_challenge;
-        let Tx_sq = &self.T2 * &fs_challenge_square;
+        let Tx = self.T1 * fs_challenge;
+        let Tx_sq = self.T2 * fs_challenge_square;
 
         let mut vec_ped_zm = (0..num_of_proofs)
             .map(|i| {
                 let z_2_m = BigInt::mod_pow(&z_bn, &BigInt::from((2 + i) as u32), &order);
                 let z_2_m_fe: FE = ECScalar::from(&z_2_m);
-                &ped_com[i] * &z_2_m_fe
+                ped_com[i] * z_2_m_fe
             })
             .collect::<Vec<GE>>();
         let vec_ped_zm_1 = vec_ped_zm.remove(0);
@@ -338,12 +338,12 @@ impl RangeProof {
         let Gx = G * &challenge_x;
         // P' = u^{xc}
 
-        let P = &Gx * &self.tx;
+        let P = Gx * self.tx;
         let minus_miu = BigInt::mod_sub(&FE::q(), &self.miu.to_big_int(), &FE::q());
         let minus_miu_fe: FE = ECScalar::from(&minus_miu);
         let Hmiu = H * &minus_miu_fe;
-        let Sx = &self.S * &fs_challenge;
-        let P = Hmiu + P + self.A.clone() + Sx;
+        let Sx = self.S * fs_challenge;
+        let P = Hmiu + P + self.A + Sx;
 
         let P1 = (0..nm)
             .map(|i| {
@@ -355,12 +355,12 @@ impl RangeProof {
                 // let z_sq_2n = BigInt::mod_mul(&z_squared, &vec_2n[i], &order);
                 let zyn_zsq2n = BigInt::mod_add(&z_yn, &z_j_2_n, &order);
                 let zyn_zsq2n_fe: FE = ECScalar::from(&zyn_zsq2n);
-                &hi_tag[i] * &zyn_zsq2n_fe
+                hi_tag[i] * zyn_zsq2n_fe
             })
             .fold(P, |acc, x| acc + x);
 
         let P = (0..nm)
-            .map(|i| &g_vec[i] * &z_minus_fe)
+            .map(|i| g_vec[i] * z_minus_fe)
             .fold(P1, |acc, x| acc + x);
         let verify = self.inner_product_proof.verify(g_vec, &hi_tag, &Gx, &P);
         if verify.is_ok() && left_side == right_side {
@@ -372,16 +372,13 @@ impl RangeProof {
 }
 
 pub fn generate_random_point(bytes: &[u8]) -> GE {
-    let result: Result<GE, _> = ECPoint::from_bytes(&bytes);
-    if result.is_ok() {
-        return result.unwrap();
-    } else {
+    ECPoint::from_bytes(bytes).unwrap_or_else(|_| {
         let two = BigInt::from(2);
         let bn = BigInt::from(bytes);
         let bn_times_two = BigInt::mod_mul(&bn, &two, &FE::q());
         let bytes = BigInt::to_vec(&bn_times_two);
-        return generate_random_point(&bytes);
-    }
+        generate_random_point(&bytes)
+    })
 }
 
 #[cfg(test)]
@@ -435,8 +432,7 @@ mod tests {
 
         let ped_com_vec = (0..m)
             .map(|i| {
-                let ped_com = &G * &v_vec[i] + &H * &r_vec[i];
-                ped_com
+                G * v_vec[i] + H * r_vec[i]
             })
             .collect::<Vec<GE>>();
 
@@ -489,8 +485,7 @@ mod tests {
 
         let ped_com_vec = (0..m)
             .map(|i| {
-                let ped_com = &G * &v_vec[i] + &H * &r_vec[i];
-                ped_com
+                G * v_vec[i] + H * r_vec[i]
             })
             .collect::<Vec<GE>>();
 
@@ -539,8 +534,7 @@ mod tests {
 
         let ped_com_vec = (0..m)
             .map(|i| {
-                let ped_com = &G * &v_vec[i] + &H * &r_vec[i];
-                ped_com
+                G * v_vec[i] + H * r_vec[i]
             })
             .collect::<Vec<GE>>();
 
@@ -592,8 +586,7 @@ mod tests {
 
         let ped_com_vec = (0..m)
             .map(|i| {
-                let ped_com = &G * &v_vec[i] + &H * &r_vec[i];
-                ped_com
+                G * v_vec[i] + H * r_vec[i]
             })
             .collect::<Vec<GE>>();
 

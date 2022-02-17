@@ -138,10 +138,10 @@ impl KeyGenFirstMsg {
     pub fn create() -> (KeyGenFirstMsg, EcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
-        let public_share = base * &secret_share;
+        let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
         let ec_key_pair = EcKeyPair {
-            public_share: public_share.clone(),
+            public_share,
             secret_share,
         };
         (
@@ -155,10 +155,10 @@ impl KeyGenFirstMsg {
 
     pub fn create_with_fixed_secret_share(secret_share: FE) -> (KeyGenFirstMsg, EcKeyPair) {
         let base: GE = ECPoint::generator();
-        let public_share = base * &secret_share;
+        let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
         let ec_key_pair = EcKeyPair {
-            public_share: public_share.clone(),
+            public_share,
             secret_share,
         };
         (
@@ -190,36 +190,36 @@ impl KeyGenSecondMsg {
         match party_one_pk_commitment
             == &HashCommitment::create_commitment_with_user_defined_randomness(
                 &party_one_public_share.bytes_compressed_to_big_int(),
-                &party_one_pk_commitment_blind_factor,
+                party_one_pk_commitment_blind_factor,
             ) {
             false => flag = false,
-            true => flag = flag,
+            true => (),
         };
         match party_one_zk_pok_commitment
             == &HashCommitment::create_commitment_with_user_defined_randomness(
                 &party_one_d_log_proof
                     .pk_t_rand_commitment
                     .bytes_compressed_to_big_int(),
-                &party_one_zk_pok_blind_factor,
+                party_one_zk_pok_blind_factor,
             ) {
             false => flag = false,
-            true => flag = flag,
+            true => (),
         };
         assert!(flag);
-        DLogProof::verify(&party_one_d_log_proof)?;
+        DLogProof::verify(party_one_d_log_proof)?;
         Ok(KeyGenSecondMsg {})
     }
 }
 
 pub fn compute_pubkey(local_share: &EcKeyPair, other_share_public_share: &GE) -> GE {
-    let pubkey = other_share_public_share.clone();
+    let pubkey = other_share_public_share;
     pubkey.scalar_mul(&local_share.secret_share.get_element())
 }
 
 impl Party2Private {
     pub fn set_private_key(ec_key: &EcKeyPair) -> Party2Private {
         Party2Private {
-            x2: ec_key.secret_share.clone(),
+            x2: ec_key.secret_share,
         }
     }
 
@@ -238,7 +238,7 @@ impl Party2Private {
         pub_ke_y: &GE,
         g: &GE,
     ) -> (Witness, Helgamalsegmented) {
-        Msegmentation::to_encrypted_segments(&self.x2, &segment_size, num_of_segments, pub_ke_y, g)
+        Msegmentation::to_encrypted_segments(&self.x2, segment_size, num_of_segments, pub_ke_y, g)
     }
 
     // used to transform lindell master key to gg18 master key
@@ -246,7 +246,7 @@ impl Party2Private {
         let message_a = MessageA {
             c: ciphertext.clone(),
         };
-        MessageB::b(&self.x2, &ek, message_a)
+        MessageB::b(&self.x2, ek, message_a)
     }
 }
 
@@ -270,7 +270,7 @@ impl PaillierPublic {
         let c_tag_tag =
             HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
         let g: GE = ECPoint::generator();
-        let q_tag = other_share_public_share.clone() * a_fe + g * b_fe;
+        let q_tag = *other_share_public_share * a_fe + g * b_fe;
 
         (
             PDLFirstMessage {
@@ -303,14 +303,14 @@ impl PaillierPublic {
         party_one_pdl_second_message: &Party1PDLSecondMessage,
     ) -> Result<(), ()> {
         let c_hat = party_one_pdl_first_message.c_hat.clone();
-        let q_hat = party_one_pdl_second_message.decommit.q_hat.clone();
+        let q_hat = party_one_pdl_second_message.decommit.q_hat;
         let blindness = party_one_pdl_second_message.decommit.blindness.clone();
         let c_hat_test = HashCommitment::create_commitment_with_user_defined_randomness(
             &q_hat.bytes_compressed_to_big_int(),
             &blindness,
         );
-        if c_hat.clone() == c_hat_test
-            && q_hat.get_element().clone() == pdl_chal.q_tag.get_element().clone()
+        if c_hat == c_hat_test
+            && q_hat.get_element() == pdl_chal.q_tag.get_element()
         {
             Ok(())
         } else {
@@ -322,18 +322,17 @@ impl PaillierPublic {
         paillier_context: &PaillierPublic,
         range_proof: &RangeProofNi,
     ) -> Result<(), RangeProofError> {
-        let result = range_proof.verify(
+        range_proof.verify(
             &paillier_context.ek,
             &paillier_context.encrypted_secret_share,
-        );
-        return result;
+        )
     }
 
     pub fn verify_ni_proof_correct_key(
         proof: NICorrectKeyProof,
         ek: &EncryptionKey,
     ) -> Result<(), CorrectKeyProofError> {
-        proof.verify(&ek)
+        proof.verify(ek)
     }
 }
 
@@ -347,14 +346,14 @@ impl EphKeyGenFirstMsg {
 
         let h: GE = GE::base_point2();
         let w = ECDDHWitness {
-            x: secret_share.clone(),
+            x: secret_share,
         };
-        let c = &h * &secret_share;
+        let c = h * secret_share;
         let delta = ECDDHStatement {
-            g1: base.clone(),
-            h1: public_share.clone(),
-            g2: h.clone(),
-            h2: c.clone(),
+            g1: base,
+            h1: public_share,
+            g2: h,
+            h2: c,
         };
         let d_log_proof = ECDDHProof::prove(&w, &delta);
 
@@ -383,7 +382,7 @@ impl EphKeyGenFirstMsg {
             EphCommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share.clone(),
+                public_share: ec_key_pair.public_share,
                 d_log_proof,
                 c,
             },
@@ -399,9 +398,9 @@ impl EphKeyGenSecondMsg {
     ) -> Result<EphKeyGenSecondMsg, ProofError> {
         let delta = ECDDHStatement {
             g1: GE::generator(),
-            h1: party_one_first_message.public_share.clone(),
+            h1: party_one_first_message.public_share,
             g2: GE::base_point2(),
-            h2: party_one_first_message.c.clone(),
+            h2: party_one_first_message.c,
         };
         party_one_first_message.d_log_proof.verify(&delta)?;
         Ok(EphKeyGenSecondMsg { comm_witness })
@@ -419,12 +418,12 @@ impl PartialSig {
     ) -> PartialSig {
         let q = FE::q();
         //compute r = k2* R1
-        let mut r: GE = ephemeral_other_public_share.clone();
+        let mut r: GE = *ephemeral_other_public_share;
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&q);
         let rho = BigInt::sample_below(&q.pow(2));
-        let k2_inv = &ephemeral_local_share
+        let k2_inv = ephemeral_local_share
             .secret_share
             .to_big_int()
             .invert(&q)

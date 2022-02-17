@@ -179,8 +179,7 @@ impl CorrectKeyTrait<EncryptionKey, DecryptionKey> for CorrectKey {
 
         // compute proof in the form of a hash of the recovered roots
         let s_digest = compute_digest(challenge.sn.iter().map(|sni| {
-            let si = extract_nroot(dk, sni);
-            si
+            extract_nroot(dk, sni)
         }));
 
         Ok(CorrectKeyProof { s_digest })

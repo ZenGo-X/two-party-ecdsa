@@ -27,7 +27,7 @@ pub struct Msegmentation;
 impl Msegmentation {
     pub fn get_segment_k(secret: &FE, segment_size: &usize, k: u8) -> FE {
         let ss_bn = secret.to_big_int();
-        let segment_size_u32 = segment_size.clone() as u32;
+        let segment_size_u32 = *segment_size as u32;
         let msb = segment_size_u32 * (k as u32 + 1);
         let lsb = segment_size_u32 * k as u32;
         let two_bn = BigInt::from(2);
@@ -36,7 +36,7 @@ impl Msegmentation {
         let mask = max - min;
         let segment_k_bn = mask & ss_bn;
         let segment_k_bn_rotated =
-            BigInt::shr(segment_k_bn, (k * segment_size.clone() as u8) as usize);
+            BigInt::shr(segment_k_bn, (k * (*segment_size) as u8) as usize);
         // println!("test = {:?}", test.to_str_radix(16));
         if segment_k_bn_rotated == BigInt::zero() {
             ECScalar::zero()
@@ -67,42 +67,41 @@ impl Msegmentation {
     }
 
     // TODO: find a way using generics to combine the following two fn's
-    pub fn assemble_fe(segments: &Vec<FE>, segment_size: &usize) -> FE {
+    pub fn assemble_fe(segments: &[FE], segment_size: &usize) -> FE {
         let two = BigInt::from(2);
-        let mut segments_2n = segments.clone();
+        let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
-        let seg_sum = segments_2n
+        segments_2n
             .iter()
-            .zip(0..segments_2n.len())
+            .enumerate()
             .fold(seg1, |acc, x| {
-                if x.0.clone() == FE::zero() {
+                if x.1 == &FE::zero() {
                     acc
                 } else {
-                    let two_to_the_n = two.pow(segment_size.clone() as u32);
-                    let two_to_the_n_shifted = two_to_the_n.shl(x.1 * segment_size);
+                    let two_to_the_n = two.pow(*segment_size as u32);
+                    let two_to_the_n_shifted = two_to_the_n.shl(x.0 * segment_size);
                     let two_to_the_n_shifted_fe: FE = ECScalar::from(&two_to_the_n_shifted);
-                    let shifted_segment = x.0.clone() * two_to_the_n_shifted_fe;
+                    let shifted_segment = *x.1 * two_to_the_n_shifted_fe;
                     acc + shifted_segment
                 }
-            });
-        return seg_sum;
+            })
     }
 
-    pub fn assemble_ge(segments: &Vec<GE>, segment_size: &usize) -> GE {
+    pub fn assemble_ge(segments: &[GE], segment_size: &usize) -> GE {
         let two = BigInt::from(2);
-        let mut segments_2n = segments.clone();
+        let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
-        let seg_sum = segments_2n
+        segments_2n
             .iter()
-            .zip(0..segments_2n.len())
+            .enumerate()
             .fold(seg1, |acc, x| {
-                let two_to_the_n = two.pow(segment_size.clone() as u32);
-                let two_to_the_n_shifted = two_to_the_n.shl(x.1 * segment_size);
+                let two_to_the_n = two.pow(*segment_size as u32);
+                let two_to_the_n_shifted = two_to_the_n.shl(x.0 * segment_size);
                 let two_to_the_n_shifted_fe: FE = ECScalar::from(&two_to_the_n_shifted);
-                let shifted_segment = x.0.clone() * two_to_the_n_shifted_fe;
+                let shifted_segment = x.1 * &two_to_the_n_shifted_fe;
                 acc + shifted_segment
-            });
-        return seg_sum;
+            })
+
     }
 
     pub fn to_encrypted_segments(
@@ -123,7 +122,7 @@ impl Msegmentation {
                 Msegmentation::encrypt_segment_k(
                     secret,
                     &r_vec[i],
-                    &segment_size,
+                    segment_size,
                     i as u8,
                     pub_ke_y,
                     G,
@@ -148,13 +147,13 @@ impl Msegmentation {
     ) -> Result<FE, Errors> {
         let mut result = None;
 
-        let limit_plus_one = limit.clone() + 1u32;
+        let limit_plus_one = *limit + 1u32;
         let out_of_limit_fe: FE = ECScalar::from(&BigInt::from(limit_plus_one));
-        let out_of_limit_ge: GE = G.clone() * &out_of_limit_fe;
-        let yE = DE.E.clone() * private_key;
+        let out_of_limit_ge: GE = G * &out_of_limit_fe;
+        let yE = DE.E * private_key;
         // handling 0 segment
         let mut D_minus_yE: GE = out_of_limit_ge;
-        if yE == DE.D.clone() {
+        if yE == DE.D {
             result = Some(());
         } else {
             D_minus_yE = DE.D.sub_point(&yE.get_element());
@@ -166,11 +165,11 @@ impl Msegmentation {
         match matched_value_index {
             Some(x) => Ok(ECScalar::from(&BigInt::from(x.0 as u32 + 1))),
             None => {
-                return if result.is_some() {
+                if result.is_some() {
                     Ok(ECScalar::zero())
                 } else {
                     Err(ErrorDecrypting)
-                };
+                }
             }
         }
     }
@@ -181,7 +180,7 @@ impl Msegmentation {
         private_key: &FE,
         segment_size: &usize,
     ) -> Result<FE, Errors> {
-        let limit = 2u32.pow(segment_size.clone() as u32);
+        let limit = 2u32.pow(*segment_size as u32);
         let test_ge_table = (1..limit)
             .into_par_iter()
             .map(|i| {
@@ -192,15 +191,13 @@ impl Msegmentation {
         let vec_secret = (0..DE_vec.DE.len())
             .into_par_iter()
             .map(|i| {
-                let result = Msegmentation::decrypt_segment(
+                Msegmentation::decrypt_segment(
                     &DE_vec.DE[i],
                     G,
                     private_key,
                     &limit,
                     &test_ge_table,
-                );
-                //   .expect("error decrypting");
-                result
+                )
             })
             .collect::<Vec<Result<FE, Errors>>>();
         let mut flag = true;
@@ -219,7 +216,7 @@ impl Msegmentation {
             false => Err(ErrorDecrypting),
             true => Ok(Msegmentation::assemble_fe(
                 &vec_secret_unwrap,
-                &segment_size,
+                segment_size,
             )),
         }
     }

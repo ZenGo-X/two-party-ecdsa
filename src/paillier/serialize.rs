@@ -37,7 +37,7 @@ pub mod vecbigint {
     use crate::curv::BigInt;
 
     pub fn serialize<S: ser::Serializer>(
-        x: &Vec<BigInt>,
+        x: &[BigInt],
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
         let mut seq = serializer.serialize_seq(Some(x.len()))?;

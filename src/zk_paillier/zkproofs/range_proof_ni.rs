@@ -13,9 +13,8 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/zk-paillier/blob/master/LICENSE>
 */
-use crate::curv::arithmetic::traits::Samplable;
 use crate::curv::BigInt;
-use crate::paillier::{EncryptWithChosenRandomness, EncryptionKey, Paillier};
+use crate::paillier::EncryptionKey;
 use std::error::Error;
 use std::fmt;
 use super::range_proof::RangeProof;
@@ -68,13 +67,11 @@ impl RangeProofNi {
         secret_x: &BigInt,
         secret_r: &BigInt,
     ) -> RangeProofNi {
-        use super::RangeProof;
         let (encrypted_pairs, data_randomness_pairs) =
             RangeProof::generate_encrypted_pairs(ek, range, SECURITY_PARAMETER);
         let (c1, c2) = (encrypted_pairs.c1, encrypted_pairs.c2); // TODO[Morten] fix temporary hack
 
-        let mut vec: Vec<BigInt> = Vec::new();
-        vec.push(ek.n.clone());
+        let mut vec = vec![ek.n.clone()];
         vec.extend_from_slice(&c1);
         vec.extend_from_slice(&c2);
         let e = ChallengeBits::from(super::compute_digest(vec.iter()));
@@ -105,8 +102,7 @@ impl RangeProofNi {
         assert_eq!(ek, &self.ek);
         // make sure proof was done with the same ciphertext
         assert_eq!(ciphertext, &self.ciphertext);
-        let mut vec: Vec<BigInt> = Vec::new();
-        vec.push(ek.n.clone());
+        let mut vec: Vec<BigInt> = vec![ek.n.clone()];
         vec.extend_from_slice(&self.encrypted_pairs.c1);
         vec.extend_from_slice(&self.encrypted_pairs.c2);
         let e = ChallengeBits::from(super::compute_digest(vec.iter()));
@@ -126,8 +122,7 @@ impl RangeProofNi {
     }
 
     pub fn verify_self(&self) -> Result<(), RangeProofError> {
-        let mut vec: Vec<BigInt> = Vec::new();
-        vec.push(self.ek.n.clone());
+        let mut vec = vec![self.ek.n.clone()];
         vec.extend_from_slice(&self.encrypted_pairs.c1);
         vec.extend_from_slice(&self.encrypted_pairs.c2);
         let e = ChallengeBits::from(super::compute_digest(vec.iter()));
@@ -138,7 +133,7 @@ impl RangeProofNi {
             &self.proof,
             &self.range,
             &self.ciphertext,
-            self.error_factor.clone(),
+            self.error_factor,
         );
         match result.is_ok() {
             true => Ok(()),
@@ -153,7 +148,8 @@ mod tests {
 
     use super::RangeProofNi;
     use super::*;
-    use crate::paillier::{Keypair, Randomness, RawPlaintext};
+    use crate::paillier::{Keypair, Randomness, RawPlaintext, Paillier, traits::EncryptWithChosenRandomness};
+    use crate::curv::arithmetic::traits::Samplable;
 
     fn test_keypair() -> Keypair {
         let p = str::parse("148677972634832330983979593310074301486537017973460461278300587514468301043894574906886127642530475786889672304776052879927627556769456140664043088700743909632312483413393134504352834240399191134336344285483935856491230340093391784574980688823380828143810804684752914935441384845195613674104960646037368551517").unwrap();

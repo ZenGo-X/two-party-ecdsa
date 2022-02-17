@@ -62,8 +62,8 @@ impl InnerProductArg {
             let (G_L, G_R) = G.split_at(n);
             let (H_L, H_R) = H.split_at(n);
 
-            let c_L = inner_product(&a_L, &b_R);
-            let c_R = inner_product(&a_R, &b_L);
+            let c_L = inner_product(a_L, b_R);
+            let c_R = inner_product(a_R, b_L);
 
             // L = <a_L * G_R> + <b_R * H_L> + c_L * ux
             let c_L_fe: FE = ECScalar::from(&c_L);
@@ -71,13 +71,13 @@ impl InnerProductArg {
             let aL_GR = (0..n)
                 .map(|i| {
                     let aLi: FE = ECScalar::from(&a_L[i]);
-                    &G_R[i] * &aLi
+                    G_R[i] * aLi
                 })
                 .fold(ux_CL, |acc, x| acc + x as GE);
             let L = (0..n)
                 .map(|i| {
                     let bRi: FE = ECScalar::from(&b_R[i]);
-                    &H_L[i] * &bRi
+                    H_L[i] * bRi
                 })
                 .fold(aL_GR, |acc, x| acc + x as GE);
 
@@ -87,17 +87,17 @@ impl InnerProductArg {
             let aR_GL = (0..n)
                 .map(|i| {
                     let aRi: FE = ECScalar::from(&a_R[i]);
-                    &G_L[i] * &aRi
+                    G_L[i] * aRi
                 })
                 .fold(ux_CR, |acc, x: GE| acc + x as GE);
             let R = (0..n)
                 .map(|i| {
                     let bLi: FE = ECScalar::from(&b_L[i]);
-                    &H_R[i] * &bLi
+                    H_R[i] * bLi
                 })
                 .fold(aR_GL, |acc, x: GE| acc + x as GE);
 
-            let x = HSha256::create_hash_from_ge(&[&L, &R, &ux]);
+            let x = HSha256::create_hash_from_ge(&[&L, &R, ux]);
             let x_bn = x.to_big_int();
             let order = FE::q();
             let x_inv_fe = x.invert();
@@ -122,8 +122,8 @@ impl InnerProductArg {
 
             let G_new = (0..n)
                 .map(|i| {
-                    let GLx_inv = &G_L[i] * &x_inv_fe;
-                    let GRx = &G_R[i] * &x;
+                    let GLx_inv = G_L[i] * x_inv_fe;
+                    let GRx = G_R[i] * x;
                     GRx + GLx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -131,8 +131,8 @@ impl InnerProductArg {
 
             let H_new = (0..n)
                 .map(|i| {
-                    let HLx = &H_L[i] * &x;
-                    let HRx_inv = &H_R[i] * &x_inv_fe;
+                    let HLx = H_L[i] * x;
+                    let HRx_inv = H_R[i] * x_inv_fe;
                     HLx + HRx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -140,7 +140,7 @@ impl InnerProductArg {
 
             L_vec.push(L);
             R_vec.push(R);
-            return InnerProductArg::prove(&G_new, &H_new, &ux, &P, &a_new, &b_new, L_vec, R_vec);
+            return InnerProductArg::prove(&G_new, &H_new, ux, P, &a_new, &b_new, L_vec, R_vec);
         }
 
         InnerProductArg {
@@ -152,8 +152,8 @@ impl InnerProductArg {
     }
 
     pub fn verify(&self, g_vec: &[GE], hi_tag: &[GE], ux: &GE, P: &GE) -> Result<(), Errors> {
-        let G = &g_vec[..];
-        let H = &hi_tag[..];
+        let G = g_vec;
+        let H = hi_tag;
         let n = G.len();
 
         // All of the input vectors must have the same length.
@@ -166,7 +166,7 @@ impl InnerProductArg {
             let (G_L, G_R) = G.split_at(n);
             let (H_L, H_R) = H.split_at(n);
 
-            let x = HSha256::create_hash_from_ge(&[&self.L[0], &self.R[0], &ux]);
+            let x = HSha256::create_hash_from_ge(&[&self.L[0], &self.R[0], ux]);
             let x_bn = x.to_big_int();
             let order = FE::q();
             let x_inv_fe = x.invert();
@@ -178,8 +178,8 @@ impl InnerProductArg {
 
             let G_new = (0..n)
                 .map(|i| {
-                    let GLx_inv = &G_L[i] * &x_inv_fe;
-                    let GRx = &G_R[i] * &x;
+                    let GLx_inv = G_L[i] * x_inv_fe;
+                    let GRx = G_R[i] * x;
                     GRx + GLx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -187,14 +187,14 @@ impl InnerProductArg {
 
             let H_new = (0..n)
                 .map(|i| {
-                    let HLx = &H_L[i] * &x;
-                    let HRx_inv = &H_R[i] * &x_inv_fe;
+                    let HLx = H_L[i] * x;
+                    let HRx_inv = H_R[i] * x_inv_fe;
                     HLx + HRx_inv
                 })
                 .collect::<Vec<GE>>();
             //    H = &mut H_new[..];
-            let Lx_sq = &self.L[0] * &x_sq_fe;
-            let Rx_sq_inv = &self.R[0] * &x_inv_sq_fe;
+            let Lx_sq = self.L[0] * x_sq_fe;
+            let Rx_sq_inv = self.R[0] * x_inv_sq_fe;
             let P_tag = Lx_sq + Rx_sq_inv + P;
             let ip = InnerProductArg {
                 L: (&self.L[1..]).to_vec(),
@@ -208,11 +208,11 @@ impl InnerProductArg {
         let a_fe: FE = ECScalar::from(&self.a_tag);
         let b_fe: FE = ECScalar::from(&self.b_tag);
         let c = a_fe.mul(&b_fe.get_element());
-        let Ga = &G[0] * &a_fe;
-        let Hb = &H[0] * &b_fe;
+        let Ga = G[0] * a_fe;
+        let Hb = H[0] * b_fe;
         let ux_c = ux * &c;
         let P_calc = Ga + Hb + ux_c;
-        if P.clone() == P_calc {
+        if P == &P_calc {
             Ok(())
         } else {
             Err(InnerProductError)
@@ -232,7 +232,7 @@ fn inner_product(a: &[BigInt], b: &[BigInt]) -> BigInt {
         let aibi = BigInt::mod_mul(x.0, x.1, &order);
         BigInt::mod_add(&acc, &aibi, &order)
     });
-    return out;
+    out
 }
 
 #[cfg(test)]
@@ -299,21 +299,21 @@ mod tests {
             })
             .collect::<Vec<FE>>();
 
-        let hi_tag = (0..n).map(|i| &h_vec[i] * &yi_inv[i]).collect::<Vec<GE>>();
+        let hi_tag = (0..n).map(|i| h_vec[i] * yi_inv[i]).collect::<Vec<GE>>();
 
         // R = <a * G> + <b_L * H_R> + c * ux
         let c_fe: FE = ECScalar::from(&c);
-        let ux_c: GE = &Gx * &c_fe;
+        let ux_c: GE = Gx * c_fe;
         let a_G = (0..n)
             .map(|i| {
                 let ai: FE = ECScalar::from(&a[i]);
-                &g_vec[i] * &ai
+                g_vec[i] * ai
             })
             .fold(ux_c, |acc, x: GE| acc + x as GE);
         let P = (0..n)
             .map(|i| {
                 let bi: FE = ECScalar::from(&b[i]);
-                &hi_tag[i] * &bi
+                hi_tag[i] * bi
             })
             .fold(a_G, |acc, x: GE| acc + x as GE);
 

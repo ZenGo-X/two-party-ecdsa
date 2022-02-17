@@ -26,7 +26,6 @@ use crate::curv::BigInt;
 use crate::paillier::EncryptWithChosenRandomness;
 use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
-use super::correct_key::CorrectKeyTrait;
 use super::CorrectKeyProofError;
 
 const STATISTICAL_ERROR_FACTOR: usize = 40;
@@ -163,7 +162,7 @@ impl RangeProofTrait for RangeProof {
         // commit to challenge
         let m = compute_digest(&e.0);
         let r = BigInt::sample_below(&ek.n);
-        let com = get_paillier_commitment(&ek, &m, &r);
+        let com = get_paillier_commitment(ek, &m, &r);
 
         (Commitment(com), ChallengeRandomness(r), e)
     }
@@ -242,7 +241,7 @@ impl RangeProofTrait for RangeProof {
         e: &ChallengeBits,
     ) -> Result<(), CorrectKeyProofError> {
         let m = compute_digest(&e.0);
-        let com_tag = get_paillier_commitment(&ek, &m, &r.0);
+        let com_tag = get_paillier_commitment(ek, &m, &r.0);
         if com.0 == com_tag {
             Ok(())
         } else {
@@ -273,8 +272,7 @@ impl RangeProofTrait for RangeProof {
                         w2: data.w2[i].clone(),
                         r2: data.r2[i].clone(),
                     }
-                } else {
-                    if secret_x + &data.w1[i] > range_scaled_third
+                } else if secret_x + &data.w1[i] > range_scaled_third
                         && secret_x + &data.w1[i] < range_scaled_two_thirds
                     {
                         Response::Mask {
@@ -289,7 +287,7 @@ impl RangeProofTrait for RangeProof {
                             masked_r: secret_r * &data.r2[i] % &ek.n,
                         }
                     }
-                }
+
             })
             .collect();
 
@@ -335,23 +333,20 @@ impl RangeProofTrait for RangeProof {
                         )
                         .into();
 
-                        if &expected_c1i != &encrypted_pairs.c1[i] {
+                        if expected_c1i != encrypted_pairs.c1[i] {
                             res = false;
                         }
-                        if &expected_c2i != &encrypted_pairs.c2[i] {
+                        if expected_c2i != encrypted_pairs.c2[i] {
                             res = false;
                         }
 
                         let mut flag = false;
-                        if w1 < &range_scaled_third {
-                            if w2 > &range_scaled_third && w2 < &range_scaled_two_thirds {
+                        if w1 < &range_scaled_third && w2 > &range_scaled_third && w2 < &range_scaled_two_thirds{
                                 flag = true;
-                            }
                         }
-                        if w2 < &range_scaled_third {
-                            if w1 > &range_scaled_third && w1 < &range_scaled_two_thirds {
+                        if w2 < &range_scaled_third && w1 > &range_scaled_third && w1 < &range_scaled_two_thirds {
                                 flag = true;
-                            }
+
                         }
                         if !flag {
                             res = false;
@@ -413,7 +408,7 @@ fn get_paillier_commitment(ek: &EncryptionKey, x: &BigInt, r: &BigInt) -> BigInt
 
 fn compute_digest(bytes: &[u8]) -> BigInt {
     let mut digest = Context::new(&SHA256);
-    digest.update(&bytes);
+    digest.update(bytes);
     BigInt::from(digest.finish().as_ref())
 }
 
@@ -424,7 +419,7 @@ mod tests {
 
     use super::*;
     use crate::paillier::{Keypair, Randomness};
-    use crate::zk_paillier::zkproofs::correct_key::CorrectKey;
+    use crate::zk_paillier::zkproofs::correct_key::{CorrectKey, CorrectKeyTrait};
 
     fn test_keypair() -> Keypair {
         let p = str::parse("148677972634832330983979593310074301486537017973460461278300587514468301043894574906886127642530475786889672304776052879927627556769456140664043088700743909632312483413393134504352834240399191134336344285483935856491230340093391784574980688823380828143810804684752914935441384845195613674104960646037368551517").unwrap();

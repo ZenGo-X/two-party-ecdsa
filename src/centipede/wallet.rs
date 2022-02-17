@@ -31,30 +31,27 @@ impl SecretShare {
         let base_point: GE = ECPoint::generator();
         let secret: FE = ECScalar::new_random();
 
-        let pubkey = base_point * &secret;
-        return SecretShare { secret, pubkey };
+        let pubkey = base_point * secret;
+        SecretShare { secret, pubkey }
     }
     //based on VRF construction from ellitpic curve: https://eprint.iacr.org/2017/099.pdf
     //TODO: consider to output in str format
     pub fn generate_randomness(&self, label: &BigInt) -> BigInt {
         let h = generate_random_point(&Converter::to_vec(label));
-        let gamma = h * &self.secret;
+        let gamma = h * self.secret;
         let beta = HSha256::create_hash_from_ge(&[&gamma]);
         beta.to_big_int()
     }
 }
 
 pub fn generate_random_point(bytes: &[u8]) -> GE {
-    let result: Result<GE, _> = ECPoint::from_bytes(&bytes);
-    if result.is_ok() {
-        return result.unwrap();
-    } else {
+    ECPoint::from_bytes(bytes).unwrap_or_else(|_| {
         let two = BigInt::from(2);
         let bn = BigInt::from(bytes);
         let bn_times_two = BigInt::mod_mul(&bn, &two, &FE::q());
         let bytes = BigInt::to_vec(&bn_times_two);
-        return generate_random_point(&bytes);
-    }
+        generate_random_point(&bytes)
+    })
 }
 
 #[cfg(test)]

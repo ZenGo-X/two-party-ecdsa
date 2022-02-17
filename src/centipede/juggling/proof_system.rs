@@ -60,7 +60,7 @@ impl Proof {
         // bulletproofs:
         let num_segments = w.x_vec.len();
         // bit range
-        let n = segment_size.clone();
+        let n = *segment_size;
         // batch size
         let m = num_segments;
         let nm = n * m;
@@ -86,38 +86,38 @@ impl Proof {
             .collect::<Vec<GE>>();
 
         let range_proof =
-            RangeProof::prove(&g_vec, &h_vec, &G, &Y, w.x_vec.clone(), &w.r_vec, n.clone());
+            RangeProof::prove(&g_vec, &h_vec, G, Y, w.x_vec.clone(), &w.r_vec, n);
 
         // proofs of correct elgamal:
 
         let elgamal_proofs = (0..num_segments)
             .map(|i| {
                 let w = HomoElGamalWitness {
-                    r: w.r_vec[i].clone(),
-                    x: w.x_vec[i].clone(),
+                    r: w.r_vec[i],
+                    x: w.x_vec[i],
                 };
                 let delta = HomoElGamalStatement {
-                    G: G.clone(),
-                    H: G.clone(),
-                    Y: Y.clone(),
-                    D: c.DE[i].D.clone(),
-                    E: c.DE[i].E.clone(),
+                    G: *G,
+                    H: *G,
+                    Y: *Y,
+                    D: c.DE[i].D,
+                    E: c.DE[i].E,
                 };
                 HomoELGamalProof::prove(&w, &delta)
             })
             .collect::<Vec<HomoELGamalProof>>();
 
         // proof of correct ElGamal DLog
-        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D.clone()).collect();
-        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E.clone()).collect();
+        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D).collect();
+        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E).collect();
         let sum_D = Msegmentation::assemble_ge(&D_vec, segment_size);
         let sum_E = Msegmentation::assemble_ge(&E_vec, segment_size);
         let sum_r = Msegmentation::assemble_fe(&w.r_vec, segment_size);
         let sum_x = Msegmentation::assemble_fe(&w.x_vec, segment_size);
-        let Q = G.clone() * &sum_x;
+        let Q = G * &sum_x;
         let delta = HomoElGamalDlogStatement {
-            G: G.clone(),
-            Y: Y.clone(),
+            G: *G,
+            Y: *Y,
             Q,
             D: sum_D,
             E: sum_E,
@@ -143,7 +143,7 @@ impl Proof {
         // bulletproofs:
         let num_segments = self.elgamal_enc.len();
         // bit range
-        let n = segment_size.clone();
+        let n = *segment_size;
         // batch size
         let m = num_segments;
         let nm = n * m;
@@ -168,39 +168,39 @@ impl Proof {
             })
             .collect::<Vec<GE>>();
 
-        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D.clone()).collect();
+        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D).collect();
         let bp_ver = self
             .bulletproof
-            .verify(&g_vec, &h_vec, G, Y, &D_vec, segment_size.clone())
+            .verify(&g_vec, &h_vec, G, Y, &D_vec, *segment_size)
             .is_ok();
 
         let elgamal_proofs_ver = (0..num_segments)
             .map(|i| {
                 let delta = HomoElGamalStatement {
-                    G: G.clone(),
-                    H: G.clone(),
-                    Y: Y.clone(),
-                    D: c.DE[i].D.clone(),
-                    E: c.DE[i].E.clone(),
+                    G: *G,
+                    H: *G,
+                    Y: *Y,
+                    D: c.DE[i].D,
+                    E: c.DE[i].E,
                 };
                 self.elgamal_enc[i].verify(&delta).is_ok()
             })
             .collect::<Vec<bool>>();
 
-        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E.clone()).collect();
+        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E).collect();
         let sum_D = Msegmentation::assemble_ge(&D_vec, segment_size);
         let sum_E = Msegmentation::assemble_ge(&E_vec, segment_size);
 
         let delta = HomoElGamalDlogStatement {
-            G: G.clone(),
-            Y: Y.clone(),
-            Q: Q.clone(),
+            G: *G,
+            Y: *Y,
+            Q: *Q,
             D: sum_D,
             E: sum_E,
         };
 
         let elgamal_dlog_proof_ver = self.elgamal_enc_dlog.verify(&delta).is_ok();
-        if bp_ver && elgamal_dlog_proof_ver && elgamal_proofs_ver.iter().all(|&x| x == true) {
+        if bp_ver && elgamal_dlog_proof_ver && elgamal_proofs_ver.iter().all(|&x| x) {
             Ok(())
         } else {
             Err(ErrorProving)
@@ -221,9 +221,9 @@ mod tests {
         let segment_size = 8;
         let y: FE = ECScalar::new_random();
         let G: GE = ECPoint::generator();
-        let Y = G.clone() * &y;
+        let Y = G * y;
         let x = SecretShare::generate();
-        let Q = G.clone() * &x.secret;
+        let Q = G * x.secret;
         let (segments, encryptions) =
             Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
         let secret_new = Msegmentation::assemble_fe(&segments.x_vec, &segment_size);
@@ -243,9 +243,9 @@ mod tests {
         let segment_size = 8;
         let y: FE = ECScalar::new_random();
         let G: GE = ECPoint::generator();
-        let Y = G.clone() * &y;
+        let Y = G * y;
         let x = SecretShare::generate();
-        let Q = G.clone() * &x.secret + G.clone();
+        let Q = G * x.secret + G;
         let (segments, encryptions) =
             Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
         let secret_new = Msegmentation::assemble_fe(&segments.x_vec, &segment_size);
