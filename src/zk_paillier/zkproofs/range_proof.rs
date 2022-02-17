@@ -22,11 +22,11 @@ use rand::prelude::*;
 use rayon::prelude::*;
 use ring::digest::{Context, SHA256};
 
+use super::CorrectKeyProofError;
 use crate::curv::BigInt;
 use crate::paillier::EncryptWithChosenRandomness;
 use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
-use super::CorrectKeyProofError;
 
 const STATISTICAL_ERROR_FACTOR: usize = 40;
 
@@ -273,21 +273,20 @@ impl RangeProofTrait for RangeProof {
                         r2: data.r2[i].clone(),
                     }
                 } else if secret_x + &data.w1[i] > range_scaled_third
-                        && secret_x + &data.w1[i] < range_scaled_two_thirds
-                    {
-                        Response::Mask {
-                            j: 1,
-                            masked_x: secret_x + &data.w1[i],
-                            masked_r: secret_r * &data.r1[i] % &ek.n,
-                        }
-                    } else {
-                        Response::Mask {
-                            j: 2,
-                            masked_x: secret_x + &data.w2[i],
-                            masked_r: secret_r * &data.r2[i] % &ek.n,
-                        }
+                    && secret_x + &data.w1[i] < range_scaled_two_thirds
+                {
+                    Response::Mask {
+                        j: 1,
+                        masked_x: secret_x + &data.w1[i],
+                        masked_r: secret_r * &data.r1[i] % &ek.n,
                     }
-
+                } else {
+                    Response::Mask {
+                        j: 2,
+                        masked_x: secret_x + &data.w2[i],
+                        masked_r: secret_r * &data.r2[i] % &ek.n,
+                    }
+                }
             })
             .collect();
 
@@ -341,12 +340,17 @@ impl RangeProofTrait for RangeProof {
                         }
 
                         let mut flag = false;
-                        if w1 < &range_scaled_third && w2 > &range_scaled_third && w2 < &range_scaled_two_thirds{
-                                flag = true;
+                        if w1 < &range_scaled_third
+                            && w2 > &range_scaled_third
+                            && w2 < &range_scaled_two_thirds
+                        {
+                            flag = true;
                         }
-                        if w2 < &range_scaled_third && w1 > &range_scaled_third && w1 < &range_scaled_two_thirds {
-                                flag = true;
-
+                        if w2 < &range_scaled_third
+                            && w1 > &range_scaled_third
+                            && w1 < &range_scaled_two_thirds
+                        {
+                            flag = true;
                         }
                         if !flag {
                             res = false;
@@ -415,7 +419,6 @@ fn compute_digest(bytes: &[u8]) -> BigInt {
 #[cfg(test)]
 mod tests {
     const RANGE_BITS: usize = 256; //for elliptic curves with 256bits for example
-
 
     use super::*;
     use crate::paillier::{Keypair, Randomness};
@@ -616,5 +619,4 @@ mod tests {
     //         );
     //     });
     // }
-
 }

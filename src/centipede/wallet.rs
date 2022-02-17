@@ -56,8 +56,8 @@ pub fn generate_random_point(bytes: &[u8]) -> GE {
 
 #[cfg(test)]
 mod tests {
-    use crate::curv::BigInt;
     use super::SecretShare;
+    use crate::curv::BigInt;
     #[test]
     fn test_randomness() {
         let x = SecretShare::generate();
@@ -69,5 +69,4 @@ mod tests {
         let randmoness_eth = x.generate_randomness(&label_eth);
         assert_ne!(randmoness_btc, randmoness_eth)
     }
-
 }

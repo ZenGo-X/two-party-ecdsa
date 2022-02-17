@@ -237,14 +237,14 @@ fn inner_product(a: &[BigInt], b: &[BigInt]) -> BigInt {
 
 #[cfg(test)]
 mod tests {
+    use crate::bulletproofs::proofs::inner_product::InnerProductArg;
+    use crate::bulletproofs::proofs::range_proof::generate_random_point;
     use crate::curv::arithmetic::traits::{Converter, Modulo};
     use crate::curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
     use crate::curv::cryptographic_primitives::hashing::traits::*;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
     use crate::curv::{FE, GE};
-    use crate::bulletproofs::proofs::inner_product::InnerProductArg;
-    use crate::bulletproofs::proofs::range_proof::generate_random_point;
 
     fn test_helper(n: usize) {
         let KZen: &[u8] = &[75, 90, 101, 110];
@@ -352,5 +352,4 @@ mod tests {
     fn make_ipp_1() {
         test_helper(1);
     }
-
 }

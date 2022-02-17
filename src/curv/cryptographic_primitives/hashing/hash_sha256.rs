@@ -8,9 +8,9 @@
 use super::traits::Hash;
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
-use sha2::{Sha256, Digest};
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
+use sha2::{Digest, Sha256};
 
 pub struct HSha256;
 

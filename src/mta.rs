@@ -22,9 +22,8 @@ use crate::curv::GE;
 use crate::paillier::{Add, Decrypt, Encrypt, Mul};
 use crate::paillier::{DecryptionKey, EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
 
-use crate::PartyPrivate;
 use crate::Error::{self, InvalidKey};
-
+use crate::PartyPrivate;
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct MessageA {

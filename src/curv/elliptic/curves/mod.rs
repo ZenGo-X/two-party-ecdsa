@@ -5,7 +5,6 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
-
 pub mod secp256_k1;
 
 pub mod traits;

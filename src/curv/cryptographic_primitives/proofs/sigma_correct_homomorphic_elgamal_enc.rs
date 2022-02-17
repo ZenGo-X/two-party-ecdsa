@@ -10,9 +10,9 @@ use super::ProofError;
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::elliptic::curves::traits::*;
-use zeroize::Zeroize;
 use crate::curv::FE;
 use crate::curv::GE;
+use zeroize::Zeroize;
 
 /// This is a proof of knowledge that a pair of group elements {D, E}
 /// form a valid homomorphic ElGamal encryption (”in the exponent”) using public key Y .
@@ -113,13 +113,7 @@ mod tests {
         let Y = G * y;
         let D = G * witness.x + Y * witness.r;
         let E = G * witness.r;
-        let delta = HomoElGamalStatement {
-            G,
-            H: G,
-            Y,
-            D,
-            E,
-        };
+        let delta = HomoElGamalStatement { G, H: G, Y, D, E };
         let proof = HomoELGamalProof::prove(&witness, &delta);
         assert!(proof.verify(&delta).is_ok());
     }

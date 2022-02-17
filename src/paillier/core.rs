@@ -5,12 +5,12 @@ use std::borrow::{Borrow, Cow};
 use rayon::join;
 use serde::*;
 
-use crate::curv::arithmetic::traits::*;
 use super::traits::*;
 use super::{
     BigInt, DecryptionKey, EncryptionKey, Keypair, MinimalDecryptionKey, MinimalEncryptionKey,
     Paillier, RawCiphertext, RawPlaintext,
 };
+use crate::curv::arithmetic::traits::*;
 
 impl Keypair {
     /// Generate default encryption and decryption keys.
@@ -607,5 +607,4 @@ mod tests {
         let result: Result<EncryptionKey, _> = serde_json::from_str(illformatted);
         assert!(result.is_err())
     }
-
 }

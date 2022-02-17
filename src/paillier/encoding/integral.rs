@@ -1,8 +1,8 @@
 //! Integral code supporting both scalars and vectors.
 
+use crate::paillier::traits::{Add, Decrypt, Encrypt, Mul, Rerandomize};
 use std::borrow::Borrow;
 use std::marker::PhantomData;
-use crate::paillier::traits::{Add, Decrypt, Encrypt, Mul, Rerandomize};
 
 use super::{pack, unpack, EncodedCiphertext};
 use crate::curv::arithmetic::traits::*;
@@ -437,5 +437,4 @@ mod tests {
         let m: Vec<_> = Paillier::decrypt(&dk, &c);
         assert_eq!(m, vec![4, 8, 12]);
     }
-
 }

@@ -5,7 +5,6 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
-
 pub mod elliptic;
 
 mod secp256k1instance {

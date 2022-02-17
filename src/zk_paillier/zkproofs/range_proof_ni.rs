@@ -13,13 +13,13 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/zk-paillier/blob/master/LICENSE>
 */
+use super::range_proof::RangeProof;
+use super::range_proof::RangeProofTrait;
+use super::range_proof::{ChallengeBits, EncryptedPairs, Proof};
 use crate::curv::BigInt;
 use crate::paillier::EncryptionKey;
 use std::error::Error;
 use std::fmt;
-use super::range_proof::RangeProof;
-use super::range_proof::RangeProofTrait;
-use super::range_proof::{ChallengeBits, EncryptedPairs, Proof};
 const SECURITY_PARAMETER: usize = 128;
 /// Zero-knowledge range proof that a value x<q/3 lies in interval [0,q].
 ///
@@ -148,8 +148,10 @@ mod tests {
 
     use super::RangeProofNi;
     use super::*;
-    use crate::paillier::{Keypair, Randomness, RawPlaintext, Paillier, traits::EncryptWithChosenRandomness};
     use crate::curv::arithmetic::traits::Samplable;
+    use crate::paillier::{
+        traits::EncryptWithChosenRandomness, Keypair, Paillier, Randomness, RawPlaintext,
+    };
 
     fn test_keypair() -> Keypair {
         let p = str::parse("148677972634832330983979593310074301486537017973460461278300587514468301043894574906886127642530475786889672304776052879927627556769456140664043088700743909632312483413393134504352834240399191134336344285483935856491230340093391784574980688823380828143810804684752914935441384845195613674104960646037368551517").unwrap();
@@ -231,5 +233,4 @@ mod tests {
     //             .expect("range proof error");
     //     });
     // }
-
 }

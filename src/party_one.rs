@@ -16,9 +16,9 @@
 use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
+use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
-use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -431,9 +431,7 @@ impl EphKeyGenFirstMsg {
         let secret_share: FE = ECScalar::new_random();
         let public_share = base * secret_share;
         let h: GE = GE::base_point2();
-        let w = ECDDHWitness {
-            x: secret_share,
-        };
+        let w = ECDDHWitness { x: secret_share };
         let c = h * secret_share;
         let delta = ECDDHStatement {
             g1: base,

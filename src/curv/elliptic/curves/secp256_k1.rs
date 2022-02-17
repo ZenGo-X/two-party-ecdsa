@@ -16,15 +16,17 @@
 // The Public Key codec: Point <> SecretKey
 //
 
+use super::traits::{ECPoint, ECScalar};
+use crate::curv::arithmetic::traits::{Converter, Modulo};
+use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
+use crate::curv::cryptographic_primitives::hashing::traits::Hash;
+use crate::curv::BigInt;
+use crate::curv::ErrorKey;
 use rand::{thread_rng, Rng};
 use secp256k1::constants::{
     CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
 };
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
-use super::traits::{ECPoint, ECScalar};
-use crate::curv::arithmetic::traits::{Converter, Modulo};
-use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
-use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use serde::de;
 use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -35,8 +37,6 @@ use std::ops::{Add, Mul};
 use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
-use crate::curv::BigInt;
-use crate::curv::ErrorKey;
 
 pub type SK = SecretKey;
 pub type PK = PublicKey;

@@ -13,30 +13,33 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
-#![allow(unused_parens, unused_imports, deprecated, unused_mut)]
 const SECURITY_BITS: usize = 256;
 
 #[macro_use]
 extern crate serde_derive;
 
+mod bulletproofs;
+mod centipede;
+mod curv;
+mod mta;
+mod paillier;
 pub mod party_one;
 pub mod party_two;
-mod centipede;
-mod bulletproofs;
-mod paillier;
 mod zk_paillier;
-mod mta;
-mod curv;
 
 mod test;
 
-pub use crate::paillier::{EncryptionKey, DecryptionKey, RawPlaintext, RawCiphertext, Paillier, traits::*};
-pub use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi, RangeProofError, CorrectKeyProofError};
-pub use crate::curv::{FE, GE, BigInt, elliptic::curves::traits::ECPoint};
-pub use crate::curv::elliptic::curves::secp256_k1::{Secp256k1Point, Secp256k1Scalar};
+pub use crate::centipede::juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
 pub use crate::curv::cryptographic_primitives::proofs::{sigma_ec_ddh::ECDDHProof, ProofError};
-pub use crate::mta::{MessageB, MessageA};
-pub use crate::centipede::juggling::proof_system::{Witness, Helgamalsegmented, Helgamal};
+pub use crate::curv::elliptic::curves::secp256_k1::{Secp256k1Point, Secp256k1Scalar};
+pub use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
+pub use crate::mta::{MessageA, MessageB};
+pub use crate::paillier::{
+    traits::*, DecryptionKey, EncryptionKey, Paillier, RawCiphertext, RawPlaintext,
+};
+pub use crate::zk_paillier::zkproofs::{
+    CorrectKeyProofError, NICorrectKeyProof, RangeProofError, RangeProofNi,
+};
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PartyPrivate {
     u_i: FE,
@@ -72,8 +75,6 @@ impl PartyPrivate {
     }
 }
 
-
-
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum Error {
     InvalidKey,
@@ -81,7 +82,6 @@ pub enum Error {
     InvalidCom,
     InvalidSig,
 }
-
 
 #[cfg(test)]
 mod tests {

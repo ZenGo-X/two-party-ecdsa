@@ -16,6 +16,8 @@ version 3 of the License, or (at your option) any later version.
 */
 
 // based on the paper: https://eprint.iacr.org/2017/1066.pdf
+use super::inner_product::InnerProductArg;
+use crate::bulletproofs::Errors::{self, RangeProofError};
 use crate::curv::arithmetic::traits::{Converter, Modulo};
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::*;
@@ -23,9 +25,7 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
 use itertools::iterate;
-use super::inner_product::InnerProductArg;
 use std::ops::{Shl, Shr};
-use crate::bulletproofs::Errors::{self, RangeProofError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RangeProof {
@@ -122,9 +122,7 @@ impl RangeProof {
         let z_bn = z.to_big_int();
 
         let one_fe: FE = ECScalar::from(&one);
-        let yi = iterate(one_fe, |&i| i * y)
-            .take(nm)
-            .collect::<Vec<FE>>();
+        let yi = iterate(one_fe, |&i| i * y).take(nm).collect::<Vec<FE>>();
 
         let t2 = (0..nm)
             .map(|i| SR[i] * yi[i] * SL[i])
@@ -274,9 +272,7 @@ impl RangeProof {
         // delta(x,y):
         let one_bn = BigInt::one();
         let one_fe: FE = ECScalar::from(&one_bn);
-        let yi = iterate(one_fe, |&i| i * y)
-            .take(nm)
-            .collect::<Vec<FE>>();
+        let yi = iterate(one_fe, |&i| i * y).take(nm).collect::<Vec<FE>>();
 
         let scalar_mul_yn = yi.iter().fold(FE::zero(), |acc, x| acc + x);
         let scalar_mul_yn = scalar_mul_yn.to_big_int();
@@ -383,14 +379,14 @@ pub fn generate_random_point(bytes: &[u8]) -> GE {
 
 #[cfg(test)]
 mod tests {
+    use crate::bulletproofs::proofs::range_proof::generate_random_point;
+    use crate::bulletproofs::proofs::range_proof::RangeProof;
     use crate::curv::arithmetic::traits::{Converter, Samplable};
     use crate::curv::cryptographic_primitives::hashing::hash_sha512::HSha512;
     use crate::curv::cryptographic_primitives::hashing::traits::*;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
     use crate::curv::{FE, GE};
-    use crate::bulletproofs::proofs::range_proof::generate_random_point;
-    use crate::bulletproofs::proofs::range_proof::RangeProof;
 
     #[test]
     pub fn test_batch_4_range_proof_32() {
@@ -431,9 +427,7 @@ mod tests {
         let r_vec = (0..m).map(|_| ECScalar::new_random()).collect::<Vec<FE>>();
 
         let ped_com_vec = (0..m)
-            .map(|i| {
-                G * v_vec[i] + H * r_vec[i]
-            })
+            .map(|i| G * v_vec[i] + H * r_vec[i])
             .collect::<Vec<GE>>();
 
         let range_proof = RangeProof::prove(&g_vec, &h_vec, &G, &H, v_vec, &r_vec, n);
@@ -484,9 +478,7 @@ mod tests {
         let r_vec = (0..m).map(|_| ECScalar::new_random()).collect::<Vec<FE>>();
 
         let ped_com_vec = (0..m)
-            .map(|i| {
-                G * v_vec[i] + H * r_vec[i]
-            })
+            .map(|i| G * v_vec[i] + H * r_vec[i])
             .collect::<Vec<GE>>();
 
         let range_proof = RangeProof::prove(&g_vec, &h_vec, &G, &H, v_vec, &r_vec, n);
@@ -533,9 +525,7 @@ mod tests {
         let r_vec = (0..m).map(|_| ECScalar::new_random()).collect::<Vec<FE>>();
 
         let ped_com_vec = (0..m)
-            .map(|i| {
-                G * v_vec[i] + H * r_vec[i]
-            })
+            .map(|i| G * v_vec[i] + H * r_vec[i])
             .collect::<Vec<GE>>();
 
         let range_proof = RangeProof::prove(&g_vec, &h_vec, &G, &H, v_vec, &r_vec, n);
@@ -585,9 +575,7 @@ mod tests {
         let r_vec = (0..m).map(|_| ECScalar::new_random()).collect::<Vec<FE>>();
 
         let ped_com_vec = (0..m)
-            .map(|i| {
-                G * v_vec[i] + H * r_vec[i]
-            })
+            .map(|i| G * v_vec[i] + H * r_vec[i])
             .collect::<Vec<GE>>();
 
         let range_proof = RangeProof::prove(&g_vec, &h_vec, &G, &H, v_vec, &r_vec, n);

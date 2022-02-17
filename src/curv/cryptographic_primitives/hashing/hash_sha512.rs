@@ -8,9 +8,9 @@
 use super::traits::Hash;
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
-use ring::digest::{Context, SHA512};
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
+use ring::digest::{Context, SHA512};
 
 pub struct HSha512;
 

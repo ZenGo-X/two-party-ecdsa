@@ -85,8 +85,7 @@ impl Proof {
             })
             .collect::<Vec<GE>>();
 
-        let range_proof =
-            RangeProof::prove(&g_vec, &h_vec, G, Y, w.x_vec.clone(), &w.r_vec, n);
+        let range_proof = RangeProof::prove(&g_vec, &h_vec, G, Y, w.x_vec.clone(), &w.r_vec, n);
 
         // proofs of correct elgamal:
 
@@ -210,11 +209,11 @@ impl Proof {
 
 #[cfg(test)]
 mod tests {
-    use crate::curv::elliptic::curves::traits::*;
-    use crate::curv::{FE, GE};
     use crate::centipede::juggling::proof_system::*;
     use crate::centipede::juggling::segmentation::Msegmentation;
     use crate::centipede::wallet::SecretShare;
+    use crate::curv::elliptic::curves::traits::*;
+    use crate::curv::{FE, GE};
 
     #[test]
     fn test_varifiable_encryption() {
@@ -257,5 +256,4 @@ mod tests {
         let result = proof.verify(&encryptions, &G, &Y, &Q, &segment_size);
         assert!(result.is_ok());
     }
-
 }

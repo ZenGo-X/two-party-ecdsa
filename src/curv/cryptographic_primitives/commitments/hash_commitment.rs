@@ -46,8 +46,8 @@ mod tests {
     use super::HashCommitment;
     use super::SECURITY_BITS;
     use crate::curv::arithmetic::traits::Samplable;
-    use sha3::{Digest, Sha3_256};
     use crate::curv::BigInt;
+    use sha3::{Digest, Sha3_256};
 
     #[test]
     fn test_bit_length_create_commitment() {

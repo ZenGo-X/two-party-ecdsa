@@ -309,9 +309,7 @@ impl PaillierPublic {
             &q_hat.bytes_compressed_to_big_int(),
             &blindness,
         );
-        if c_hat == c_hat_test
-            && q_hat.get_element() == pdl_chal.q_tag.get_element()
-        {
+        if c_hat == c_hat_test && q_hat.get_element() == pdl_chal.q_tag.get_element() {
             Ok(())
         } else {
             Err(())
@@ -345,9 +343,7 @@ impl EphKeyGenFirstMsg {
         let public_share = base.scalar_mul(&secret_share.get_element());
 
         let h: GE = GE::base_point2();
-        let w = ECDDHWitness {
-            x: secret_share,
-        };
+        let w = ECDDHWitness { x: secret_share };
         let c = h * secret_share;
         let delta = ECDDHStatement {
             g1: base,

@@ -178,9 +178,7 @@ impl CorrectKeyTrait<EncryptionKey, DecryptionKey> for CorrectKey {
         }
 
         // compute proof in the form of a hash of the recovered roots
-        let s_digest = compute_digest(challenge.sn.iter().map(|sni| {
-            extract_nroot(dk, sni)
-        }));
+        let s_digest = compute_digest(challenge.sn.iter().map(|sni| extract_nroot(dk, sni)));
 
         Ok(CorrectKeyProof { s_digest })
     }
@@ -256,5 +254,4 @@ mod tests {
         let result = CorrectKey::verify(&proof_results.unwrap(), &verification_aid);
         assert!(result.is_err()); // ERROR expected because of manipulated aid
     }
-
 }

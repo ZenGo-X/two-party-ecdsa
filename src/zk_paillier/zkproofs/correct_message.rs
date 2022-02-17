@@ -15,7 +15,9 @@
 */
 use crate::curv::arithmetic::traits::{Modulo, Samplable};
 use crate::curv::BigInt;
-use crate::paillier::{EncryptWithChosenRandomness, EncryptionKey, Paillier, Randomness, RawPlaintext};
+use crate::paillier::{
+    EncryptWithChosenRandomness, EncryptionKey, Paillier, Randomness, RawPlaintext,
+};
 
 const B: usize = 256;
 /// n the case that the message space size is small (a message can be only one of a few possibilities ),

@@ -60,9 +60,7 @@ impl NICorrectKeyProof {
 
         let sigma_vec = rho_vec
             .iter()
-            .map(|i| {
-                extract_nroot(dk, i)
-            })
+            .map(|i| extract_nroot(dk, i))
             .collect::<Vec<BigInt>>();
         NICorrectKeyProof { sigma_vec }
     }
@@ -104,9 +102,8 @@ pub fn mask_generation(out_length: &usize, seed: &BigInt) -> BigInt {
     let msklen = out_length / DIGEST_SIZE + 1; // adding one sha256 is more efficient then rejection sampling (see A.4 (e) in the paper)
     let msklen_hash_vec = (0..msklen)
         .map(|j| {
-            let digest = super::compute_digest(
-                iter::once(seed).chain(iter::once(&BigInt::from(j as u32))),
-            );
+            let digest =
+                super::compute_digest(iter::once(seed).chain(iter::once(&BigInt::from(j as u32))));
             BigInt::from(&digest[..])
             // concat elements of  msklen_hash_vec to one long element
         })
