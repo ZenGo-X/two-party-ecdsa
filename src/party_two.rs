@@ -176,8 +176,6 @@ impl KeyGenSecondMsg {
         party_one_first_message: &Party1KeyGenFirstMessage,
         party_one_second_message: &Party1KeyGenSecondMessage,
     ) -> Result<KeyGenSecondMsg, ProofError> {
-        let party_one_pk_commitment = &party_one_first_message.pk_commitment;
-        let party_one_zk_pok_commitment = &party_one_first_message.zk_pok_commitment;
         let party_one_zk_pok_blind_factor =
             &party_one_second_message.comm_witness.zk_pok_blind_factor;
         let party_one_public_share = &party_one_second_message.comm_witness.public_share;
@@ -186,26 +184,22 @@ impl KeyGenSecondMsg {
             .pk_commitment_blind_factor;
         let party_one_d_log_proof = &party_one_second_message.comm_witness.d_log_proof;
 
-        let mut flag = true;
-        match party_one_pk_commitment
-            == &HashCommitment::create_commitment_with_user_defined_randomness(
-                &party_one_public_share.bytes_compressed_to_big_int(),
-                party_one_pk_commitment_blind_factor,
-            ) {
-            false => flag = false,
-            true => (),
-        };
-        match party_one_zk_pok_commitment
-            == &HashCommitment::create_commitment_with_user_defined_randomness(
-                &party_one_d_log_proof
-                    .pk_t_rand_commitment
-                    .bytes_compressed_to_big_int(),
-                party_one_zk_pok_blind_factor,
-            ) {
-            false => flag = false,
-            true => (),
-        };
-        assert!(flag);
+        let p1_pk_com = HashCommitment::create_commitment_with_user_defined_randomness(
+            &party_one_public_share.bytes_compressed_to_big_int(),
+            party_one_pk_commitment_blind_factor,
+        );
+        let pk1_zk_com = HashCommitment::create_commitment_with_user_defined_randomness(
+            &party_one_d_log_proof
+                .pk_t_rand_commitment
+                .bytes_compressed_to_big_int(),
+            party_one_zk_pok_blind_factor,
+        );
+        let valid_coms = p1_pk_com == party_one_first_message.pk_commitment
+            && pk1_zk_com == party_one_first_message.zk_pok_commitment;
+        if !valid_coms {
+            return Err(ProofError {});
+        }
+
         DLogProof::verify(party_one_d_log_proof)?;
         Ok(KeyGenSecondMsg {})
     }

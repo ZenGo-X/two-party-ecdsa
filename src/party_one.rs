@@ -47,8 +47,6 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
-use subtle::ConstantTimeEq;
-
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EcKeyPair {
@@ -460,8 +458,6 @@ impl EphKeyGenSecondMsg {
         party_two_first_message: &Party2EphKeyGenFirstMessage,
         party_two_second_message: &Party2EphKeyGenSecondMessage,
     ) -> Result<EphKeyGenSecondMsg, ProofError> {
-        let party_two_pk_commitment = &party_two_first_message.pk_commitment;
-        let party_two_zk_pok_commitment = &party_two_first_message.zk_pok_commitment;
         let party_two_zk_pok_blind_factor =
             &party_two_second_message.comm_witness.zk_pok_blind_factor;
         let party_two_public_share = &party_two_second_message.comm_witness.public_share;
@@ -469,28 +465,20 @@ impl EphKeyGenSecondMsg {
             .comm_witness
             .pk_commitment_blind_factor;
         let party_two_d_log_proof = &party_two_second_message.comm_witness.d_log_proof;
-        let mut flag = true;
-        match party_two_pk_commitment
-            == &HashCommitment::create_commitment_with_user_defined_randomness(
-                &party_two_public_share.bytes_compressed_to_big_int(),
-                party_two_pk_commitment_blind_factor,
-            ) {
-            false => flag = false,
-            true => (),
-        };
-        match party_two_zk_pok_commitment
-            == &HashCommitment::create_commitment_with_user_defined_randomness(
-                &HSha256::create_hash_from_ge(&[
-                    &party_two_d_log_proof.a1,
-                    &party_two_d_log_proof.a2,
-                ])
+        let pk2_pk_com = HashCommitment::create_commitment_with_user_defined_randomness(
+            &party_two_public_share.bytes_compressed_to_big_int(),
+            party_two_pk_commitment_blind_factor,
+        );
+        let pk2_zk_com = HashCommitment::create_commitment_with_user_defined_randomness(
+            &HSha256::create_hash_from_ge(&[&party_two_d_log_proof.a1, &party_two_d_log_proof.a2])
                 .to_big_int(),
-                party_two_zk_pok_blind_factor,
-            ) {
-            false => flag = false,
-            true => (),
-        };
-        assert!(flag);
+            party_two_zk_pok_blind_factor,
+        );
+        let valid_coms = pk2_pk_com == party_two_first_message.pk_commitment
+            && pk2_zk_com == party_two_first_message.zk_pok_commitment;
+        if !valid_coms {
+            return Err(ProofError {});
+        }
         let delta = ECDDHStatement {
             g1: GE::generator(),
             h1: *party_two_public_share,
@@ -581,9 +569,7 @@ pub fn verify(signature: &Signature, pubkey: &GE, message: &BigInt) -> Result<()
     let rx_bytes = &BigInt::to_vec(&signature.r)[..];
     let u1_plus_u2_bytes = &BigInt::to_vec(&(u1 + u2).x_coor().unwrap())[..];
 
-    if rx_bytes.ct_eq(u1_plus_u2_bytes).unwrap_u8() == 1
-        && signature.s < FE::q() - signature.s.clone()
-    {
+    if rx_bytes == u1_plus_u2_bytes && signature.s < FE::q() - signature.s.clone() {
         Ok(())
     } else {
         Err(InvalidSig)
