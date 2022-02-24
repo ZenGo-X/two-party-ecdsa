@@ -352,60 +352,15 @@ impl RangeProofTrait for RangeProof {
 #[cfg(test)]
 mod tests {
     const RANGE_BITS: usize = 256; //for elliptic curves with 256bits for example
+    const STATISTICAL_ERROR_FACTOR: usize = 128;
 
     use super::*;
     use crate::paillier::{Keypair, Randomness};
-    use crate::zk_paillier::zkproofs::correct_key::{CorrectKey, CorrectKeyTrait};
 
     fn test_keypair() -> Keypair {
         let p = str::parse("148677972634832330983979593310074301486537017973460461278300587514468301043894574906886127642530475786889672304776052879927627556769456140664043088700743909632312483413393134504352834240399191134336344285483935856491230340093391784574980688823380828143810804684752914935441384845195613674104960646037368551517").unwrap();
         let q = str::parse("158741574437007245654463598139927898730476924736461654463975966787719309357536545869203069369466212089132653564188443272208127277664424448947476335413293018778018615899291704693105620242763173357203898195318179150836424196645745308205164116144020613415407736216097185962171301808761138424668335445923774195463").unwrap();
         Keypair { p, q }
-    }
-
-    #[test]
-    fn test_generate_encrypted_pairs() {
-        let (ek, _dk) = test_keypair().keys();
-        let range = BigInt::from(0xFFFFFFFFFFFFFi64);
-        RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
-        //Paillier::verifier_commit();
-    }
-
-    #[test]
-    fn test_commit_decommit() {
-        let (verifier_ek, verifier_dk) = test_keypair().keys();
-        let (com, r, e) = RangeProof::verifier_commit(&verifier_ek);
-        // 1. verifier sends the prover (com,r,e,verifier_ek)
-        // 2. prover is playing verifier for zk correct_key protocol to make sure verifier_ek was generated correctly:
-        let (challenge, verification_aid) = CorrectKey::challenge(&verifier_ek);
-        // 3. verifier is proving correct_key
-        let proof_results = CorrectKey::prove(&verifier_dk, &challenge);
-        assert!(proof_results.is_ok());
-        // 4. prover verifies correct key proof:
-        let result = CorrectKey::verify(&proof_results.unwrap(), &verification_aid);
-        assert!(result.is_ok());
-        assert!(RangeProof::verify_commit(&verifier_ek, &com, &r, &e).is_ok())
-    }
-
-    #[test]
-    fn test_generate_proof() {
-        let (ek, _dk) = test_keypair().keys();
-        let (verifier_ek, _verifier_dk) = test_keypair().keys();
-        let range = BigInt::from(0xFFFFFFFFFFFFFi64);
-        let (_com, _r, e) = RangeProof::verifier_commit(&verifier_ek);
-        let (_encrypted_pairs, data_and_randmoness_pairs) =
-            RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
-        let secret_r = BigInt::sample_below(&ek.n);
-        let secret_x = BigInt::from(0xFFFFFFFi64);
-        let _z_vector = RangeProof::generate_proof(
-            &ek,
-            &secret_x,
-            &secret_r,
-            &e,
-            &range,
-            &data_and_randmoness_pairs,
-            STATISTICAL_ERROR_FACTOR,
-        );
     }
 
     #[test]
@@ -415,12 +370,6 @@ mod tests {
         // prover:
         let (ek, _dk) = test_keypair().keys();
         let (verifier_ek, verifier_dk) = test_keypair().keys();
-        // verifier:
-        let (com, r, e) = RangeProof::verifier_commit(&verifier_ek);
-        let (challenge, verification_aid) = CorrectKey::challenge(&verifier_ek);
-        let proof_results = CorrectKey::prove(&verifier_dk, &challenge);
-        let _result = CorrectKey::verify(&proof_results.unwrap(), &verification_aid);
-        assert!(RangeProof::verify_commit(&verifier_ek, &com, &r, &e).is_ok());
         // prover:
         let (encrypted_pairs, data_and_randmoness_pairs) =
             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
@@ -433,6 +382,11 @@ mod tests {
             RawPlaintext::from(&secret_x),
             &Randomness(secret_r.clone()),
         );
+        let mut v = vec![ek.n.clone()];
+        v.extend_from_slice(&encrypted_pairs.c1);
+        v.extend_from_slice(&encrypted_pairs.c2);
+        let e = ChallengeBits::from(super::super::compute_digest(v.iter()));
+
         // verifer decommits (tested in test_commit_decommit)
         // prover:
         let z_vector = RangeProof::generate_proof(
@@ -464,8 +418,6 @@ mod tests {
         // prover:
         let (ek, _dk) = test_keypair().keys();
         let (verifier_ek, _verifier_dk) = test_keypair().keys();
-        // verifier:
-        let (_com, _r, e) = RangeProof::verifier_commit(&verifier_ek);
         // prover:
         let (encrypted_pairs, data_and_randmoness_pairs) =
             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
@@ -483,6 +435,10 @@ mod tests {
         );
         // verifer decommits (tested in test_commit_decommit)
         // prover:
+        let mut v = vec![ek.n.clone()];
+        v.extend_from_slice(&encrypted_pairs.c1);
+        v.extend_from_slice(&encrypted_pairs.c2);
+        let e = ChallengeBits::from(super::super::compute_digest(v.iter()));
         let z_vector = RangeProof::generate_proof(
             &ek,
             &secret_x,

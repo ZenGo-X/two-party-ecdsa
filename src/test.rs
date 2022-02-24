@@ -36,7 +36,7 @@ mod tests {
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
             party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
-                &BigInt::from(10),
+                &BigInt::from(10_i32),
             ));
         let party_one_second_message = party_one::KeyGenSecondMsg::verify_and_decommit(
             comm_witness,
@@ -65,11 +65,11 @@ mod tests {
 
         let correct_key_proof =
             party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
-        party_two::PaillierPublic::verify_ni_proof_correct_key(
-            correct_key_proof,
-            &party_two_paillier.ek,
-        )
-        .expect("bad paillier key");
+
+        correct_key_proof
+            .verify(&party_two_paillier.ek)
+            .expect("bad paillier key");
+
         // zk proof of correct paillier key
 
         // zk range proof
@@ -77,37 +77,8 @@ mod tests {
             &paillier_key_pair,
             &party_one_private,
         );
-        let _result =
-            party_two::PaillierPublic::verify_range_proof(&party_two_paillier, &range_proof)
-                .expect("range proof error");
-
-        // pdl proof minus range proof
-        let (party_two_pdl_first_message, pdl_chal_party2) =
-            party_two_paillier.pdl_challenge(&party_one_second_message.comm_witness.public_share);
-
-        let (party_one_pdl_first_message, pdl_decommit_party1, alpha) =
-            party_one::PaillierKeyPair::pdl_first_stage(
-                &party_one_private,
-                &party_two_pdl_first_message,
-            );
-
-        let party_two_pdl_second_message =
-            party_two::PaillierPublic::pdl_decommit_c_tag_tag(&pdl_chal_party2);
-        let party_one_pdl_second_message = party_one::PaillierKeyPair::pdl_second_stage(
-            &party_two_pdl_first_message,
-            &party_two_pdl_second_message,
-            party_one_private,
-            pdl_decommit_party1,
-            alpha,
-        )
-        .expect("pdl error party2");
-
-        party_two::PaillierPublic::verify_pdl(
-            &pdl_chal_party2,
-            &party_one_pdl_first_message,
-            &party_one_pdl_second_message,
-        )
-        .expect("pdl error party1")
+        party_two::PaillierPublic::verify_range_proof(&party_two_paillier, &range_proof)
+            .expect("range proof error");
     }
 
     #[test]
