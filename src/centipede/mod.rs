@@ -13,9 +13,7 @@ version 3 of the License, or (at your option) any later version.
 
 @license GPL-3.0+ <https://github.com/KZen-networks/centipede/blob/master/LICENSE>
 */
-
 pub mod juggling;
-pub mod wallet;
 
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum Errors {

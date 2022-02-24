@@ -211,7 +211,6 @@ impl Proof {
 mod tests {
     use crate::centipede::juggling::proof_system::*;
     use crate::centipede::juggling::segmentation::Msegmentation;
-    use crate::centipede::wallet::SecretShare;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::{FE, GE};
 
@@ -221,15 +220,15 @@ mod tests {
         let y: FE = ECScalar::new_random();
         let G: GE = ECPoint::generator();
         let Y = G * y;
-        let x = SecretShare::generate();
-        let Q = G * x.secret;
+        let x = FE::new_random();
+        let Q = G * x;
         let (segments, encryptions) =
-            Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
+            Msegmentation::to_encrypted_segments(&x, &segment_size, 32, &Y, &G);
         let secret_new = Msegmentation::assemble_fe(&segments.x_vec, &segment_size);
         let secret_decrypted = Msegmentation::decrypt(&encryptions, &G, &y, &segment_size);
 
-        assert_eq!(x.secret, secret_new);
-        assert_eq!(x.secret, secret_decrypted.unwrap());
+        assert_eq!(x, secret_new);
+        assert_eq!(x, secret_decrypted.unwrap());
 
         let proof = Proof::prove(&segments, &encryptions, &G, &Y, &segment_size);
         let result = proof.verify(&encryptions, &G, &Y, &Q, &segment_size);
@@ -243,14 +242,14 @@ mod tests {
         let y: FE = ECScalar::new_random();
         let G: GE = ECPoint::generator();
         let Y = G * y;
-        let x = SecretShare::generate();
-        let Q = G * x.secret + G;
+        let x = FE::new_random();
+        let Q = G * x + G;
         let (segments, encryptions) =
-            Msegmentation::to_encrypted_segments(&x.secret, &segment_size, 32, &Y, &G);
+            Msegmentation::to_encrypted_segments(&x, &segment_size, 32, &Y, &G);
         let secret_new = Msegmentation::assemble_fe(&segments.x_vec, &segment_size);
         let secret_decrypted = Msegmentation::decrypt(&encryptions, &G, &y, &segment_size);
-        assert_eq!(x.secret, secret_new);
-        assert_eq!(x.secret, secret_decrypted.unwrap());
+        assert_eq!(x, secret_new);
+        assert_eq!(x, secret_decrypted.unwrap());
 
         let proof = Proof::prove(&segments, &encryptions, &G, &Y, &segment_size);
         let result = proof.verify(&encryptions, &G, &Y, &Q, &segment_size);

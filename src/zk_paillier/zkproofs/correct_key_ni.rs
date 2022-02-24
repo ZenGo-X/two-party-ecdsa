@@ -98,7 +98,7 @@ impl NICorrectKeyProof {
 
 // generate random element of size :
 // based on https://tools.ietf.org/html/rfc8017#appendix-B.2.1
-pub fn mask_generation(out_length: &usize, seed: &BigInt) -> BigInt {
+fn mask_generation(out_length: &usize, seed: &BigInt) -> BigInt {
     let msklen = out_length / DIGEST_SIZE + 1; // adding one sha256 is more efficient then rejection sampling (see A.4 (e) in the paper)
     let msklen_hash_vec = (0..msklen)
         .map(|j| {

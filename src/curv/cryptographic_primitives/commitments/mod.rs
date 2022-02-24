@@ -8,4 +8,5 @@
 const SECURITY_BITS: usize = 256;
 
 pub mod hash_commitment;
+pub mod pedersen_commitment;
 pub mod traits;

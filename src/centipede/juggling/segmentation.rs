@@ -25,7 +25,7 @@ use std::ops::{Shl, Shr};
 pub struct Msegmentation;
 
 impl Msegmentation {
-    pub fn get_segment_k(secret: &FE, segment_size: &usize, k: u8) -> FE {
+    fn get_segment_k(secret: &FE, segment_size: &usize, k: u8) -> FE {
         let ss_bn = secret.to_big_int();
         let segment_size_u32 = *segment_size as u32;
         let msb = segment_size_u32 * (k as u32 + 1);
@@ -44,7 +44,7 @@ impl Msegmentation {
         }
     }
     //returns r_k,{D_k,E_k}
-    pub fn encrypt_segment_k(
+    fn encrypt_segment_k(
         secret: &FE,
         random: &FE,
         segment_size: &usize,
@@ -66,7 +66,7 @@ impl Msegmentation {
     }
 
     // TODO: find a way using generics to combine the following two fn's
-    pub fn assemble_fe(segments: &[FE], segment_size: &usize) -> FE {
+    pub(crate) fn assemble_fe(segments: &[FE], segment_size: &usize) -> FE {
         let two = BigInt::from(2);
         let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
@@ -83,7 +83,7 @@ impl Msegmentation {
         })
     }
 
-    pub fn assemble_ge(segments: &[GE], segment_size: &usize) -> GE {
+    pub(crate) fn assemble_ge(segments: &[GE], segment_size: &usize) -> GE {
         let two = BigInt::from(2);
         let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
@@ -130,7 +130,7 @@ impl Msegmentation {
     }
 
     //TODO: implement a more advance algorithm for dlog
-    pub fn decrypt_segment(
+    fn decrypt_segment(
         DE: &Helgamal,
         G: &GE,
         private_key: &FE,

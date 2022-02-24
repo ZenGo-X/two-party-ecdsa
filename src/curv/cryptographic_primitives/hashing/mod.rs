@@ -7,4 +7,5 @@
 
 pub mod hash_sha256;
 pub mod hash_sha512;
+pub mod hmac_sha512;
 pub mod traits;

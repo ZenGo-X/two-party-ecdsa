@@ -18,7 +18,6 @@ use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
-use std::ops::Shl;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -34,12 +33,9 @@ use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::party_two::EphKeyGenFirstMsg as Party2EphKeyGenFirstMessage;
 use crate::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
-use crate::party_two::PDLFirstMessage as Party2PDLFirstMessage;
-use crate::party_two::PDLSecondMessage as Party2PDLSecondMessage;
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
-use crate::mta::MessageB;
 
 use crate::curv::BigInt;
 use crate::curv::FE;
@@ -248,52 +244,6 @@ impl Party1Private {
             c_key_randomness: paillier_key.randomness.clone(),
         }
     }
-    pub fn refresh_private_key(
-        party_one_private: &Party1Private,
-        factor: &BigInt,
-    ) -> (
-        EncryptionKey,
-        BigInt,
-        Party1Private,
-        NICorrectKeyProof,
-        RangeProofNi,
-    ) {
-        let (ek_new, dk_new) = Paillier::keypair().keys();
-        let randomness = Randomness::sample(&ek_new);
-        let factor_fe: FE = ECScalar::from(factor);
-        let x1_new = party_one_private.x1 * factor_fe;
-        let three = BigInt::from(3);
-        let c_key_new = Paillier::encrypt_with_chosen_randomness(
-            &ek_new,
-            RawPlaintext::from(x1_new.to_big_int()),
-            &randomness,
-        )
-        .0
-        .into_owned();
-        let correct_key_proof_new = NICorrectKeyProof::proof(&dk_new);
-
-        let range_proof_new = RangeProofNi::prove(
-            &ek_new,
-            &(FE::q() * three),
-            &c_key_new,
-            &x1_new.to_big_int(),
-            &randomness.0,
-        );
-
-        let party_one_private_new = Party1Private {
-            x1: x1_new,
-            paillier_priv: dk_new,
-            c_key_randomness: randomness.0,
-        };
-
-        (
-            ek_new,
-            c_key_new,
-            party_one_private_new,
-            correct_key_proof_new,
-            range_proof_new,
-        )
-    }
 
     // used for verifiable recovery
     pub fn to_encrypted_segment(
@@ -304,11 +254,6 @@ impl Party1Private {
         g: &GE,
     ) -> (Witness, Helgamalsegmented) {
         Msegmentation::to_encrypted_segments(&self.x1, segment_size, num_of_segments, pub_ke_y, g)
-    }
-
-    // used to transform lindell master key to gg18 master key
-    pub fn to_mta_message_b(&self, message_b: MessageB) -> Result<FE, Error> {
-        message_b.verify_proofs_get_alpha(&self.paillier_priv, &self.x1)
     }
 }
 
@@ -333,29 +278,6 @@ impl PaillierKeyPair {
         }
     }
 
-    pub fn generate_encrypted_share_from_fixed_paillier_keypair(
-        ek: &EncryptionKey,
-        dk: &DecryptionKey,
-        keygen: &EcKeyPair,
-    ) -> PaillierKeyPair {
-        let randomness = Randomness::sample(ek);
-
-        let encrypted_share = Paillier::encrypt_with_chosen_randomness(
-            ek,
-            RawPlaintext::from(keygen.secret_share.to_big_int()),
-            &randomness,
-        )
-        .0
-        .into_owned();
-
-        PaillierKeyPair {
-            ek: ek.clone(),
-            dk: dk.clone(),
-            encrypted_share,
-            randomness: randomness.0,
-        }
-    }
-
     pub fn generate_range_proof(
         paillier_context: &PaillierKeyPair,
         party_one_private: &Party1Private,
@@ -371,55 +293,6 @@ impl PaillierKeyPair {
 
     pub fn generate_ni_proof_correct_key(paillier_context: &PaillierKeyPair) -> NICorrectKeyProof {
         NICorrectKeyProof::proof(&paillier_context.dk)
-    }
-
-    pub fn pdl_first_stage(
-        party_one_private: &Party1Private,
-        pdl_first_message: &Party2PDLFirstMessage,
-    ) -> (PDLFirstMessage, PDLdecommit, BigInt) {
-        let c_tag = pdl_first_message.c_tag.clone();
-        let alpha = Paillier::decrypt(
-            &party_one_private.paillier_priv.clone(),
-            &RawCiphertext::from(c_tag),
-        );
-        let alpha_fe: FE = ECScalar::from(&alpha.0);
-        let g: GE = ECPoint::generator();
-        let q_hat = g * alpha_fe;
-        let blindness = BigInt::sample_below(&FE::q());
-        let c_hat = HashCommitment::create_commitment_with_user_defined_randomness(
-            &q_hat.bytes_compressed_to_big_int(),
-            &blindness,
-        );
-        (
-            PDLFirstMessage { c_hat },
-            PDLdecommit { blindness, q_hat },
-            alpha.0.into_owned(),
-        )
-    }
-
-    pub fn pdl_second_stage(
-        pdl_party_two_first_message: &Party2PDLFirstMessage,
-        pdl_party_two_second_message: &Party2PDLSecondMessage,
-        party_one_private: Party1Private,
-        pdl_decommit: PDLdecommit,
-        alpha: BigInt,
-    ) -> Result<PDLSecondMessage, ()> {
-        let a = pdl_party_two_second_message.decommit.a.clone();
-        let b = pdl_party_two_second_message.decommit.b.clone();
-        let blindness = pdl_party_two_second_message.decommit.blindness.clone();
-
-        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
-        let c_tag_tag_test =
-            HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
-        let ax1 = a * party_one_private.x1.to_big_int();
-        let alpha_test = ax1 + b;
-        if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
-            Ok(PDLSecondMessage {
-                decommit: pdl_decommit,
-            })
-        } else {
-            Err(())
-        }
     }
 }
 

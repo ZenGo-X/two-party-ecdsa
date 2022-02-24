@@ -15,7 +15,6 @@
 */
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
-use std::ops::Shl;
 
 use crate::curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
 use crate::curv::cryptographic_primitives::commitments::traits::Commitment;
@@ -30,22 +29,15 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
+use crate::paillier::traits::{Add, Encrypt, Mul};
+use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
 use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
-use crate::party_one::PDLFirstMessage as Party1PDLFirstMessage;
-use crate::party_one::PDLSecondMessage as Party1PDLSecondMessage;
-
-use crate::paillier::Paillier;
-use crate::paillier::{Add, Encrypt, Mul};
-use crate::paillier::{EncryptionKey, RawCiphertext, RawPlaintext};
-use crate::zk_paillier::zkproofs::{
-    CorrectKeyProofError, NICorrectKeyProof, RangeProofError, RangeProofNi,
-};
+use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
-use crate::mta::{MessageA, MessageB};
 
 //****************** Begin: Party Two structs ******************//
 
@@ -79,33 +71,7 @@ pub struct PartialSig {
 pub struct Party2Private {
     x2: FE,
 }
-#[derive(Debug)]
-pub struct PDLchallenge {
-    pub c_tag: BigInt,
-    pub c_tag_tag: BigInt,
-    a: BigInt,
-    b: BigInt,
-    blindness: BigInt,
-    q_tag: GE,
-}
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PDLFirstMessage {
-    pub c_tag: BigInt,
-    pub c_tag_tag: BigInt,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PDLdecommit {
-    pub a: BigInt,
-    pub b: BigInt,
-    pub blindness: BigInt,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PDLSecondMessage {
-    pub decommit: PDLdecommit,
-}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphEcKeyPair {
     pub public_share: GE,
@@ -234,82 +200,9 @@ impl Party2Private {
     ) -> (Witness, Helgamalsegmented) {
         Msegmentation::to_encrypted_segments(&self.x2, segment_size, num_of_segments, pub_ke_y, g)
     }
-
-    // used to transform lindell master key to gg18 master key
-    pub fn to_mta_message_b(&self, ek: &EncryptionKey, ciphertext: &BigInt) -> (MessageB, FE) {
-        let message_a = MessageA {
-            c: ciphertext.clone(),
-        };
-        MessageB::b(&self.x2, ek, message_a)
-    }
 }
 
 impl PaillierPublic {
-    pub fn pdl_challenge(&self, other_share_public_share: &GE) -> (PDLFirstMessage, PDLchallenge) {
-        let a_fe: FE = ECScalar::new_random();
-        let a = a_fe.to_big_int();
-        let q = FE::q();
-        let q_sq = q.pow(2);
-        let b = BigInt::sample_below(&q_sq);
-        let b_fe: FE = ECScalar::from(&b);
-        let b_enc = Paillier::encrypt(&self.ek, RawPlaintext::from(b.clone()));
-        let ac = Paillier::mul(
-            &self.ek,
-            RawCiphertext::from(self.encrypted_secret_share.clone()),
-            RawPlaintext::from(a.clone()),
-        );
-        let c_tag = Paillier::add(&self.ek, ac, b_enc).0.into_owned();
-        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
-        let blindness = BigInt::sample_below(&q);
-        let c_tag_tag =
-            HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
-        let g: GE = ECPoint::generator();
-        let q_tag = *other_share_public_share * a_fe + g * b_fe;
-
-        (
-            PDLFirstMessage {
-                c_tag: c_tag.clone(),
-                c_tag_tag: c_tag_tag.clone(),
-            },
-            PDLchallenge {
-                c_tag,
-                c_tag_tag,
-                a,
-                b,
-                blindness,
-                q_tag,
-            },
-        )
-    }
-
-    pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
-        let decommit = PDLdecommit {
-            a: pdl_chal.a.clone(),
-            b: pdl_chal.b.clone(),
-            blindness: pdl_chal.blindness.clone(),
-        };
-        PDLSecondMessage { decommit }
-    }
-
-    pub fn verify_pdl(
-        pdl_chal: &PDLchallenge,
-        party_one_pdl_first_message: &Party1PDLFirstMessage,
-        party_one_pdl_second_message: &Party1PDLSecondMessage,
-    ) -> Result<(), ()> {
-        let c_hat = party_one_pdl_first_message.c_hat.clone();
-        let q_hat = party_one_pdl_second_message.decommit.q_hat;
-        let blindness = party_one_pdl_second_message.decommit.blindness.clone();
-        let c_hat_test = HashCommitment::create_commitment_with_user_defined_randomness(
-            &q_hat.bytes_compressed_to_big_int(),
-            &blindness,
-        );
-        if c_hat == c_hat_test && q_hat.get_element() == pdl_chal.q_tag.get_element() {
-            Ok(())
-        } else {
-            Err(())
-        }
-    }
-
     pub fn verify_range_proof(
         paillier_context: &PaillierPublic,
         range_proof: &RangeProofNi,
@@ -318,13 +211,6 @@ impl PaillierPublic {
             &paillier_context.ek,
             &paillier_context.encrypted_secret_share,
         )
-    }
-
-    pub fn verify_ni_proof_correct_key(
-        proof: NICorrectKeyProof,
-        ek: &EncryptionKey,
-    ) -> Result<(), CorrectKeyProofError> {
-        proof.verify(ek)
     }
 }
 

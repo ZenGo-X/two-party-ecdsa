@@ -20,15 +20,12 @@ use std::mem;
 use bit_vec::BitVec;
 use rand::prelude::*;
 use rayon::prelude::*;
-use ring::digest::{Context, SHA256};
 
 use super::CorrectKeyProofError;
 use crate::curv::BigInt;
 use crate::paillier::EncryptWithChosenRandomness;
 use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
-
-const STATISTICAL_ERROR_FACTOR: usize = 40;
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct EncryptedPairs {
@@ -81,24 +78,11 @@ pub enum Response {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Proof(Vec<Response>);
 
-pub struct Commitment(BigInt);
-
-impl ChallengeBits {
-    fn sample(big_length: usize) -> ChallengeBits {
-        let mut rng = thread_rng();
-        let mut bytes: Vec<u8> = vec![0; big_length / 8];
-        rng.fill_bytes(&mut bytes);
-        ChallengeBits(bytes)
-    }
-}
-
 impl From<Vec<u8>> for ChallengeBits {
     fn from(x: Vec<u8>) -> Self {
         ChallengeBits(x)
     }
 }
-
-pub struct ChallengeRandomness(BigInt);
 
 /// Zero-knowledge range proof that a value x<q/3 lies in interval [0,q].
 ///
@@ -112,25 +96,12 @@ pub struct ChallengeRandomness(BigInt);
 ///
 /// /// This is an interactive version of the proof, assuming only DCRA which is alreasy assumed for Paillier cryptosystem security
 pub trait RangeProofTrait {
-    /// Verifier commits to a t-bit vector e where e size is STATISTICAL_ERROR_FACTOR.
-    fn verifier_commit(ek: &EncryptionKey) -> (Commitment, ChallengeRandomness, ChallengeBits); // commitment is public
-
     /// Prover generates t random pairs, each pair encrypts a number in {q/3, 2q/3} and a number in {0, q/3}
     fn generate_encrypted_pairs(
         ek: &EncryptionKey,
         range: &BigInt,
         error_factor: usize,
     ) -> (EncryptedPairs, DataRandomnessPairs);
-
-    /// Verifier decommits to vector e.
-
-    /// Prover check correctness using:
-    fn verify_commit(
-        ek: &EncryptionKey,
-        com: &Commitment,
-        r: &ChallengeRandomness,
-        e: &ChallengeBits,
-    ) -> Result<(), CorrectKeyProofError>;
 
     /// Prover calcuate z_i according to bit e_i and returns a vector z
     fn generate_proof(
@@ -157,16 +128,6 @@ pub trait RangeProofTrait {
 pub struct RangeProof;
 
 impl RangeProofTrait for RangeProof {
-    fn verifier_commit(ek: &EncryptionKey) -> (Commitment, ChallengeRandomness, ChallengeBits) {
-        let e = ChallengeBits::sample(STATISTICAL_ERROR_FACTOR);
-        // commit to challenge
-        let m = compute_digest(&e.0);
-        let r = BigInt::sample_below(&ek.n);
-        let com = get_paillier_commitment(ek, &m, &r);
-
-        (Commitment(com), ChallengeRandomness(r), e)
-    }
-
     fn generate_encrypted_pairs(
         ek: &EncryptionKey,
         range: &BigInt,
@@ -232,21 +193,6 @@ impl RangeProofTrait for RangeProof {
             EncryptedPairs { c1, c2 },
             DataRandomnessPairs { w1, w2, r1, r2 },
         )
-    }
-
-    fn verify_commit(
-        ek: &EncryptionKey,
-        com: &Commitment,
-        r: &ChallengeRandomness,
-        e: &ChallengeBits,
-    ) -> Result<(), CorrectKeyProofError> {
-        let m = compute_digest(&e.0);
-        let com_tag = get_paillier_commitment(ek, &m, &r.0);
-        if com.0 == com_tag {
-            Ok(())
-        } else {
-            Err(CorrectKeyProofError)
-        }
     }
 
     fn generate_proof(
@@ -401,19 +347,6 @@ impl RangeProofTrait for RangeProof {
             Err(CorrectKeyProofError)
         }
     }
-}
-
-/// hash based commitment scheme : digest = H(m||r), works under random oracle model. |r| is of length security parameter
-fn get_paillier_commitment(ek: &EncryptionKey, x: &BigInt, r: &BigInt) -> BigInt {
-    let com_pi =
-        Paillier::encrypt_with_chosen_randomness(ek, RawPlaintext::from(x), &Randomness::from(r));
-    com_pi.0.into_owned()
-}
-
-fn compute_digest(bytes: &[u8]) -> BigInt {
-    let mut digest = Context::new(&SHA256);
-    digest.update(bytes);
-    BigInt::from(digest.finish().as_ref())
 }
 
 #[cfg(test)]
