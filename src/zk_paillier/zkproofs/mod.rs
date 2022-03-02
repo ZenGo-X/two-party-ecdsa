@@ -28,7 +28,7 @@ pub use self::correct_message::CorrectMessageProof;
 pub use self::correct_message::CorrectMessageProofError;
 
 use crate::curv::BigInt;
-use ring::digest::{Context, SHA256};
+use sha2::{Digest, Sha256};
 use std::borrow::Borrow;
 
 fn compute_digest<IT>(values: IT) -> Vec<u8>
@@ -36,10 +36,10 @@ where
     IT: Iterator,
     IT::Item: Borrow<BigInt>,
 {
-    let mut digest = Context::new(&SHA256);
+    let mut digest = Sha256::new();
     for value in values {
         let bytes: Vec<u8> = value.borrow().into();
-        digest.update(&bytes);
+        digest.update(bytes);
     }
-    digest.finish().as_ref().into()
+    digest.finalize().to_vec()
 }
