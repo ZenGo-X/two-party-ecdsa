@@ -20,7 +20,6 @@ use super::traits::{
     BitManipulation, ConvertFrom, Converter, Modulo, NumberTests, Samplable, EGCD,
 };
 use gmp::mpz::Mpz;
-use rand::rngs::OsRng;
 use rand::RngCore;
 
 use std::borrow::Borrow;
@@ -98,10 +97,9 @@ impl Samplable for Mpz {
     }
 
     fn sample(bit_size: usize) -> Self {
-        let mut rng = OsRng::new().unwrap();
         let bytes = (bit_size - 1) / 8 + 1;
         let mut buf: Vec<u8> = vec![0; bytes];
-        rng.fill_bytes(&mut buf);
+        rand::thread_rng().fill_bytes(&mut buf);
         Self::from(&*buf) >> (bytes * 8 - bit_size)
     }
 
