@@ -18,6 +18,7 @@ use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
+use std::ops::Shl;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -33,6 +34,9 @@ use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::party_two::EphKeyGenFirstMsg as Party2EphKeyGenFirstMessage;
 use crate::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
+use crate::party_two::{
+    PDLFirstMessage as Party2PDLFirstMessage, PDLSecondMessage as Party2PDLSecondMessage,
+};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
@@ -293,6 +297,55 @@ impl PaillierKeyPair {
 
     pub fn generate_ni_proof_correct_key(paillier_context: &PaillierKeyPair) -> NICorrectKeyProof {
         NICorrectKeyProof::proof(&paillier_context.dk)
+    }
+
+    pub fn pdl_first_stage(
+        party_one_private: &Party1Private,
+        pdl_first_message: &Party2PDLFirstMessage,
+    ) -> (PDLFirstMessage, PDLdecommit, BigInt) {
+        let c_tag = pdl_first_message.c_tag.clone();
+        let alpha = Paillier::decrypt(
+            &party_one_private.paillier_priv.clone(),
+            &RawCiphertext::from(c_tag),
+        );
+        let alpha_fe: FE = ECScalar::from(&alpha.0);
+        let g: GE = ECPoint::generator();
+        let q_hat = g * alpha_fe;
+        let blindness = BigInt::sample_below(&FE::q());
+        let c_hat = HashCommitment::create_commitment_with_user_defined_randomness(
+            &q_hat.bytes_compressed_to_big_int(),
+            &blindness,
+        );
+        (
+            PDLFirstMessage { c_hat },
+            PDLdecommit { blindness, q_hat },
+            alpha.0.into_owned(),
+        )
+    }
+
+    pub fn pdl_second_stage(
+        pdl_party_two_first_message: &Party2PDLFirstMessage,
+        pdl_party_two_second_message: &Party2PDLSecondMessage,
+        party_one_private: Party1Private,
+        pdl_decommit: PDLdecommit,
+        alpha: BigInt,
+    ) -> Result<PDLSecondMessage, ()> {
+        let a = pdl_party_two_second_message.decommit.a.clone();
+        let b = pdl_party_two_second_message.decommit.b.clone();
+        let blindness = pdl_party_two_second_message.decommit.blindness.clone();
+
+        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
+        let c_tag_tag_test =
+            HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
+        let ax1 = a * party_one_private.x1.to_big_int();
+        let alpha_test = ax1 + b;
+        if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
+            Ok(PDLSecondMessage {
+                decommit: pdl_decommit,
+            })
+        } else {
+            Err(())
+        }
     }
 }
 

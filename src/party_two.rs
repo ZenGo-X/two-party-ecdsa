@@ -98,6 +98,24 @@ pub struct EphKeyGenSecondMsg {
     pub comm_witness: EphCommWitness,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLFirstMessage {
+    pub c_tag: BigInt,
+    pub c_tag_tag: BigInt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLdecommit {
+    pub a: BigInt,
+    pub b: BigInt,
+    pub blindness: BigInt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLSecondMessage {
+    pub decommit: PDLdecommit,
+}
+
 //****************** End: Party Two structs ******************//
 
 impl KeyGenFirstMsg {
