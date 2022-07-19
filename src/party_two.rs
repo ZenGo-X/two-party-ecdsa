@@ -26,6 +26,9 @@ use crate::curv::cryptographic_primitives::proofs::ProofError;
 
 use crate::curv::elliptic::curves::traits::*;
 
+use super::party_one::{
+    PDLFirstMessage as Party1PDLFirstMessage, PDLSecondMessage as Party1PDLSecondMessage,
+};
 use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::BigInt;
 use crate::curv::FE;
@@ -287,6 +290,27 @@ impl PaillierPublic {
             blindness: pdl_chal.blindness.clone(),
         };
         PDLSecondMessage { decommit }
+    }
+
+    pub fn verify_pdl(
+        pdl_chal: &PDLchallenge,
+        party_one_pdl_first_message: &Party1PDLFirstMessage,
+        party_one_pdl_second_message: &Party1PDLSecondMessage,
+    ) -> Result<(), ()> {
+        let c_hat = party_one_pdl_first_message.c_hat.clone();
+        let q_hat = party_one_pdl_second_message.decommit.q_hat.clone();
+        let blindness = party_one_pdl_second_message.decommit.blindness.clone();
+        let c_hat_test = HashCommitment::create_commitment_with_user_defined_randomness(
+            &q_hat.bytes_compressed_to_big_int(),
+            &blindness,
+        );
+        if c_hat.clone() == c_hat_test
+            && q_hat.get_element().clone() == pdl_chal.q_tag.get_element().clone()
+        {
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 
