@@ -279,6 +279,15 @@ impl PaillierPublic {
             },
         )
     }
+
+    pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
+        let decommit = PDLdecommit {
+            a: pdl_chal.a.clone(),
+            b: pdl_chal.b.clone(),
+            blindness: pdl_chal.blindness.clone(),
+        };
+        PDLSecondMessage { decommit }
+    }
 }
 
 impl EphKeyGenFirstMsg {
