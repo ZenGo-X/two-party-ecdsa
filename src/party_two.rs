@@ -26,6 +26,7 @@ use crate::curv::cryptographic_primitives::proofs::ProofError;
 
 use crate::curv::elliptic::curves::traits::*;
 
+use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
@@ -38,6 +39,7 @@ use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
+use std::ops::Shl;
 
 //****************** Begin: Party Two structs ******************//
 
@@ -114,6 +116,16 @@ pub struct PDLdecommit {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
     pub decommit: PDLdecommit,
+}
+
+#[derive(Debug)]
+pub struct PDLchallenge {
+    pub c_tag: BigInt,
+    pub c_tag_tag: BigInt,
+    a: BigInt,
+    b: BigInt,
+    blindness: BigInt,
+    q_tag: Secp256k1Point,
 }
 
 //****************** End: Party Two structs ******************//
@@ -228,6 +240,43 @@ impl PaillierPublic {
         range_proof.verify(
             &paillier_context.ek,
             &paillier_context.encrypted_secret_share,
+        )
+    }
+
+    pub fn pdl_challenge(&self, other_share_public_share: &GE) -> (PDLFirstMessage, PDLchallenge) {
+        let a_fe: FE = ECScalar::new_random();
+        let a = a_fe.to_big_int();
+        let q = FE::q();
+        let q_sq = q.pow(2);
+        let b = BigInt::sample_below(&q_sq);
+        let b_fe: FE = ECScalar::from(&b);
+        let b_enc = Paillier::encrypt(&self.ek, RawPlaintext::from(b.clone()));
+        let ac = Paillier::mul(
+            &self.ek,
+            RawCiphertext::from(self.encrypted_secret_share.clone()),
+            RawPlaintext::from(a.clone()),
+        );
+        let c_tag = Paillier::add(&self.ek, ac, b_enc).0.into_owned();
+        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
+        let blindness = BigInt::sample_below(&q);
+        let c_tag_tag =
+            HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
+        let g: GE = ECPoint::generator();
+        let q_tag = other_share_public_share.clone() * a_fe + g * b_fe;
+
+        (
+            PDLFirstMessage {
+                c_tag: c_tag.clone(),
+                c_tag_tag: c_tag_tag.clone(),
+            },
+            PDLchallenge {
+                c_tag,
+                c_tag_tag,
+                a,
+                b,
+                blindness,
+                q_tag,
+            },
         )
     }
 }
