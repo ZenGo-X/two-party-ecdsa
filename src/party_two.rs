@@ -67,7 +67,7 @@ pub struct PaillierPublic {
     pub encrypted_secret_share: BigInt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PartialSig {
     pub c3: BigInt,
 }
@@ -98,7 +98,7 @@ pub struct EphKeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphKeyGenSecondMsg {
     pub comm_witness: EphCommWitness,
 }
