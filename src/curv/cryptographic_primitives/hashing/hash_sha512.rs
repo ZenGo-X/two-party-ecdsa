@@ -10,29 +10,29 @@ use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
-use ring::digest::{Context, SHA512};
+use sha2::{Digest, Sha512};
 
 pub struct HSha512;
 
 impl Hash for HSha512 {
     fn create_hash(big_ints: &[&BigInt]) -> BigInt {
-        let mut digest = Context::new(&SHA512);
+        let mut digest = Sha512::new();
 
         for value in big_ints {
             digest.update(&BigInt::to_vec(value));
         }
 
-        BigInt::from(digest.finish().as_ref())
+        BigInt::from(digest.finalize().as_ref())
     }
 
     fn create_hash_from_ge(ge_vec: &[&GE]) -> FE {
-        let mut digest = Context::new(&SHA512);
+        let mut digest = Sha512::new();
 
         for value in ge_vec {
             digest.update(&value.pk_to_key_slice());
         }
 
-        let result = BigInt::from(digest.finish().as_ref());
+        let result = BigInt::from(digest.finalize().as_ref());
         ECScalar::from(&result)
     }
 }

@@ -9,21 +9,21 @@ use crate::curv::BigInt;
 
 use super::traits::KeyedHash;
 use crate::curv::arithmetic::traits::Converter;
-use ring::hmac::{self, HMAC_SHA512};
 use zeroize::Zeroize;
+use sha2::Sha512;
+use hmac::{Hmac, Mac};
 pub struct HMacSha512;
 
 impl KeyedHash for HMacSha512 {
     fn create_hmac(key: &BigInt, data: &[&BigInt]) -> BigInt {
         let mut key_bytes: Vec<u8> = key.into();
-        let mut s_ctx =
-            hmac::SigningContext::with_key(&hmac::SigningKey::new(HMAC_SHA512, &key_bytes));
 
+        let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
         for value in data {
-            s_ctx.update(&BigInt::to_vec(value));
+            ctx.update(&BigInt::to_vec(value));
         }
         key_bytes.zeroize();
-        BigInt::from(s_ctx.sign().as_ref())
+        BigInt::from(ctx.finalize().into_bytes().as_ref())
     }
 }
 

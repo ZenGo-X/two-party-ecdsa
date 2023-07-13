@@ -26,6 +26,10 @@ use crate::curv::cryptographic_primitives::proofs::ProofError;
 
 use crate::curv::elliptic::curves::traits::*;
 
+use super::party_one::{
+    PDLFirstMessage as Party1PDLFirstMessage, PDLSecondMessage as Party1PDLSecondMessage,
+};
+use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
@@ -38,6 +42,7 @@ use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
+use std::ops::Shl;
 
 //****************** Begin: Party Two structs ******************//
 
@@ -62,7 +67,7 @@ pub struct PaillierPublic {
     pub encrypted_secret_share: BigInt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PartialSig {
     pub c3: BigInt,
 }
@@ -93,9 +98,37 @@ pub struct EphKeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphKeyGenSecondMsg {
     pub comm_witness: EphCommWitness,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLFirstMessage {
+    pub c_tag: BigInt,
+    pub c_tag_tag: BigInt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLdecommit {
+    pub a: BigInt,
+    pub b: BigInt,
+    pub blindness: BigInt,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PDLSecondMessage {
+    pub decommit: PDLdecommit,
+}
+
+#[derive(Debug)]
+pub struct PDLchallenge {
+    pub c_tag: BigInt,
+    pub c_tag_tag: BigInt,
+    a: BigInt,
+    b: BigInt,
+    blindness: BigInt,
+    q_tag: Secp256k1Point,
 }
 
 //****************** End: Party Two structs ******************//
@@ -211,6 +244,73 @@ impl PaillierPublic {
             &paillier_context.ek,
             &paillier_context.encrypted_secret_share,
         )
+    }
+
+    pub fn pdl_challenge(&self, other_share_public_share: &GE) -> (PDLFirstMessage, PDLchallenge) {
+        let a_fe: FE = ECScalar::new_random();
+        let a = a_fe.to_big_int();
+        let q = FE::q();
+        let q_sq = q.pow(2);
+        let b = BigInt::sample_below(&q_sq);
+        let b_fe: FE = ECScalar::from(&b);
+        let b_enc = Paillier::encrypt(&self.ek, RawPlaintext::from(b.clone()));
+        let ac = Paillier::mul(
+            &self.ek,
+            RawCiphertext::from(self.encrypted_secret_share.clone()),
+            RawPlaintext::from(a.clone()),
+        );
+        let c_tag = Paillier::add(&self.ek, ac, b_enc).0.into_owned();
+        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
+        let blindness = BigInt::sample_below(&q);
+        let c_tag_tag =
+            HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
+        let g: GE = ECPoint::generator();
+        let q_tag = other_share_public_share.clone() * a_fe + g * b_fe;
+
+        (
+            PDLFirstMessage {
+                c_tag: c_tag.clone(),
+                c_tag_tag: c_tag_tag.clone(),
+            },
+            PDLchallenge {
+                c_tag,
+                c_tag_tag,
+                a,
+                b,
+                blindness,
+                q_tag,
+            },
+        )
+    }
+
+    pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
+        let decommit = PDLdecommit {
+            a: pdl_chal.a.clone(),
+            b: pdl_chal.b.clone(),
+            blindness: pdl_chal.blindness.clone(),
+        };
+        PDLSecondMessage { decommit }
+    }
+
+    pub fn verify_pdl(
+        pdl_chal: &PDLchallenge,
+        party_one_pdl_first_message: &Party1PDLFirstMessage,
+        party_one_pdl_second_message: &Party1PDLSecondMessage,
+    ) -> Result<(), ()> {
+        let c_hat = party_one_pdl_first_message.c_hat.clone();
+        let q_hat = party_one_pdl_second_message.decommit.q_hat.clone();
+        let blindness = party_one_pdl_second_message.decommit.blindness.clone();
+        let c_hat_test = HashCommitment::create_commitment_with_user_defined_randomness(
+            &q_hat.bytes_compressed_to_big_int(),
+            &blindness,
+        );
+        if c_hat.clone() == c_hat_test
+            && q_hat.get_element().clone() == pdl_chal.q_tag.get_element().clone()
+        {
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 
