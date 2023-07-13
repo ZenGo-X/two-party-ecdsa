@@ -136,28 +136,31 @@ pub struct EphKeyGenSecondMsg {}
 //****************** End: Party One structs ******************//
 
 impl KeyGenFirstMsg {
+
+    //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
+    fn is_secret_share_in_range(secret_share: &FE) -> bool {
+        let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
+        let upper_bound: BigInt = FE::q().mul(&BigInt::from(2))
+            .div_floor(&BigInt::from(3));
+
+        return if secret_share.to_big_int().gt(&lower_bound) &&
+                secret_share.to_big_int().lt(&upper_bound) {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let base: GE = ECPoint::generator();
 
-        //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
         let mut secret_share: FE = ECScalar::new_random();
-        let lower_bound = FE::q().div_floor(&BigInt::from(3));  // q/3
+        secret_share = ECScalar::from(&secret_share.to_big_int());
 
-        loop {
-            // secret_share \in {0 , ... , 2q/3}
-            let tmp = &secret_share.to_big_int()
-                .mul(&BigInt::from(2))
-                .mul(&FE::q())
-                .div_floor(&BigInt::from(3));
-
-            // secret_share > q/3
-            if tmp.gt(&lower_bound) {
-                break;
-            } else {
-                secret_share = ECScalar::new_random();
-            }
+        while !Self::is_secret_share_in_range(&secret_share) {
+            secret_share = ECScalar::new_random();
+            secret_share = ECScalar::from(&secret_share.to_big_int());
         }
-
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -198,10 +201,7 @@ impl KeyGenFirstMsg {
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
     ) -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
-        //in Lindell's protocol range proof works only for x1<q/3
-        let sk_bigint = secret_share.to_big_int();
-        let q_third = FE::q();
-        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3)));
+        assert!(Self::is_secret_share_in_range(&secret_share));
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
