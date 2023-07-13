@@ -18,7 +18,7 @@ use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
-use std::ops::Mul;
+use std::ops::{Mul, Shl};
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
