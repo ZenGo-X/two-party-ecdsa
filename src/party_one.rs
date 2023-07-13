@@ -18,6 +18,7 @@ use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
+use std::ops::Mul;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -135,10 +136,25 @@ impl KeyGenFirstMsg {
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let base: GE = ECPoint::generator();
 
-        let secret_share: FE = ECScalar::new_random();
-        //in Lindell's protocol range proof works only for x1<q/3
-        let secret_share: FE =
-            ECScalar::from(&secret_share.to_big_int().div_floor(&BigInt::from(3)));
+        //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
+        let mut secret_share: FE = ECScalar::new_random();
+        let lower_bound = FE::q().div_floor(&BigInt::from(3));  // q/3
+
+        loop {
+            // secret_share \in {0 , ... , 2q/3}
+            let tmp = &secret_share.to_big_int()
+                .mul(&BigInt::from(2))
+                .mul(&FE::q())
+                .div_floor(&BigInt::from(3));
+
+            // secret_share > q/3
+            if tmp.gt(&lower_bound) {
+                break;
+            } else {
+                secret_share = ECScalar::new_random();
+            }
+        }
+
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
