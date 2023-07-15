@@ -7,6 +7,7 @@ mod tests {
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
     use crate::*;
+    use crate::party_one::KeyGenFirstMsg;
 
     #[test]
     fn test_d_log_proof_party_two_party_one() {
@@ -32,7 +33,7 @@ mod tests {
     fn test_full_key_gen() {
         let (party_one_first_message, comm_witness, ec_key_pair_party1) =
             party_one::KeyGenFirstMsg::create_commitments_with_fixed_secret_share(ECScalar::from(
-                &BigInt::sample(253),
+                &KeyGenFirstMsg::get_secret_share_in_range().to_big_int()
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
             party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
