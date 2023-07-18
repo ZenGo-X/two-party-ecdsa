@@ -31,9 +31,10 @@ mod tests {
     #[test]
 
     fn test_full_key_gen() {
+        let bounds = KeyGenFirstMsg::get_lindell_secret_share_bounds();
         let (party_one_first_message, comm_witness, ec_key_pair_party1) =
             party_one::KeyGenFirstMsg::create_commitments_with_fixed_secret_share(ECScalar::from(
-                &KeyGenFirstMsg::get_secret_share_in_range().to_big_int()
+                &KeyGenFirstMsg::get_secret_share_in_range(&bounds.0, &bounds.1).to_big_int()
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
             party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
