@@ -138,29 +138,16 @@ pub struct EphKeyGenSecondMsg {}
 impl KeyGenFirstMsg {
 
     //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
-    pub fn is_secret_share_in_range(secret_share: &FE) -> bool {
+    pub fn get_secret_share_bounds() -> (BigInt, BigInt) {
         let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
         let upper_bound: BigInt = FE::q().mul(&BigInt::from(2))
             .div_floor(&BigInt::from(3));
-
-        return if secret_share.to_big_int().gt(&lower_bound) &&
-            secret_share.to_big_int().lt(&upper_bound) {
-            true
-        } else {
-            false
-        }
+        (lower_bound, upper_bound)
     }
 
     pub fn get_secret_share_in_range() -> FE {
-        let mut secret_share: FE = ECScalar::new_random();
-        secret_share = ECScalar::from(&secret_share.to_big_int());
-
-        while !Self::is_secret_share_in_range(&secret_share) {
-            secret_share = ECScalar::new_random();
-            secret_share = ECScalar::from(&secret_share.to_big_int());
-        }
-
-        return secret_share;
+        let bounds: (BigInt, BigInt) = Self::get_secret_share_bounds();
+        ECScalar::from(&BigInt::sample_range(&bounds.0, &bounds.1))
     }
 
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
@@ -205,8 +192,10 @@ impl KeyGenFirstMsg {
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
     ) -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
+        let bounds: (BigInt, BigInt) = Self::get_secret_share_bounds();
+        assert!(secret_share.to_big_int().gt(&bounds.0) &&
+            secret_share.to_big_int().lt(&bounds.1));
 
-        assert!(Self::is_secret_share_in_range(&secret_share));
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
