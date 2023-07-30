@@ -318,7 +318,7 @@ impl EphKeyGenFirstMsg {
     pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
         let base: GE = ECPoint::generator();
 
-        let secret_share: FE = ECScalar::new_random();
+        let secret_share: FE = ECScalar::from(&BigInt::one());
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
