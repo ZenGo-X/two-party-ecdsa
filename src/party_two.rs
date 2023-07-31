@@ -315,10 +315,16 @@ impl PaillierPublic {
 }
 
 impl EphKeyGenFirstMsg {
-    pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
+    pub fn create_commitments(fixed_nonce: Option<BigInt>) -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
         let base: GE = ECPoint::generator();
 
-        let secret_share: FE = ECScalar::from(&BigInt::one());
+        let secret_share: FE;
+        if let Some(fixed_nonce) = fixed_nonce {
+            secret_share = ECScalar::from(&fixed_nonce)
+        }
+        else {
+            secret_share = ECScalar::new_random()
+        }
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 

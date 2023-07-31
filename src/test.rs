@@ -2,11 +2,16 @@
 
 #[cfg(test)]
 mod tests {
-
+    use std::fs;
+    use std::fs::{OpenOptions};
+    use std::io::{BufWriter, Read, Write};
+    use std::str::FromStr;
+    use gmp::mpz::Mpz;
     use crate::curv::arithmetic::traits::Samplable;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
     use crate::*;
+    use crate::party_one::Signature;
 
     #[test]
     fn test_d_log_proof_party_two_party_one() {
@@ -81,8 +86,47 @@ mod tests {
             .expect("range proof error");
     }
 
+
+    #[test]
+    fn test_two_party_sign_multiple() -> std::io::Result<()> {
+
+        let nonces: Vec<BigInt>  = fs::read_to_string("nonces.txt")?.lines().map(|k| {
+            let k = BigInt::from_str(k).unwrap();
+            println!("{}", k.to_string());
+            k
+
+        }).collect();
+
+        for nonce in nonces.iter() {
+            let (message, pubkey, signature) = test_two_party_sign_internal(Some(nonce));
+            let out_file = OpenOptions::new()
+                .create(true)
+                .write(true)
+                .append(true)
+                .open("sigs.txt")
+                .expect("unable to open file");
+
+
+            let mut writer = BufWriter::new(out_file);
+            // write!(f,"msg,pk_x,pk_y,r,s").expect("unable to write");
+            write!(writer, "{},{},{},{},{}\n",
+                   message,
+                   pubkey.x_coor().unwrap(),
+                   pubkey.y_coor().unwrap(),
+                   signature.r,
+                   signature.s, )
+                .expect("unable to write");
+        }
+        Ok(())
+    }
+
+
     #[test]
     fn test_two_party_sign() {
+        test_two_party_sign_internal(None);
+    }
+
+    fn test_two_party_sign_internal(fixed_nonce: Option<&BigInt>) -> (Mpz, GE, Signature) {
         // assume party1 and party2 engaged with KeyGen in the past resulting in
         // party1 owning private share and paillier key-pair
         // party2 owning private share and paillier encryption of party1 share
@@ -96,7 +140,7 @@ mod tests {
         // creating the ephemeral private shares:
 
         let (eph_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
-            party_two::EphKeyGenFirstMsg::create_commitments();
+            party_two::EphKeyGenFirstMsg::create_commitments(None);
         let (eph_party_one_first_message, eph_ec_key_pair_party1) =
             party_one::EphKeyGenFirstMsg::create();
         let eph_party_two_second_message = party_two::EphKeyGenSecondMsg::verify_and_decommit(
@@ -112,7 +156,7 @@ mod tests {
             )
             .expect("failed to verify commitments and DLog proof");
         let party2_private = party_two::Party2Private::set_private_key(&ec_key_pair_party2);
-        let message = BigInt::from(1234);
+        let message = BigInt::sample(SECURITY_BITS);
         let partial_sig = party_two::PartialSig::compute(
             &keypair.ek,
             &keypair.encrypted_share,
@@ -134,6 +178,12 @@ mod tests {
 
         let pubkey =
             party_one::compute_pubkey(&party1_private, &party_two_private_share_gen.public_share);
-        party_one::verify(&signature, &pubkey, &message).expect("Invalid signature")
+        party_one::verify(&signature, &pubkey, &message).expect("Invalid signature");
+
+        (
+            message,
+            pubkey,
+            signature
+        )
     }
 }
