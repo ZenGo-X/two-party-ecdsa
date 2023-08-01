@@ -92,7 +92,6 @@ mod tests {
 
         let nonces: Vec<BigInt>  = fs::read_to_string("nonces.txt")?.lines().map(|k| {
             let k = BigInt::from_str(k).unwrap();
-            println!("{}", k.to_string());
             k
 
         }).collect();
@@ -140,7 +139,7 @@ mod tests {
         // creating the ephemeral private shares:
 
         let (eph_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
-            party_two::EphKeyGenFirstMsg::create_commitments(None);
+            party_two::EphKeyGenFirstMsg::create_commitments(fixed_nonce);
         let (eph_party_one_first_message, eph_ec_key_pair_party1) =
             party_one::EphKeyGenFirstMsg::create();
         let eph_party_two_second_message = party_two::EphKeyGenSecondMsg::verify_and_decommit(
