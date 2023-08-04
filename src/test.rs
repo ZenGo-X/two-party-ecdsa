@@ -86,7 +86,6 @@ mod tests {
         // let c1 = Paillier::encrypt(&paillier_key_pair.ek, RawPlaintext::from(minus_lower_bound));
         // put chosen randomness because it is needed raw in the proof generation
         let randomness = Randomness::sample(&paillier_key_pair.ek);
-
         let c1 = Paillier::encrypt_with_chosen_randomness(
             &paillier_key_pair.ek,
             RawPlaintext::from(minus_lower_bound.clone()),
@@ -113,6 +112,7 @@ mod tests {
         party_two_paillier.encrypted_secret_share =
             new_cipher_x1_minus_q_thirds.clone().0.into_owned();
 
+        //assign x = x - q/3
         let party_one_private_for_range_proof =
             Party1Private::tweak_x1_for_range_proof(&ec_key_pair_party1, &paillier_key_pair);
 
