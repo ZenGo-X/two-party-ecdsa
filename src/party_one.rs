@@ -136,16 +136,14 @@ pub struct EphKeyGenSecondMsg {}
 //****************** End: Party One structs ******************//
 
 impl KeyGenFirstMsg {
-
     //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
     pub fn get_lindell_secret_share_bounds() -> (BigInt, BigInt) {
         let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
-        let upper_bound: BigInt = FE::q().mul(&BigInt::from(2))
-            .div_floor(&BigInt::from(3));
+        let upper_bound: BigInt = FE::q().mul(&BigInt::from(2)).div_floor(&BigInt::from(3));
         (lower_bound, upper_bound)
     }
 
-    pub fn get_secret_share_in_range(lower_bound: &BigInt,upper_bound: &BigInt) -> FE {
+    pub fn get_secret_share_in_range(lower_bound: &BigInt, upper_bound: &BigInt) -> FE {
         ECScalar::from(&BigInt::sample_range(&lower_bound, &upper_bound))
     }
 
@@ -194,8 +192,7 @@ impl KeyGenFirstMsg {
         secret_share: FE,
     ) -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let bounds: (BigInt, BigInt) = Self::get_lindell_secret_share_bounds();
-        assert!(secret_share.to_big_int().gt(&bounds.0) &&
-            secret_share.to_big_int().lt(&bounds.1));
+        assert!(secret_share.to_big_int().gt(&bounds.0) && secret_share.to_big_int().lt(&bounds.1));
 
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
@@ -259,13 +256,19 @@ impl Party1Private {
         }
     }
 
-    pub fn tweak_x1_for_range_proof(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
-        let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
+    pub fn tweak_x1_for_range_proof(
+        ec_key: &EcKeyPair,
+        paillier_key: &PaillierKeyPair,
+    ) -> Party1Private {
         let order = FE::q();
+        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
         let minus_lower_bound = BigInt::mod_sub(&order, &lower_bound, &order);
-        let x1_minus_lower_bound = BigInt::mod_add(&ec_key.secret_share.to_big_int(), &minus_lower_bound, &order);
+        let x1_minus_lower_bound = BigInt::mod_add(
+            &ec_key.secret_share.to_big_int(),
+            &minus_lower_bound,
+            &order,
+        );
         let x1_minus_lower_bound_fe: FE = ECScalar::from(&x1_minus_lower_bound);
-
 
         Party1Private {
             x1: x1_minus_lower_bound_fe,

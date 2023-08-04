@@ -4,9 +4,10 @@
 mod tests {
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
-    use crate::*;
-    use crate::party_one::{Modulo, Party1Private};
     use crate::paillier::{Paillier, Randomness, RawCiphertext, RawPlaintext};
+    use crate::party_one::{Modulo, Party1Private};
+    use crate::*;
+    use std::borrow::Borrow;
     #[test]
     fn test_d_log_proof_party_two_party_one() {
         let (party_one_first_message, comm_witness, _ec_key_pair_party1) =
@@ -32,7 +33,8 @@ mod tests {
         let bounds = party_one::KeyGenFirstMsg::get_lindell_secret_share_bounds();
         let (party_one_first_message, comm_witness, ec_key_pair_party1) =
             party_one::KeyGenFirstMsg::create_commitments_with_fixed_secret_share(ECScalar::from(
-                &party_one::KeyGenFirstMsg::get_secret_share_in_range(&bounds.0, &bounds.1).to_big_int()
+                &party_one::KeyGenFirstMsg::get_secret_share_in_range(&bounds.0, &bounds.1)
+                    .to_big_int(),
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
             party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
@@ -55,6 +57,22 @@ mod tests {
         let mut paillier_key_pair =
             party_one::PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
 
+        let party_one_private =
+            Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
+
+        let mut party_two_paillier = party_two::PaillierPublic {
+            ek: paillier_key_pair.ek.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share.clone(),
+        };
+
+        // zk proof of correct paillier key
+        let correct_key_proof =
+            party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
+
+        correct_key_proof
+            .verify(&party_two_paillier.ek)
+            .expect("bad paillier key");
+
         //order of curve
         let order = FE::q();
 
@@ -76,33 +94,27 @@ mod tests {
         );
 
         //compute x1-q/3 in the ciphertext space
-        let x = Paillier::add(&paillier_key_pair.ek,RawCiphertext::from(paillier_key_pair.encrypted_share.clone()),c1);
-
-        let party_one_private =
-            Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
-
-        let party_one_private_for_range_proof = Party1Private::tweak_x1_for_range_proof(&ec_key_pair_party1, &paillier_key_pair);
-
-        let mut party_two_paillier = party_two::PaillierPublic {
-            ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share.clone()
-        };
-
-        // zk proof of correct paillier key
-        let correct_key_proof =
-            party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
-
-        correct_key_proof
-            .verify(&party_two_paillier.ek)
-            .expect("bad paillier key");
+        let new_cipher_x1_minus_q_thirds = Paillier::add(
+            &paillier_key_pair.ek,
+            RawCiphertext::from(paillier_key_pair.encrypted_share.clone()),
+            c1,
+        );
 
         //tweak c to c-q/3 for the soundness proof
-        paillier_key_pair.encrypted_share = x.clone().0.into_owned();
+        paillier_key_pair.encrypted_share = new_cipher_x1_minus_q_thirds.clone().0.into_owned();
         //tweak r to r*r' where r' is the randomness used to encrypt -q/3
-        paillier_key_pair.randomness = (paillier_key_pair.randomness * randomness.0.clone()) % &paillier_key_pair.ek.n;
+        paillier_key_pair.randomness = BigInt::mod_mul(
+            paillier_key_pair.randomness.borrow(),
+            &randomness.0,
+            &paillier_key_pair.ek.n,
+        );
         //tweak c to c-q/3 for the soundness proof
         //TODO duplicate element here, is it needed?
-        party_two_paillier.encrypted_secret_share = x.clone().0.into_owned();
+        party_two_paillier.encrypted_secret_share =
+            new_cipher_x1_minus_q_thirds.clone().0.into_owned();
+
+        let party_one_private_for_range_proof =
+            Party1Private::tweak_x1_for_range_proof(&ec_key_pair_party1, &paillier_key_pair);
 
         // zk range proof
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
