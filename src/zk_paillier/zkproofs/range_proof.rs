@@ -369,7 +369,7 @@ mod tests {
         let range = BigInt::sample(RANGE_BITS);
         // prover:
         let (ek, _dk) = test_keypair().keys();
-        let (verifier_ek, verifier_dk) = test_keypair().keys();
+        let (_verifier_ek, _verifier_dk) = test_keypair().keys();
         // prover:
         let (encrypted_pairs, data_and_randmoness_pairs) =
             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
@@ -417,7 +417,7 @@ mod tests {
         let range = BigInt::sample(RANGE_BITS);
         // prover:
         let (ek, _dk) = test_keypair().keys();
-        let (verifier_ek, _verifier_dk) = test_keypair().keys();
+        let (_verifier_ek, _verifier_dk) = test_keypair().keys();
         // prover:
         let (encrypted_pairs, data_and_randmoness_pairs) =
             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);

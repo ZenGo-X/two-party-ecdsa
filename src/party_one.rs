@@ -78,7 +78,7 @@ pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
     pub encrypted_share: BigInt,
-    randomness: BigInt,
+    pub randomness: BigInt,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -254,6 +254,21 @@ impl Party1Private {
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
         Party1Private {
             x1: ec_key.secret_share,
+            paillier_priv: paillier_key.dk.clone(),
+            c_key_randomness: paillier_key.randomness.clone(),
+        }
+    }
+
+    pub fn tweak_x1_for_range_proof(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
+        let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
+        let order = FE::q();
+        let minus_lower_bound = BigInt::mod_sub(&order, &lower_bound, &order);
+        let x1_minus_lower_bound = BigInt::mod_add(&ec_key.secret_share.to_big_int(), &minus_lower_bound, &order);
+        let x1_minus_lower_bound_fe: FE = ECScalar::from(&x1_minus_lower_bound);
+
+
+        Party1Private {
+            x1: x1_minus_lower_bound_fe,
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
