@@ -286,6 +286,7 @@ impl RangeProofTrait for RangeProof {
                         }
 
                         let mut flag = false;
+
                         if w1 < &range_scaled_third
                             && w2 > &range_scaled_third
                             && w2 < &range_scaled_two_thirds
