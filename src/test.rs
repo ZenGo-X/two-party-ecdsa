@@ -70,55 +70,7 @@ mod tests {
         correct_key_proof
             .verify(&party_two_paillier.ek)
             .expect("bad paillier key");
-
-        // //order of curve
-        // let order = FE::q();
-        //
-        // //Big int q/3
-        // let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
-        //
-        // //Bigint -q/3
-        // let minus_lower_bound = BigInt::mod_sub(&order, &lower_bound, &order);
-
-        //encrypt -q/3
-        // let c1 = Paillier::encrypt(&paillier_key_pair.ek, RawPlaintext::from(minus_lower_bound));
-
-        // // put chosen randomness because it is needed raw in the proof generation
-        // let randomness = Randomness::sample(&paillier_key_pair.ek);
-        // let c1 = Paillier::encrypt_with_chosen_randomness(
-        //     &paillier_key_pair.ek,
-        //     RawPlaintext::from(minus_lower_bound.clone()),
-        //     &randomness,
-        // );
-
-        // //compute x1-q/3 in the ciphertext space
-        // let new_cipher_x1_minus_q_thirds = Paillier::add(
-        //     &paillier_key_pair.ek,
-        //     RawCiphertext::from(paillier_key_pair.encrypted_share.clone()),
-        //     c1,
-        // );
-
-        // //tweak c to c-q/3 for the soundness proof
-        // paillier_key_pair.encrypted_share = new_cipher_x1_minus_q_thirds.clone().0.into_owned();
-        // //tweak r to r*r' where r' is the randomness used to encrypt -q/3
-        // paillier_key_pair.randomness=    BigInt::mod_mul(
-        //     paillier_key_pair.randomness.borrow(),
-        //     &randomness.0.clone(),
-        //     &paillier_key_pair.ek.n,
-        // );
-        // println!("r*r plain ={:?}",paillier_key_pair.randomness);
-        // let (m, r) = Paillier::open(&paillier_key_pair.dk, &new_cipher_x1_minus_q_thirds);
-        // println!("r*r after decryption = {:?}",r.0);
-
-        // println!("after decryption x1-q/3 = {:?}",m.0);
-
-        //tweak c to c-q/3 for the soundness proof for P2
-        // party_two_paillier.encrypted_secret_share = paillier_key_pair.encrypted_share_minus_q_thirds.clone();
-        // new_cipher_x1_minus_q_thirds.clone().0.into_owned();
-
-        // //assign x = x - q/3
-        // let party_one_private_for_range_proof =
-        //     Party1Private::tweak_x1_for_range_proof(&ec_key_pair_party1, &paillier_key_pair);
+        
         // zk range proof
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
