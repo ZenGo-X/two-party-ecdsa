@@ -64,6 +64,11 @@ pub struct CommWitness {
     pub public_share: GE,
     pub d_log_proof: DLogProof,
 }
+impl Display for CommWitness {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyGenFirstMsg {
