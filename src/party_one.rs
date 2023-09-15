@@ -19,6 +19,9 @@ use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, R
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
+use std::fmt::{Debug, Display, Formatter};
+use gotham_engine::traits::Value;
+
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -67,6 +70,13 @@ pub struct KeyGenFirstMsg {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
 }
+impl Display for KeyGenFirstMsg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Value for KeyGenFirstMsg {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenSecondMsg {
