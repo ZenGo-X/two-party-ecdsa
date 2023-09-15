@@ -34,7 +34,7 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
-impl Value<'_> for DLogProof{
+impl Value for DLogProof{
     fn as_any(&self) -> &dyn Any {
         self
     }

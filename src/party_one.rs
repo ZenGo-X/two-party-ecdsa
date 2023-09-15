@@ -51,7 +51,7 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
-pub trait Value<'a>: Sync + Send + Display + Deserialize<'a> {
+pub trait Value: Sync + Send + Display {
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -65,43 +65,43 @@ pub struct v {
     pub value: String,
 }
 
-impl Value<'_> for HDPos {
+impl Value for HDPos {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for KeyGenFirstMsg {
+impl Value for KeyGenFirstMsg {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for CommWitness {
+impl Value for CommWitness {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for EcKeyPair {
+impl Value for EcKeyPair {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for v {
+impl Value for v {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for PaillierKeyPair {
+impl Value for PaillierKeyPair {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Value<'_> for Party1Private {
+impl Value for Party1Private {
     fn as_any(&self) -> &dyn Any {
         self
     }
