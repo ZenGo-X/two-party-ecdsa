@@ -145,7 +145,7 @@ impl Display for Party1Private {
 
 impl Display for HDPos {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.pos.to_string())
     }
 }
 
