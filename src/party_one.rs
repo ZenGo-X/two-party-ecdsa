@@ -56,6 +56,11 @@ pub struct EcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
+impl Display for EcKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitness {
@@ -135,11 +140,6 @@ pub struct PDLSecondMessage {
 pub struct EphEcKeyPair {
     pub public_share: GE,
     secret_share: FE,
-}
-impl Display for EphEcKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
