@@ -54,7 +54,7 @@ pub struct Secp256k1Point {
     purpose: &'static str,
     ge: PK,
 }
-impl Value for Secp256k1Point{
+impl Value<'_> for Secp256k1Point{
     fn as_any(&self) -> &dyn Any {
         self
     }

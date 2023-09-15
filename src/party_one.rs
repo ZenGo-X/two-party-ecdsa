@@ -21,6 +21,7 @@ use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
+use serde::Deserialize;
 
 
 use super::SECURITY_BITS;
@@ -50,22 +51,59 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
-pub trait Value: Sync + Send + Display {
+pub trait Value<'a>: Sync + Send + Display + Deserialize<'a> {
     fn as_any(&self) -> &dyn Any;
-
 }
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct HDPos {
     pub pos: u32,
 }
+
 #[derive(Serialize, Deserialize, Debug)]
-pub struct v{
-    pub value: String
+pub struct v {
+    pub value: String,
 }
 
-impl Display for HDPos {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.pos)
+impl Value<'_> for HDPos {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for KeyGenFirstMsg {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for CommWitness {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for EcKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for v {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for PaillierKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value<'_> for Party1Private {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -75,40 +113,39 @@ impl Display for v {
     }
 }
 
-impl Value for HDPos {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl Value for KeyGenFirstMsg {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl Value for CommWitness {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl Value for EcKeyPair{
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl Value for v{
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-impl Value for PaillierKeyPair{
-    fn as_any(&self) -> &dyn Any {
-        self
+impl Display for CommWitness {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
-impl Value for Party1Private{
-    fn as_any(&self) -> &dyn Any {
-        self
+impl Display for KeyGenFirstMsg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Display for EcKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Display for PaillierKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Display for Party1Private {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Display for HDPos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -118,11 +155,7 @@ pub struct EcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
-impl Display for EcKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitness {
@@ -131,21 +164,12 @@ pub struct CommWitness {
     pub public_share: GE,
     pub d_log_proof: DLogProof,
 }
-impl Display for CommWitness {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
+
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyGenFirstMsg {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
-}
-impl Display for KeyGenFirstMsg {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
 }
 
 
@@ -161,11 +185,7 @@ pub struct PaillierKeyPair {
     pub encrypted_share: BigInt,
     randomness: BigInt,
 }
-impl Display for PaillierKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
     pub s: BigInt,
@@ -186,11 +206,6 @@ pub struct Party1Private {
     c_key_randomness: BigInt,
 }
 
-impl Display for Party1Private {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLFirstMessage {
@@ -362,8 +377,8 @@ impl PaillierKeyPair {
             RawPlaintext::from(keygen.secret_share.to_big_int()),
             &randomness,
         )
-        .0
-        .into_owned();
+            .0
+            .into_owned();
 
         PaillierKeyPair {
             ek,

@@ -12,11 +12,11 @@
 #![allow(non_snake_case)]
 #![cfg(test)]
 use super::{MasterKey1, MasterKey2};
-use crate::chain_code::two_party::{party1, party2};
-use two_party_ecdsa::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
-use two_party_ecdsa::curv::arithmetic::traits::Converter;
-use two_party_ecdsa::curv::elliptic::curves::traits::{ECPoint, ECScalar};
-use two_party_ecdsa::curv::{BigInt, FE, GE};
+use crate::kms::chain_code::two_party::{party1, party2};
+use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
+use crate::curv::arithmetic::traits::Converter;
+use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
+use crate::curv::{BigInt, FE, GE};
 
 #[test]
 fn test_recovery_from_openssl() {
