@@ -51,9 +51,7 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
-pub trait Value: Sync + Send + Display {
-    fn as_any(&self) -> &dyn Any;
-}
+pub trait Value: Sync + Send + Display {}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct HDPos {
@@ -65,47 +63,19 @@ pub struct v {
     pub value: String,
 }
 
-impl Value for HDPos {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for HDPos {}
 
-impl Value for KeyGenFirstMsg {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for KeyGenFirstMsg {}
 
-impl Value for CommWitness {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for CommWitness {}
 
-impl Value for EcKeyPair {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for EcKeyPair {}
 
-impl Value for v {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for v {}
 
-impl Value for PaillierKeyPair {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for PaillierKeyPair {}
 
-impl Value for Party1Private {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+impl Value for Party1Private {}
 
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -115,13 +85,13 @@ impl Display for v {
 
 impl Display for CommWitness {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}{}{}{}", self.pk_commitment_blind_factor.to_string(), self.zk_pok_blind_factor.to_string(), self.public_share.to_string(), self.d_log_proof.to_string())
     }
 }
 
 impl Display for KeyGenFirstMsg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}{}", self.pk_commitment.to_string(), self.zk_pok_commitment.to_string())
     }
 }
 

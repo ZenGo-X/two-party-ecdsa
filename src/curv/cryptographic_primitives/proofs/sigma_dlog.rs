@@ -34,17 +34,15 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
-impl Value for DLogProof{
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
+
+impl Value for DLogProof {}
 
 impl Display for DLogProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
+
 pub trait ProveDLog {
     fn prove(sk: &FE) -> DLogProof;
 
