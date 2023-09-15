@@ -5,6 +5,7 @@
     License MIT: https://github.com/KZen-networks/curv/blob/master/LICENSE
 */
 
+use std::any::Any;
 use std::fmt::{Display, Formatter};
 use super::ProofError;
 use crate::curv::FE;
@@ -33,7 +34,11 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
-impl Value for DLogProof{}
+impl Value for DLogProof{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl Display for DLogProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

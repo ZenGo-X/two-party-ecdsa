@@ -13,6 +13,7 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
+use std::any::Any;
 use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
@@ -50,6 +51,8 @@ use crate::curv::GE;
 use crate::Error::{self, InvalidSig};
 
 pub trait Value: Sync + Send + Display {
+    fn as_any(&self) -> &dyn Any;
+
 }
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct HDPos {
@@ -72,11 +75,31 @@ impl Display for v {
     }
 }
 
-impl Value for HDPos {}
-impl Value for KeyGenFirstMsg {}
-impl Value for CommWitness {}
-impl Value for EcKeyPair{}
-impl Value for v{}
+impl Value for HDPos {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl Value for KeyGenFirstMsg {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl Value for CommWitness {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl Value for EcKeyPair{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+impl Value for v{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
