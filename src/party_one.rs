@@ -76,11 +76,11 @@ pub struct KeyGenSecondMsg {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
-    pub dk: DecryptionKey,
+    dk: DecryptionKey,
     pub encrypted_share: BigInt,
     pub encrypted_share_minus_q_thirds: BigInt,
-    pub randomness: BigInt,
-    pub randomness_q: BigInt,
+    randomness: BigInt,
+    randomness_q: BigInt,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

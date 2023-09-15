@@ -70,7 +70,7 @@ mod tests {
         correct_key_proof
             .verify(&party_two_paillier.ek)
             .expect("bad paillier key");
-        
+
         // zk range proof
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
