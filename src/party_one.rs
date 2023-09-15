@@ -20,7 +20,6 @@ use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
-use gotham_engine::traits::Value;
 
 
 use super::SECURITY_BITS;
@@ -49,6 +48,35 @@ use crate::curv::FE;
 use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
+
+pub trait Value: Sync + Send + Display {
+}
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct HDPos {
+    pub pos: u32,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct v{
+    pub value: String
+}
+
+impl Display for HDPos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.pos)
+    }
+}
+
+impl Display for v {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Value for HDPos {}
+impl Value for KeyGenFirstMsg {}
+impl Value for CommWitness {}
+impl Value for EcKeyPair{}
+impl Value for v{}
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]

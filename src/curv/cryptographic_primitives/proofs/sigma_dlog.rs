@@ -15,7 +15,7 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use zeroize::Zeroize;
-use crate::party_one::EcKeyPair;
+use crate::party_one::{EcKeyPair, Value};
 
 /// This is implementation of Schnorr's identification protocol for elliptic curve groups or a
 /// sigma protocol for Proof of knowledge of the discrete log of an Elliptic-curve point:
@@ -33,6 +33,8 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
+impl Value for DLogProof{}
+
 impl Display for DLogProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
