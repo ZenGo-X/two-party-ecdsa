@@ -100,6 +100,17 @@ impl Value for v{
         self
     }
 }
+impl Value for PaillierKeyPair{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Value for Party1Private{
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -150,7 +161,11 @@ pub struct PaillierKeyPair {
     pub encrypted_share: BigInt,
     randomness: BigInt,
 }
-
+impl Display for PaillierKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
     pub s: BigInt,
@@ -169,6 +184,12 @@ pub struct Party1Private {
     x1: FE,
     paillier_priv: DecryptionKey,
     c_key_randomness: BigInt,
+}
+
+impl Display for Party1Private {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
