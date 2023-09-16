@@ -39,7 +39,7 @@ use std::ops::{Add, Mul};
 use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
-use crate::party_one::{DLogProof, Value};
+use crate::party_one::{DLogProof, PaillierKeyPair, Value};
 
 pub type SK = SecretKey;
 pub type PK = PublicKey;
@@ -60,10 +60,9 @@ impl Value for Secp256k1Point {}
 
 impl Display for Secp256k1Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
     }
 }
-
 pub type GE = Secp256k1Point;
 pub type FE = Secp256k1Scalar;
 
