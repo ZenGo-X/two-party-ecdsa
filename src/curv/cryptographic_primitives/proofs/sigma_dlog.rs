@@ -39,7 +39,7 @@ impl Value for DLogProof {}
 
 impl Display for DLogProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.pk.to_string())
     }
 }
 

@@ -79,43 +79,41 @@ impl Value for Party1Private {}
 
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
+        write!(f, "{:?}", self)    }
 }
 
 impl Display for CommWitness {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}{}{}", self.pk_commitment_blind_factor.to_string(), self.zk_pok_blind_factor.to_string(), self.public_share.to_string(), self.d_log_proof.to_string())
-    }
+        write!(f, "{:?}", self)    }
 }
 
 impl Display for KeyGenFirstMsg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{}", self.pk_commitment.to_string(), self.zk_pok_commitment.to_string())
+        write!(f, "{:?}", self)
     }
 }
 
 impl Display for EcKeyPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
     }
 }
 
 impl Display for PaillierKeyPair {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
     }
 }
 
 impl Display for Party1Private {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{:?}", self)
     }
 }
 
 impl Display for HDPos {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.pos.to_string())
+        write!(f, "{:?}", self)
     }
 }
 
