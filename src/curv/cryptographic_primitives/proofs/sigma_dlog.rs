@@ -34,7 +34,7 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
-
+#[typetag::serde]
 impl Value for DLogProof {}
 
 impl Display for DLogProof {

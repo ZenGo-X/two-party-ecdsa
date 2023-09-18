@@ -21,8 +21,7 @@ use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
-use serde::Deserialize;
-
+use serde::{Serialize,Deserialize};
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -51,6 +50,7 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
+#[typetag::serde(tag = "type")]
 pub trait Value: Sync + Send + Display {}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -62,19 +62,25 @@ pub struct HDPos {
 pub struct v {
     pub value: String,
 }
-
+#[typetag::serde]
 impl Value for HDPos {}
 
+#[typetag::serde]
 impl Value for KeyGenFirstMsg {}
 
+#[typetag::serde]
 impl Value for CommWitness {}
 
+#[typetag::serde]
 impl Value for EcKeyPair {}
 
+#[typetag::serde]
 impl Value for v {}
 
+#[typetag::serde]
 impl Value for PaillierKeyPair {}
 
+#[typetag::serde]
 impl Value for Party1Private {}
 
 impl Display for v {

@@ -55,7 +55,7 @@ pub struct Secp256k1Point {
     purpose: &'static str,
     ge: PK,
 }
-
+#[typetag::serde]
 impl Value for Secp256k1Point {}
 
 impl Display for Secp256k1Point {
