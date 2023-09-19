@@ -127,6 +127,19 @@ impl Display for CommWitness {
     }
 }
 
+#[typetag::serde]
+impl Value for PDLdecommit {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for PDLdecommit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl Display for KeyGenFirstMsg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
