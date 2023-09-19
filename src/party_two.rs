@@ -43,6 +43,7 @@ use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
 use std::ops::Shl;
+use serde::{Serialize,Deserialize};
 
 //****************** Begin: Party Two structs ******************//
 

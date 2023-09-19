@@ -26,6 +26,8 @@ use crate::curv::BigInt;
 use crate::curv::{FE, GE};
 use itertools::iterate;
 use std::ops::{Shl, Shr};
+use serde::{Serialize,Deserialize};
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RangeProof {

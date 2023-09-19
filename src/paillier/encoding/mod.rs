@@ -5,6 +5,7 @@ use std::marker::PhantomData;
 use crate::curv::arithmetic::traits::ConvertFrom;
 use crate::curv::BigInt;
 pub mod integral;
+use serde::{Serialize,Deserialize};
 
 /// Encrypted message with type information.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

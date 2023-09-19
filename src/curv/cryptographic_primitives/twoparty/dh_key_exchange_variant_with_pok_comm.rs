@@ -22,6 +22,7 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
+use serde::{Serialize,Deserialize};
 
 const SECURITY_BITS: usize = 256;
 
