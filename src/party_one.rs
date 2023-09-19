@@ -51,7 +51,7 @@ use crate::curv::GE;
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde(tag = "type")]
-pub trait Value: Sync + Send + Serialize + Deserialize {}
+pub trait Value: Sync + Send   {}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct HDPos {
