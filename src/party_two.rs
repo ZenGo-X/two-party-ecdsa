@@ -13,6 +13,7 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
+use std::any::Any;
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
 
@@ -35,7 +36,7 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
+use crate::party_one::{EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
@@ -110,6 +111,14 @@ pub struct PDLFirstMessage {
     pub c_tag_tag: BigInt,
 }
 
+
+#[typetag::serde]
+impl Value for PDLFirstMessage {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLdecommit {
     pub a: BigInt,
@@ -117,9 +126,25 @@ pub struct PDLdecommit {
     pub blindness: BigInt,
 }
 
+
+#[typetag::serde]
+impl Value for PDLdecommit {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
     pub decommit: PDLdecommit,
+}
+
+
+#[typetag::serde]
+impl Value for PDLSecondMessage {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 #[derive(Debug)]
