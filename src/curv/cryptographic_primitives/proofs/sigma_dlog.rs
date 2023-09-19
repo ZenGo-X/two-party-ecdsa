@@ -36,7 +36,11 @@ pub struct DLogProof {
     pub challenge_response: FE,
 }
 #[typetag::serde]
-impl Value for DLogProof {}
+impl Value for DLogProof {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl Display for DLogProof {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

@@ -21,7 +21,7 @@ use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
-use serde::{Serialize,Deserialize};
+use serde::{Serialize, Deserialize};
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -51,7 +51,9 @@ use crate::curv::GE;
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde(tag = "type")]
-pub trait Value: Sync + Send   {}
+pub trait Value: Sync + Send {
+    fn as_any(&self) -> &dyn Any;
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct HDPos {
@@ -62,35 +64,66 @@ pub struct HDPos {
 pub struct v {
     pub value: String,
 }
-#[typetag::serde]
-impl Value for HDPos {}
 
 #[typetag::serde]
-impl Value for KeyGenFirstMsg {}
+impl Value for HDPos {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 #[typetag::serde]
-impl Value for CommWitness {}
+impl Value for KeyGenFirstMsg {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 #[typetag::serde]
-impl Value for EcKeyPair {}
+impl Value for CommWitness {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 #[typetag::serde]
-impl Value for v {}
+impl Value for EcKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 #[typetag::serde]
-impl Value for PaillierKeyPair {}
+impl Value for v {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 #[typetag::serde]
-impl Value for Party1Private {}
+impl Value for PaillierKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+#[typetag::serde]
+impl Value for Party1Private {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)    }
+        write!(f, "{:?}", self)
+    }
 }
 
 impl Display for CommWitness {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)    }
+        write!(f, "{:?}", self)
+    }
 }
 
 impl Display for KeyGenFirstMsg {

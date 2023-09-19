@@ -56,7 +56,11 @@ pub struct Secp256k1Point {
     ge: PK,
 }
 #[typetag::serde]
-impl Value for Secp256k1Point {}
+impl Value for Secp256k1Point {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl Display for Secp256k1Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
