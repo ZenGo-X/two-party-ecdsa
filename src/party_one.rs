@@ -22,6 +22,7 @@ use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
 use serde::{Serialize, Deserialize};
+use std::marker::Sized;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -51,7 +52,7 @@ use crate::curv::GE;
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde(tag = "type")]
-pub trait Value: Sync + Send {
+pub trait Value: Sync + Send  {
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -60,7 +61,7 @@ pub struct HDPos {
     pub pos: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone,Serialize, Deserialize, Debug)]
 pub struct v {
     pub value: String,
 }
@@ -185,7 +186,7 @@ pub struct KeyGenSecondMsg {
     pub comm_witness: CommWitness,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone,Debug, Serialize, Deserialize)]
 pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
