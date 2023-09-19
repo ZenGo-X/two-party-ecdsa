@@ -51,7 +51,7 @@ use crate::curv::GE;
 
 use crate::Error::{self, InvalidSig};
 
-#[typetag::serde()]
+#[typetag::serde]
 pub trait Value: Sync + Send  {
     fn as_any(&self) -> &dyn Any;
 }
