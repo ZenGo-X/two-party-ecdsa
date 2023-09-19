@@ -14,6 +14,7 @@
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
 use std::any::Any;
+use std::fmt::{Display, Formatter};
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
 
@@ -36,7 +37,7 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::{EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
+use crate::party_one::{CommWitness, EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
@@ -119,6 +120,12 @@ impl Value for PDLFirstMessage {
     }
 }
 
+impl Display for PDLFirstMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLdecommit {
     pub a: BigInt,
@@ -134,6 +141,12 @@ impl Value for PDLdecommit {
     }
 }
 
+impl Display for PDLdecommit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
     pub decommit: PDLdecommit,
@@ -146,6 +159,12 @@ impl Value for PDLSecondMessage {
         self
     }
 }
+impl Display for PDLSecondMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 
 #[derive(Debug)]
 pub struct PDLchallenge {
