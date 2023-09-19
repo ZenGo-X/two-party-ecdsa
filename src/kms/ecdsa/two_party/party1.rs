@@ -91,7 +91,7 @@ impl MasterKey1 {
         party_one::KeyGenFirstMsg::create_commitments()
     }
     pub fn key_gen_second_message(
-        comm_witness: party_one::CommWitness,
+        comm_witness: &party_one::CommWitness,
         ec_key_pair_party1: &party_one::EcKeyPair,
         proof: &DLogProof,
     ) -> (
@@ -100,7 +100,7 @@ impl MasterKey1 {
         party_one::Party1Private,
     ) {
         let key_gen_second_message =
-            party_one::KeyGenSecondMsg::verify_and_decommit(comm_witness, proof).expect("");
+            party_one::KeyGenSecondMsg::verify_and_decommit(comm_witness.clone(), proof).expect("");
 
         let paillier_key_pair =
             party_one::PaillierKeyPair::generate_keypair_and_encrypted_share(ec_key_pair_party1);
