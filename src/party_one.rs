@@ -22,7 +22,6 @@ use std::cmp;
 use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
 use serde::{Serialize, Deserialize};
-use std::marker::Sized;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -52,7 +51,7 @@ use crate::curv::GE;
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde]
-pub trait Value: Sync + Send  {
+pub trait Value: Sync + Send {
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -61,7 +60,7 @@ pub struct HDPos {
     pub pos: u32,
 }
 
-#[derive(Clone,Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct v {
     pub value: String,
 }
@@ -115,6 +114,22 @@ impl Value for Party1Private {
     }
 }
 
+#[typetag::serde]
+impl Value for PDLdecommit {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+// impl Clone for PDLdecommit {
+//     fn clone(&self) -> PDLdecommit {
+//         PDLdecommit {
+//             q_hat: self.q_hat,
+//             blindness: self.blindness.clone(),
+//         }
+//     }
+// }
+
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -127,12 +142,6 @@ impl Display for CommWitness {
     }
 }
 
-#[typetag::serde]
-impl Value for PDLdecommit {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
 
 impl Display for PDLdecommit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -199,7 +208,7 @@ pub struct KeyGenSecondMsg {
     pub comm_witness: CommWitness,
 }
 
-#[derive(Clone,Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
@@ -238,15 +247,6 @@ pub struct PDLdecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
 }
-impl Clone for PDLdecommit {
-    fn clone(&self) -> PDLdecommit {
-        PDLdecommit {
-            q_hat: self.q_hat,
-            blindness: self.blindness.clone(),
-        }
-    }
-}
-
 
 
 #[derive(Debug, Serialize, Deserialize)]

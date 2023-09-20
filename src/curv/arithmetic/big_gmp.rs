@@ -21,7 +21,6 @@ use super::traits::{
 };
 use gmp::mpz::Mpz;
 use rand::RngCore;
-
 use std::borrow::Borrow;
 
 pub type BigInt = Mpz;

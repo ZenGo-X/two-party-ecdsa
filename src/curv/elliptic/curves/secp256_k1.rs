@@ -39,7 +39,7 @@ use std::ops::{Add, Mul};
 use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
-use crate::party_one::{DLogProof, PaillierKeyPair, Value};
+use crate::party_one::{Value};
 
 pub type SK = SecretKey;
 pub type PK = PublicKey;
@@ -55,6 +55,7 @@ pub struct Secp256k1Point {
     purpose: &'static str,
     ge: PK,
 }
+
 #[typetag::serde]
 impl Value for Secp256k1Point {
     fn as_any(&self) -> &dyn Any {
@@ -67,6 +68,7 @@ impl Display for Secp256k1Point {
         write!(f, "{:?}", self)
     }
 }
+
 pub type GE = Secp256k1Point;
 pub type FE = Secp256k1Scalar;
 

@@ -16,7 +16,7 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use zeroize::Zeroize;
-use crate::party_one::{EcKeyPair, Value};
+use crate::party_one::{Value};
 use serde::{Serialize,Deserialize};
 
 /// This is implementation of Schnorr's identification protocol for elliptic curve groups or a

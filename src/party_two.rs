@@ -37,7 +37,7 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::{CommWitness, EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
+use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
