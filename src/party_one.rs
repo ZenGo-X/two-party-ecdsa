@@ -238,6 +238,16 @@ pub struct PDLdecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
 }
+impl Clone for PDLdecommit {
+    fn clone(&self) -> PDLdecommit {
+        PDLdecommit {
+            q_hat: self.q_hat,
+            blindness: self.blindness.clone(),
+        }
+    }
+}
+
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
