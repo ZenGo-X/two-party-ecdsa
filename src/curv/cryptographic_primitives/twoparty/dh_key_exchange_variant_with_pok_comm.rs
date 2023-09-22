@@ -5,6 +5,8 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 /// in ECDH Alice chooses at random a secret "a" and sends Bob public key A = aG
 /// Bob chooses at random a secret "b" and sends to Alice B = bG.
 /// Both parties can compute a joint secret: C =aB = bA = abG which cannot be computed by
@@ -23,8 +25,24 @@ use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
 use serde::{Serialize,Deserialize};
+use crate::party_one::Value;
+use crate::party_two::PDLFirstMessage;
 
 const SECURITY_BITS: usize = 256;
+
+
+#[typetag::serde]
+impl Value for EcKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for EcKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EcKeyPair {
@@ -39,6 +57,33 @@ pub struct CommWitness {
     pub public_share: GE,
     pub d_log_proof: DLogProof,
 }
+
+#[typetag::serde]
+impl Value for CommWitness {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for CommWitness {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[typetag::serde]
+impl Value for Party1FirstMessage {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for Party1FirstMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1FirstMessage {
     pub pk_commitment: BigInt,
