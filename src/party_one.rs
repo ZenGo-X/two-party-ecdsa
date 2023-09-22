@@ -121,6 +121,19 @@ impl Value for PDLdecommit {
     }
 }
 
+#[typetag::serde]
+impl Value for EphEcKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for EphEcKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
