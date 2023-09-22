@@ -127,7 +127,7 @@ impl Display for PDLFirstMessage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLdecommit {
+pub struct PDL2decommit {
     pub a: BigInt,
     pub b: BigInt,
     pub blindness: BigInt,
@@ -135,13 +135,13 @@ pub struct PDLdecommit {
 
 
 #[typetag::serde]
-impl Value for PDLdecommit {
+impl Value for PDL2decommit {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Display for PDLdecommit {
+impl Display for PDL2decommit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -149,7 +149,7 @@ impl Display for PDLdecommit {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
-    pub decommit: PDLdecommit,
+    pub decommit: PDL2decommit,
 }
 
 
@@ -329,7 +329,7 @@ impl PaillierPublic {
     }
 
     pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
-        let decommit = PDLdecommit {
+        let decommit = PDL2decommit {
             a: pdl_chal.a.clone(),
             b: pdl_chal.b.clone(),
             blindness: pdl_chal.blindness.clone(),
