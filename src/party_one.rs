@@ -121,15 +121,6 @@ impl Value for PDLdecommit {
     }
 }
 
-// impl Clone for PDLdecommit {
-//     fn clone(&self) -> PDLdecommit {
-//         PDLdecommit {
-//             q_hat: self.q_hat.clone(),
-//             blindness: self.blindness.clone(),
-//         }
-//     }
-// }
-
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
