@@ -51,11 +51,11 @@ use std::any::{Any, TypeId};
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde]
-pub trait Value: Sync + Send +Any{
+pub trait Value: Sync + Send + Any {
     fn as_any(&self) -> &dyn Any;
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct HDPos {
     pub pos: u32,
 }
@@ -121,14 +121,14 @@ impl Value for PDLdecommit {
     }
 }
 
-impl Clone for PDLdecommit {
-    fn clone(&self) -> PDLdecommit {
-        PDLdecommit {
-            q_hat: self.q_hat.clone(),
-            blindness: self.blindness.clone(),
-        }
-    }
-}
+// impl Clone for PDLdecommit {
+//     fn clone(&self) -> PDLdecommit {
+//         PDLdecommit {
+//             q_hat: self.q_hat.clone(),
+//             blindness: self.blindness.clone(),
+//         }
+//     }
+// }
 
 impl Display for v {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -242,7 +242,7 @@ pub struct PDLFirstMessage {
     pub c_hat: BigInt,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PDLdecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
