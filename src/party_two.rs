@@ -79,7 +79,18 @@ pub struct PartialSig {
 pub struct Party2Private {
     x2: FE,
 }
+#[typetag::serde]
+impl Value for EphEcKeyPair {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
+impl Display for EphEcKeyPair {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphEcKeyPair {
     pub public_share: GE,
@@ -99,6 +110,19 @@ pub struct EphCommWitness {
 pub struct EphKeyGenFirstMsg {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
+}
+
+#[typetag::serde]
+impl Value for EphKeyGenFirstMsg {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl Display for EphKeyGenFirstMsg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
