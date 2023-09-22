@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::curv::cryptographic_primitives::{
     proofs::sigma_dlog::DLogProof,
     twoparty::dh_key_exchange_variant_with_pok_comm::{
-        compute_pubkey, CommWitness, EcKeyPair, Party1FirstMessage, Party1SecondMessage,
+        compute_pubkey, CommWitnessDHPoK, EcKeyPair, Party1FirstMessage, Party1SecondMessage,
     },
 };
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, GE};
@@ -27,11 +27,11 @@ impl Display for ChainCode1 {
     }
 }
 impl ChainCode1 {
-    pub fn chain_code_first_message() -> (Party1FirstMessage, CommWitness, EcKeyPair) {
+    pub fn chain_code_first_message() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPair) {
         Party1FirstMessage::create_commitments()
     }
     pub fn chain_code_second_message(
-        comm_witness: CommWitness,
+        comm_witness: CommWitnessDHPoK,
         proof: &DLogProof,
     ) -> Party1SecondMessage {
         Party1SecondMessage::verify_and_decommit(comm_witness, proof).expect("")

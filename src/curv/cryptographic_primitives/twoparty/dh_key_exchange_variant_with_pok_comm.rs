@@ -51,7 +51,7 @@ pub struct EcKeyPair {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CommWitness {
+pub struct CommWitnessDHPoK {
     pub pk_commitment_blind_factor: BigInt,
     pub zk_pok_blind_factor: BigInt,
     pub public_share: GE,
@@ -59,13 +59,13 @@ pub struct CommWitness {
 }
 
 #[typetag::serde]
-impl Value for CommWitness {
+impl Value for CommWitnessDHPoK {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Display for CommWitness {
+impl Display for CommWitnessDHPoK {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -97,14 +97,14 @@ pub struct Party2FirstMessage {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1SecondMessage {
-    pub comm_witness: CommWitness,
+    pub comm_witness: CommWitnessDHPoK,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party2SecondMessage {}
 
 impl Party1FirstMessage {
-    pub fn create_commitments() -> (Party1FirstMessage, CommWitness, EcKeyPair) {
+    pub fn create_commitments() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPair) {
         let base: GE = ECPoint::generator();
 
         let secret_share: FE = ECScalar::new_random();
@@ -135,7 +135,7 @@ impl Party1FirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitness {
+            CommWitnessDHPoK {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -147,7 +147,7 @@ impl Party1FirstMessage {
 
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
-    ) -> (Party1FirstMessage, CommWitness, EcKeyPair) {
+    ) -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPair) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
 
@@ -176,7 +176,7 @@ impl Party1FirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitness {
+            CommWitnessDHPoK {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -189,7 +189,7 @@ impl Party1FirstMessage {
 
 impl Party1SecondMessage {
     pub fn verify_and_decommit(
-        comm_witness: CommWitness,
+        comm_witness: CommWitnessDHPoK,
         proof: &DLogProof,
     ) -> Result<Party1SecondMessage, ProofError> {
         DLogProof::verify(proof)?;
