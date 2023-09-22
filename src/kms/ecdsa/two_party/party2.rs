@@ -172,13 +172,13 @@ impl MasterKey2 {
     pub fn sign_first_message() -> (
         party_two::EphKeyGenFirstMsg,
         party_two::EphCommWitness,
-        party_two::EphEcKeyPair,
+        party_two::EphEcKeyPair2,
     ) {
         party_two::EphKeyGenFirstMsg::create_commitments()
     }
     pub fn sign_second_message(
         &self,
-        ec_key_pair_party2: &party_two::EphEcKeyPair,
+        ec_key_pair_party2: &party_two::EphEcKeyPair2,
         eph_comm_witness: party_two::EphCommWitness,
         eph_party1_first_message: &Party1EphKeyGenFirstMsg,
         message: &BigInt,

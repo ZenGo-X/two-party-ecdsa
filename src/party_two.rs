@@ -80,19 +80,19 @@ pub struct Party2Private {
     x2: FE,
 }
 #[typetag::serde]
-impl Value for EphEcKeyPair {
+impl Value for EphEcKeyPair2 {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Display for EphEcKeyPair {
+impl Display for EphEcKeyPair2 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EphEcKeyPair {
+pub struct EphEcKeyPair2 {
     pub public_share: GE,
     secret_share: FE,
 }
@@ -384,7 +384,7 @@ impl PaillierPublic {
 }
 
 impl EphKeyGenFirstMsg {
-    pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
+    pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair2) {
         let base: GE = ECPoint::generator();
 
         let secret_share: FE = ECScalar::new_random();
@@ -415,7 +415,7 @@ impl EphKeyGenFirstMsg {
             &zk_pok_blind_factor,
         );
 
-        let ec_key_pair = EphEcKeyPair {
+        let ec_key_pair = EphEcKeyPair2 {
             public_share,
             secret_share,
         };
@@ -457,7 +457,7 @@ impl PartialSig {
         ek: &EncryptionKey,
         encrypted_secret_share: &BigInt,
         local_share: &Party2Private,
-        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_local_share: &EphEcKeyPair2,
         ephemeral_other_public_share: &GE,
         message: &BigInt,
     ) -> PartialSig {
