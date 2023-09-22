@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use crate::curv::cryptographic_primitives::{
     proofs::ProofError,
     twoparty::dh_key_exchange_variant_with_pok_comm::{
-        compute_pubkey, EcKeyPair, Party1FirstMessage, Party1SecondMessage, Party2FirstMessage,
+        compute_pubkey, EcKeyPairDHPoK, Party1FirstMessage, Party1SecondMessage, Party2FirstMessage,
         Party2SecondMessage,
     },
 };
@@ -14,7 +14,7 @@ pub struct ChainCode2 {
 }
 
 impl ChainCode2 {
-    pub fn chain_code_first_message() -> (Party2FirstMessage, EcKeyPair) {
+    pub fn chain_code_first_message() -> (Party2FirstMessage, EcKeyPairDHPoK) {
         Party2FirstMessage::create()
     }
 
@@ -29,7 +29,7 @@ impl ChainCode2 {
     }
 
     pub fn compute_chain_code(
-        ec_key_pair: &EcKeyPair,
+        ec_key_pair: &EcKeyPairDHPoK,
         party1_second_message_public_share: &GE,
     ) -> ChainCode2 {
         ChainCode2 {

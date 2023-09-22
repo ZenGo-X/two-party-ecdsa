@@ -32,20 +32,20 @@ const SECURITY_BITS: usize = 256;
 
 
 #[typetag::serde]
-impl Value for EcKeyPair {
+impl Value for EcKeyPairDHPoK {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
-impl Display for EcKeyPair {
+impl Display for EcKeyPairDHPoK {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EcKeyPair {
+pub struct EcKeyPairDHPoK {
     pub public_share: GE,
     secret_share: FE,
 }
@@ -104,7 +104,7 @@ pub struct Party1SecondMessage {
 pub struct Party2SecondMessage {}
 
 impl Party1FirstMessage {
-    pub fn create_commitments() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPair) {
+    pub fn create_commitments() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPairDHPoK) {
         let base: GE = ECPoint::generator();
 
         let secret_share: FE = ECScalar::new_random();
@@ -126,7 +126,7 @@ impl Party1FirstMessage {
                 .bytes_compressed_to_big_int(),
             &zk_pok_blind_factor,
         );
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = EcKeyPairDHPoK {
             public_share,
             secret_share,
         };
@@ -147,7 +147,7 @@ impl Party1FirstMessage {
 
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
-    ) -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPair) {
+    ) -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPairDHPoK) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
 
@@ -167,7 +167,7 @@ impl Party1FirstMessage {
             &zk_pok_blind_factor,
         );
 
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = EcKeyPairDHPoK {
             public_share,
             secret_share,
         };
@@ -197,12 +197,12 @@ impl Party1SecondMessage {
     }
 }
 impl Party2FirstMessage {
-    pub fn create() -> (Party2FirstMessage, EcKeyPair) {
+    pub fn create() -> (Party2FirstMessage, EcKeyPairDHPoK) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
         let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = EcKeyPairDHPoK {
             public_share,
             secret_share,
         };
@@ -215,11 +215,11 @@ impl Party2FirstMessage {
         )
     }
 
-    pub fn create_with_fixed_secret_share(secret_share: FE) -> (Party2FirstMessage, EcKeyPair) {
+    pub fn create_with_fixed_secret_share(secret_share: FE) -> (Party2FirstMessage, EcKeyPairDHPoK) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = EcKeyPairDHPoK {
             public_share,
             secret_share,
         };
@@ -274,7 +274,7 @@ impl Party2SecondMessage {
         Ok(Party2SecondMessage {})
     }
 }
-pub fn compute_pubkey(local_share: &EcKeyPair, other_share_public_share: &GE) -> GE {
+pub fn compute_pubkey(local_share: &EcKeyPairDHPoK, other_share_public_share: &GE) -> GE {
     other_share_public_share * &local_share.secret_share
 }
 
