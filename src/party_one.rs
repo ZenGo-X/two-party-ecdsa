@@ -13,7 +13,6 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
-use std::any::Any;
 use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
@@ -47,11 +46,12 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
+use std::any::{Any, TypeId};
 
 use crate::Error::{self, InvalidSig};
 
 #[typetag::serde]
-pub trait Value: Sync + Send {
+pub trait Value: Sync + Send +Any{
     fn as_any(&self) -> &dyn Any;
 }
 
