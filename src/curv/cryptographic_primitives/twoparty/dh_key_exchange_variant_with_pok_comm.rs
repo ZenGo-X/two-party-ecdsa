@@ -36,6 +36,10 @@ impl Value for EcKeyPairDHPoK {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "EcKeyPairDHPoK"
+    }
 }
 
 impl Display for EcKeyPairDHPoK {
@@ -63,6 +67,10 @@ impl Value for CommWitnessDHPoK {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "CommWitnessDHPoK"
+    }
 }
 
 impl Display for CommWitnessDHPoK {
@@ -75,6 +83,10 @@ impl Display for CommWitnessDHPoK {
 impl Value for Party1FirstMessage {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "Party1FirstMessage"
     }
 }
 

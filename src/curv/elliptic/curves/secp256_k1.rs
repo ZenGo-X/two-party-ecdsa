@@ -61,6 +61,10 @@ impl Value for Secp256k1Point {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "Secp256k1Point"
+    }
 }
 
 impl Display for Secp256k1Point {

@@ -84,6 +84,10 @@ impl Value for EphEcKeyPair2 {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "EphEcKeyPair2"
+    }
 }
 
 impl Display for EphEcKeyPair2 {
@@ -117,6 +121,10 @@ impl Value for EphKeyGenFirstMsg {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "EphKeyGenFirstMsg"
+    }
 }
 
 impl Display for EphKeyGenFirstMsg {
@@ -142,6 +150,10 @@ impl Value for PDLFirstMessage {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "PDLFirstMessage"
+    }
 }
 
 impl Display for PDLFirstMessage {
@@ -163,6 +175,10 @@ impl Value for PDL2decommit {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "PDL2decommit"
+    }
 }
 
 impl Display for PDL2decommit {
@@ -181,6 +197,10 @@ pub struct PDLSecondMessage {
 impl Value for PDLSecondMessage {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "PDLSecondMessage"
     }
 }
 impl Display for PDLSecondMessage {

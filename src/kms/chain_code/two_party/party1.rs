@@ -19,6 +19,12 @@ impl Value for ChainCode1 {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "ChainCode1"
+    }
+
+
 }
 
 impl Display for ChainCode1 {

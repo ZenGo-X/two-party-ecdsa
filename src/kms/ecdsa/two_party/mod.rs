@@ -30,6 +30,10 @@ impl Value for MasterKey1 {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "MasterKey1"
+    }
 }
 
 impl Display for MasterKey1 {

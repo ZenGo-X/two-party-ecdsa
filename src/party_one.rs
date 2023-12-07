@@ -53,6 +53,7 @@ use crate::Error::{self, InvalidSig};
 #[typetag::serde]
 pub trait Value: Sync + Send + Any {
     fn as_any(&self) -> &dyn Any;
+    fn type_name(&self) -> &str;
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -70,12 +71,20 @@ impl Value for HDPos {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "HDPos"
+    }
 }
 
 #[typetag::serde]
 impl Value for KeyGenFirstMsg {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "KeyGenFirstMsg"
     }
 }
 
@@ -84,12 +93,20 @@ impl Value for CommWitness {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "CommWitness"
+    }
 }
 
 #[typetag::serde]
 impl Value for EcKeyPair {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "EcKeyPair"
     }
 }
 
@@ -98,12 +115,20 @@ impl Value for v {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "v"
+    }
 }
 
 #[typetag::serde]
 impl Value for PaillierKeyPair {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "PaillierKeyPair"
     }
 }
 
@@ -112,6 +137,10 @@ impl Value for Party1Private {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "Party1Private"
+    }
 }
 
 #[typetag::serde]
@@ -119,12 +148,20 @@ impl Value for PDLdecommit {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "PDLdecommit"
+    }
 }
 
 #[typetag::serde]
 impl Value for EphEcKeyPair {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    fn type_name(&self) -> &str {
+        "EphEcKeyPair"
     }
 }
 

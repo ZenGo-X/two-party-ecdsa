@@ -40,6 +40,11 @@ impl Value for DLogProof {
     fn as_any(&self) -> &dyn Any {
         self
     }
+
+    fn type_name(&self) -> &str {
+        "DLogProof"
+    }
+
 }
 
 impl Display for DLogProof {
