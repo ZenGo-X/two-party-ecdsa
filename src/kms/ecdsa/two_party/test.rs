@@ -11,12 +11,20 @@
 */
 #![allow(non_snake_case)]
 #![cfg(test)]
+
+use sha2::Sha512;
+use hmac::{Hmac, Mac};
+use zeroize::Zeroize;
+
+pub struct HMacSha512;
 use super::{MasterKey1, MasterKey2};
 use crate::kms::chain_code::two_party::{party1, party2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
+use crate::curv::cryptographic_primitives::hashing::hmac_sha512;
+use crate::curv::cryptographic_primitives::hashing::traits::KeyedHash;
 
 #[test]
 fn test_recovery_from_openssl() {
@@ -421,4 +429,89 @@ pub fn test_key_gen() -> (MasterKey1, MasterKey2) {
         &party_two_paillier,
     );
     (party_one_master_key, party_two_master_key)
+}
+
+
+fn compute_hmac(key: &BigInt,input: &str) -> BigInt {
+    //init key
+    let mut key_bytes: Vec<u8> = key.into();
+    let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
+
+    //hash input
+    ctx.update(input.as_ref());
+    key_bytes.zeroize();
+    BigInt::from(ctx.finalize().into_bytes().as_ref())
+
+}
+
+#[test]
+fn test_hd_multipath_derivation() {
+
+
+    // compute master keys:
+    let (party_one_master_key, party_two_master_key) = test_key_gen();
+    let pub_key_bi = party_one_master_key.public.q.bytes_compressed_to_big_int();
+
+
+
+    let new_party_two_master_key =
+        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5),compute_hmac(&pub_key_bi,"vault"),compute_hmac(&pub_key_bi,"friends"),compute_hmac(&pub_key_bi,"Max")]);
+    let new_party_one_master_key =
+        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
+
+    //make sure that keys are not the same after the multipath derivation run only by one party
+    assert_ne!(
+        new_party_one_master_key.public.q,
+        new_party_two_master_key.public.q
+    );
+    //derive the proper path for the server as the client did
+    //the path is expected to be in BigInts, so the way we achieve that is hmac(key,input) to a BigInt. Anything like
+    //a good collision hash function works . We used hmac keyed with the public key as a domain separator.
+    let new_party_one_master_key =
+        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5),compute_hmac(&pub_key_bi,"vault"),compute_hmac(&pub_key_bi,"friends"),compute_hmac(&pub_key_bi,"Max")]);
+
+//make sure that the public keys are equal
+    assert_eq!(
+        new_party_one_master_key.public.q,
+        new_party_two_master_key.public.q
+    );
+
+
+    //test signing:
+    let message = BigInt::from(1234);
+    let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
+        MasterKey2::sign_first_message();
+    let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
+    let sign_party_two_second_message = party_two_master_key.sign_second_message(
+        &eph_ec_key_pair_party2,
+        eph_comm_witness,
+        &sign_party_one_first_message,
+        &message,
+    );
+    let sign_party_one_second_message = party_one_master_key.sign_second_message(
+        &sign_party_two_second_message,
+        &sign_party_two_first_message,
+        &eph_ec_key_pair_party1,
+        &message,
+    );
+    sign_party_one_second_message.expect("bad signature");
+
+    // test sign for child
+    let message = BigInt::from(1234);
+    let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
+        MasterKey2::sign_first_message();
+    let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
+    let sign_party_two_second_message = new_party_two_master_key.sign_second_message(
+        &eph_ec_key_pair_party2,
+        eph_comm_witness,
+        &sign_party_one_first_message,
+        &message,
+    );
+    let sign_party_one_second_message = new_party_one_master_key.sign_second_message(
+        &sign_party_two_second_message,
+        &sign_party_two_first_message,
+        &eph_ec_key_pair_party1,
+        &message,
+    );
+    sign_party_one_second_message.expect("bad signature");
 }
