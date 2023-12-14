@@ -17,14 +17,16 @@ use hmac::{Hmac, Mac};
 use zeroize::Zeroize;
 
 pub struct HMacSha512;
+
 use super::{MasterKey1, MasterKey2};
 use crate::kms::chain_code::two_party::{party1, party2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
-use crate::curv::cryptographic_primitives::hashing::hmac_sha512;
-use crate::curv::cryptographic_primitives::hashing::traits::KeyedHash;
+pub use crate::kms::rotation::two_party::party1::Rotation1;
+pub use crate::kms::rotation::two_party::party2::Rotation2;
+pub use crate::kms::rotation::two_party::Rotation;
 
 #[test]
 fn test_recovery_from_openssl() {
@@ -209,7 +211,7 @@ fn test_commutativity_rotate_get_child() {
     sign_party_one_second_message.expect("bad signature");
 
     let (cr_party_one_master_key, cr_party_two_master_key) =
-        (new_party_one_master_key, new_party_two_master_key);
+        test_rotation(new_party_one_master_key, new_party_two_master_key);
 
     // sign with child and rotated keys
     let sign_party_two_second_message = cr_party_two_master_key.sign_second_message(
@@ -229,8 +231,8 @@ fn test_commutativity_rotate_get_child() {
     // rotate_and_get_child:
 
     let (rotate_party_one_master_key, rotate_party_two_master_key) =
-        (party_one_master_key, party_two_master_key);
-
+        test_rotation(party_one_master_key, party_two_master_key);
+   println!(" rotate_and_get_child:");
     //get child:
     let rc_party_one_master_key = rotate_party_one_master_key.get_child(vec![BigInt::from(10_i32)]);
     let rc_party_two_master_key = rotate_party_two_master_key.get_child(vec![BigInt::from(10_i32)]);
@@ -341,7 +343,7 @@ fn test_flip_masters() {
 
     // rotation
     let (party_one_master_key_rotated, party_two_master_key_rotated) =
-        (party_one_master_key, party_two_master_key);
+        test_rotation(party_one_master_key, party_two_master_key);
 
     // sign after rotate:
     //test signing:
@@ -432,7 +434,7 @@ pub fn test_key_gen() -> (MasterKey1, MasterKey2) {
 }
 
 
-fn compute_hmac(key: &BigInt,input: &str) -> BigInt {
+fn compute_hmac(key: &BigInt, input: &str) -> BigInt {
     //init key
     let mut key_bytes: Vec<u8> = key.into();
     let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
@@ -441,7 +443,6 @@ fn compute_hmac(key: &BigInt,input: &str) -> BigInt {
     ctx.update(input.as_ref());
     key_bytes.zeroize();
     BigInt::from(ctx.finalize().into_bytes().as_ref())
-
 }
 
 #[test]
@@ -453,9 +454,8 @@ fn test_hd_multipath_derivation() {
     let pub_key_bi = party_one_master_key.public.q.bytes_compressed_to_big_int();
 
 
-
     let new_party_two_master_key =
-        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5),compute_hmac(&pub_key_bi,"vault"),compute_hmac(&pub_key_bi,"friends"),compute_hmac(&pub_key_bi,"Max")]);
+        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
     let new_party_one_master_key =
         party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
 
@@ -468,7 +468,7 @@ fn test_hd_multipath_derivation() {
     //the path is expected to be in BigInts, so the way we achieve that is hmac(key,input) to a BigInt. Anything like
     //a good collision hash function works . We used hmac keyed with the public key as a domain separator.
     let new_party_one_master_key =
-        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5),compute_hmac(&pub_key_bi,"vault"),compute_hmac(&pub_key_bi,"friends"),compute_hmac(&pub_key_bi,"Max")]);
+        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
 
 //make sure that the public keys are equal
     assert_eq!(
@@ -515,3 +515,33 @@ fn test_hd_multipath_derivation() {
     );
     sign_party_one_second_message.expect("bad signature");
 }
+
+pub fn test_rotation(
+    party_one_master_key: MasterKey1,
+    party_two_master_key: MasterKey2,
+) -> (MasterKey1, MasterKey2) {
+    //coin flip:
+    let (party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+    let party2_first_message = Rotation2::key_rotate_first_message(&party1_first_message);
+    let (party1_second_message, random1) =
+        Rotation1::key_rotate_second_message(&party2_first_message, &m1, &r1);
+    let random2 = Rotation2::key_rotate_second_message(
+        &party1_second_message,
+        &party2_first_message,
+        &party1_first_message,
+    );
+
+    //rotation:
+    let (rotation_party_one_first_message, party_one_master_key_rotated) =
+        party_one_master_key.rotation_first_message(&random1);
+
+    let result_rotate_party_two =
+        party_two_master_key.rotate_first_message(&random2, &rotation_party_one_first_message);
+    assert!(result_rotate_party_two.is_ok());
+
+    (
+        party_one_master_key_rotated,
+        result_rotate_party_two.unwrap(),
+    )
+}
+
