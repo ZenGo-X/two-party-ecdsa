@@ -383,6 +383,15 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 }
 
 impl Party1Private {
+    pub fn check_rotated_key_bounds(
+        party_one_private: &Party1Private,
+        factor: &BigInt,
+    ) -> bool {
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new: FE = factor_fe * party_one_private.x1;
+
+        (x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3)))
+    }
     pub fn refresh_private_key(
         party_one_private: &Party1Private,
         factor: &BigInt,
