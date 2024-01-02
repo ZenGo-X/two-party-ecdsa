@@ -239,23 +239,5 @@ impl MasterKey1 {
             alpha,
         )
     }
-    pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, MasterKey1) {
-        let (
-            ek_new,
-            c_key_new,
-            new_private,
-            correct_key_proof,
-            range_proof
-        ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
-        let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
-        (
-            RotationParty1Message1 {
-                ek_new,
-                c_key_new,
-                correct_key_proof,
-                range_proof,
-            },
-            master_key_new,
-        )
-    }
+
 }

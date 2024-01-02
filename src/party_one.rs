@@ -439,56 +439,7 @@ impl Party1Private {
 
         (x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3)))
     }
-    pub fn refresh_private_key(
-        party_one_private: &Party1Private,
-        factor: &BigInt,
-    ) -> (
-        EncryptionKey,
-        BigInt,
-        Party1Private,
-        NICorrectKeyProof,
-        RangeProofNi
-    ) {
-        let (ek_new, dk_new) = Paillier::keypair().keys();
-        let randomness = Randomness::sample(&ek_new.clone());
-        let factor_fe: FE = ECScalar::from(factor);
-        let x1_new: FE = *&party_one_private.x1 * factor_fe;
-        let c_key_new = Paillier::encrypt_with_chosen_randomness(
-            &ek_new.clone(),
-            RawPlaintext::from(x1_new.to_big_int()),
-            &randomness,
-        )
-            .0
-            .into_owned();
 
-        let party_one_private_new = Party1Private {
-            x1: x1_new.clone(),
-            paillier_priv: dk_new.clone(),
-            c_key_randomness: randomness.0.clone(),
-        };
-
-        let paillier_key_pair = PaillierKeyPair {
-            ek: ek_new.clone(),
-            dk: dk_new.clone(),
-            encrypted_share: c_key_new.clone(),
-            randomness: randomness.0.clone(),
-        };
-        let correct_key_proof =
-            PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
-
-
-        let range_proof = party_one::PaillierKeyPair::generate_range_proof(
-            &paillier_key_pair,
-            &party_one_private_new,
-        );
-        (
-            ek_new.clone(),
-            c_key_new.clone(),
-            party_one_private_new,
-            correct_key_proof,
-            range_proof
-        )
-    }
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
         let order = FE::q();
         let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
