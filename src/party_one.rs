@@ -22,7 +22,7 @@ use std::ops::{Mul, Shl};
 use std::fmt::{Debug, Display, Formatter};
 use serde::{Serialize, Deserialize};
 
-use super::SECURITY_BITS;
+use super::{party_one, SECURITY_BITS};
 pub use crate::curv::arithmetic::traits::*;
 
 use crate::curv::elliptic::curves::traits::*;
@@ -46,7 +46,8 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use std::any::{Any, TypeId};
+use std::any::{Any};
+use secp256k1::Secp256k1;
 
 use crate::Error::{self, InvalidSig};
 
@@ -429,6 +430,65 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 }
 
 impl Party1Private {
+    pub fn check_rotated_key_bounds(
+        party_one_private: &Party1Private,
+        factor: &BigInt,
+    ) -> bool {
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new: FE = factor_fe * party_one_private.x1;
+
+        (x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3)))
+    }
+    pub fn refresh_private_key(
+        party_one_private: &Party1Private,
+        factor: &BigInt,
+    ) -> (
+        EncryptionKey,
+        BigInt,
+        Party1Private,
+        NICorrectKeyProof,
+        RangeProofNi
+    ) {
+        let (ek_new, dk_new) = Paillier::keypair().keys();
+        let randomness = Randomness::sample(&ek_new.clone());
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new: FE = *&party_one_private.x1 * factor_fe;
+        let c_key_new = Paillier::encrypt_with_chosen_randomness(
+            &ek_new.clone(),
+            RawPlaintext::from(x1_new.to_big_int()),
+            &randomness,
+        )
+            .0
+            .into_owned();
+
+        let party_one_private_new = Party1Private {
+            x1: x1_new.clone(),
+            paillier_priv: dk_new.clone(),
+            c_key_randomness: randomness.0.clone(),
+        };
+
+        let paillier_key_pair = PaillierKeyPair {
+            ek: ek_new.clone(),
+            dk: dk_new.clone(),
+            encrypted_share: c_key_new.clone(),
+            randomness: randomness.0.clone(),
+        };
+        let correct_key_proof =
+            PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
+
+
+        let range_proof = party_one::PaillierKeyPair::generate_range_proof(
+            &paillier_key_pair,
+            &party_one_private_new,
+        );
+        (
+            ek_new.clone(),
+            c_key_new.clone(),
+            party_one_private_new,
+            correct_key_proof,
+            range_proof
+        )
+    }
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
         let order = FE::q();
         let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
