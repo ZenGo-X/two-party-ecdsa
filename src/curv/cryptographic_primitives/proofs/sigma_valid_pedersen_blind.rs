@@ -14,6 +14,7 @@ use crate::curv::elliptic::curves::traits::*;
 
 use crate::curv::{FE, GE};
 use zeroize::Zeroize;
+use serde::{Serialize,Deserialize};
 
 /// protocol for proving that Pedersen commitment c was constructed correctly which is the same as
 /// proof of knowledge of (r) such that c = mG + rH.

@@ -15,8 +15,8 @@
 */
 const SECURITY_BITS: usize = 256;
 
-#[macro_use]
-extern crate serde_derive;
+// #[macro_use]
+// extern crate serde_derive;
 
 pub mod bulletproofs;
 pub mod centipede;
@@ -25,8 +25,11 @@ pub mod paillier;
 pub mod party_one;
 pub mod party_two;
 pub mod zk_paillier;
+pub mod kms;
 
 mod test;
+
+use serde::{Serialize,Deserialize};
 
 pub use crate::centipede::juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
 pub use crate::curv::cryptographic_primitives::proofs::{sigma_ec_ddh::ECDDHProof, ProofError};

@@ -22,6 +22,7 @@ use crate::curv::cryptographic_primitives::hashing::traits::*;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
+use serde::{Serialize,Deserialize};
 
 use crate::bulletproofs::Errors::{self, InnerProductError};
 

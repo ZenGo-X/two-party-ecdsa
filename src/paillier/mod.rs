@@ -12,6 +12,7 @@ pub use self::traits::*;
 pub use keygen::*;
 
 use std::borrow::Cow;
+use serde::{Serialize,Deserialize};
 
 /// Main struct onto which most operations are added.
 pub struct Paillier;

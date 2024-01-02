@@ -13,6 +13,8 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
 
@@ -35,7 +37,7 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
+use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
@@ -43,6 +45,7 @@ use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
 use std::ops::Shl;
+use serde::{Serialize,Deserialize};
 
 //****************** Begin: Party Two structs ******************//
 
@@ -76,9 +79,24 @@ pub struct PartialSig {
 pub struct Party2Private {
     x2: FE,
 }
+#[typetag::serde]
+impl Value for EphEcKeyPair2 {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 
+    fn type_name(&self) -> &str {
+        "EphEcKeyPair2"
+    }
+}
+
+impl Display for EphEcKeyPair2 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EphEcKeyPair {
+pub struct EphEcKeyPair2 {
     pub public_share: GE,
     secret_share: FE,
 }
@@ -98,6 +116,23 @@ pub struct EphKeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
+#[typetag::serde]
+impl Value for EphKeyGenFirstMsg {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn type_name(&self) -> &str {
+        "EphKeyGenFirstMsg"
+    }
+}
+
+impl Display for EphKeyGenFirstMsg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphKeyGenSecondMsg {
     pub comm_witness: EphCommWitness,
@@ -109,17 +144,71 @@ pub struct PDLFirstMessage {
     pub c_tag_tag: BigInt,
 }
 
+
+#[typetag::serde]
+impl Value for PDLFirstMessage {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn type_name(&self) -> &str {
+        "PDLFirstMessage"
+    }
+}
+
+impl Display for PDLFirstMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLdecommit {
+pub struct PDL2decommit {
     pub a: BigInt,
     pub b: BigInt,
     pub blindness: BigInt,
 }
 
+
+#[typetag::serde]
+impl Value for PDL2decommit {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn type_name(&self) -> &str {
+        "PDL2decommit"
+    }
+}
+
+impl Display for PDL2decommit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
-    pub decommit: PDLdecommit,
+    pub decommit: PDL2decommit,
 }
+
+
+#[typetag::serde]
+impl Value for PDLSecondMessage {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn type_name(&self) -> &str {
+        "PDLSecondMessage"
+    }
+}
+impl Display for PDLSecondMessage {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 
 #[derive(Debug)]
 pub struct PDLchallenge {
@@ -284,7 +373,7 @@ impl PaillierPublic {
     }
 
     pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
-        let decommit = PDLdecommit {
+        let decommit = PDL2decommit {
             a: pdl_chal.a.clone(),
             b: pdl_chal.b.clone(),
             blindness: pdl_chal.blindness.clone(),
@@ -315,7 +404,7 @@ impl PaillierPublic {
 }
 
 impl EphKeyGenFirstMsg {
-    pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair) {
+    pub fn create_commitments() -> (EphKeyGenFirstMsg, EphCommWitness, EphEcKeyPair2) {
         let base: GE = ECPoint::generator();
 
         let secret_share: FE = ECScalar::new_random();
@@ -346,7 +435,7 @@ impl EphKeyGenFirstMsg {
             &zk_pok_blind_factor,
         );
 
-        let ec_key_pair = EphEcKeyPair {
+        let ec_key_pair = EphEcKeyPair2 {
             public_share,
             secret_share,
         };
@@ -388,7 +477,7 @@ impl PartialSig {
         ek: &EncryptionKey,
         encrypted_secret_share: &BigInt,
         local_share: &Party2Private,
-        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_local_share: &EphEcKeyPair2,
         ephemeral_other_public_share: &GE,
         message: &BigInt,
     ) -> PartialSig {

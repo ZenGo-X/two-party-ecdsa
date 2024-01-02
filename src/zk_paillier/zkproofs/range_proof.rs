@@ -26,6 +26,7 @@ use crate::curv::BigInt;
 use crate::paillier::EncryptWithChosenRandomness;
 use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
+use serde::{Serialize,Deserialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct EncryptedPairs {
