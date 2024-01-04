@@ -23,6 +23,8 @@ pub struct KeyGenParty1Message2 {
     pub ecdh_second_message: party_one::KeyGenSecondMsg,
     pub ek: EncryptionKey,
     pub c_key: BigInt,
+    pub old_ek: EncryptionKey,
+    pub old_c_key: BigInt,
     pub correct_key_proof: NICorrectKeyProof,
     pub range_proof: RangeProofNi,
 }
@@ -140,6 +142,11 @@ impl MasterKey1 {
         let party_one_private =
             party_one::Party1Private::set_private_key(ec_key_pair_party1, &paillier_key_pair);
 
+        let party_two_paillier = party_two::PaillierPublic {
+            ek: paillier_key_pair.ek.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone(),
+        };
+
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
             &party_one_private,
@@ -149,12 +156,14 @@ impl MasterKey1 {
         (
             KeyGenParty1Message2 {
                 ecdh_second_message: key_gen_second_message,
-                ek: paillier_key_pair.ek.clone(),
-                c_key: paillier_key_pair.encrypted_share.clone(),
+                ek: party_two_paillier.ek.clone(),
+                c_key: party_two_paillier.encrypted_secret_share.clone(),
+                old_ek: paillier_key_pair.ek.clone(),
+                old_c_key: paillier_key_pair.encrypted_share.clone(),
                 correct_key_proof,
                 range_proof,
             },
-            paillier_key_pair,
+            paillier_key_pair.clone(),
             party_one_private,
         )
     }
@@ -239,5 +248,4 @@ impl MasterKey1 {
             alpha,
         )
     }
-
 }
