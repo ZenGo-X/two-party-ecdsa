@@ -21,6 +21,8 @@ use crate::paillier::EncryptionKey;
 use std::error::Error;
 use std::fmt;
 const SECURITY_PARAMETER: usize = 128;
+use serde::{Serialize,Deserialize};
+
 /// Zero-knowledge range proof that a value x<q/3 lies in interval [0,q].
 ///
 /// The verifier is given only c = ENC(ek,x).

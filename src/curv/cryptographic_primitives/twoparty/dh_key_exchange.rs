@@ -12,6 +12,7 @@
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::FE;
 use crate::curv::GE;
+use serde::{Serialize,Deserialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EcKeyPair {
