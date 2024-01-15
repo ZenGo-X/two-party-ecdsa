@@ -15,6 +15,8 @@ use crate::{
 };
 
 use serde::{Deserialize, Serialize};
+use crate::curv::elliptic::curves::traits::ECScalar;
+use crate::kms::rotation::two_party::Rotation;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenParty1Message2 {
@@ -25,7 +27,36 @@ pub struct KeyGenParty1Message2 {
     pub range_proof: RangeProofNi,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RotationParty1Message1 {
+    pub ek_new: EncryptionKey,
+    pub c_key_new: BigInt,
+    pub correct_key_proof: NICorrectKeyProof,
+    pub range_proof: RangeProofNi,
+}
+
 impl MasterKey1 {
+    // before rotation make sure both parties have the same key
+    pub fn rotate(
+        self,
+        cf: &Rotation,
+        party_one_private: party_one::Party1Private,
+        ek_new: &EncryptionKey,
+        c_key_new: &BigInt,
+    ) -> MasterKey1 {
+        let public = Party1Public {
+            q: self.public.q,
+            p1: &self.public.p1 * &cf.rotation,
+            p2: &self.public.p2 * &cf.rotation.invert(),
+            paillier_pub: ek_new.clone(),
+            c_key: c_key_new.clone(),
+        };
+        MasterKey1 {
+            public,
+            private: party_one_private,
+            chain_code: self.chain_code,
+        }
+    }
     pub fn get_child(&self, location_in_hir: Vec<BigInt>) -> MasterKey1 {
         let (public_key_new_child, f_l_new, cc_new) =
             hd_key(location_in_hir, &self.public.q, &self.chain_code);
@@ -206,6 +237,25 @@ impl MasterKey1 {
             party_one_private,
             pdl_decommit,
             alpha,
+        )
+    }
+    pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, MasterKey1) {
+        let (
+            ek_new,
+            c_key_new,
+            new_private,
+            correct_key_proof,
+            range_proof
+        ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
+        let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
+        (
+            RotationParty1Message1 {
+                ek_new,
+                c_key_new,
+                correct_key_proof,
+                range_proof,
+            },
+            master_key_new,
         )
     }
 }

@@ -11,12 +11,27 @@
 */
 #![allow(non_snake_case)]
 #![cfg(test)]
+
+use std::cell::RefCell;
+use std::sync::Arc;
+use sha2::Sha512;
+use hmac::{Hmac, Mac};
+use zeroize::Zeroize;
+
+pub struct HMacSha512;
+
 use super::{MasterKey1, MasterKey2};
 use crate::kms::chain_code::two_party::{party1, party2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
+use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
+pub use crate::kms::rotation::two_party::party1::Rotation1;
+pub use crate::kms::rotation::two_party::party2::Rotation2;
+pub use crate::kms::rotation::two_party::Rotation;
+use crate::party_one::Party1Private;
+use crate::Secp256k1Scalar;
 
 #[test]
 fn test_recovery_from_openssl() {
@@ -201,7 +216,8 @@ fn test_commutativity_rotate_get_child() {
     sign_party_one_second_message.expect("bad signature");
 
     let (cr_party_one_master_key, cr_party_two_master_key) =
-        (new_party_one_master_key, new_party_two_master_key);
+        test_rotation(new_party_one_master_key, new_party_two_master_key);
+    println!("br1");
 
     // sign with child and rotated keys
     let sign_party_two_second_message = cr_party_two_master_key.sign_second_message(
@@ -219,10 +235,11 @@ fn test_commutativity_rotate_get_child() {
     sign_party_one_second_message.expect("bad signature");
 
     // rotate_and_get_child:
+    println!("br2");
 
     let (rotate_party_one_master_key, rotate_party_two_master_key) =
-        (party_one_master_key, party_two_master_key);
-
+        test_rotation(party_one_master_key, party_two_master_key);
+    println!(" rotate_and_get_child:");
     //get child:
     let rc_party_one_master_key = rotate_party_one_master_key.get_child(vec![BigInt::from(10_i32)]);
     let rc_party_two_master_key = rotate_party_two_master_key.get_child(vec![BigInt::from(10_i32)]);
@@ -333,7 +350,7 @@ fn test_flip_masters() {
 
     // rotation
     let (party_one_master_key_rotated, party_two_master_key_rotated) =
-        (party_one_master_key, party_two_master_key);
+        test_rotation(party_one_master_key, party_two_master_key);
 
     // sign after rotate:
     //test signing:
@@ -422,3 +439,140 @@ pub fn test_key_gen() -> (MasterKey1, MasterKey2) {
     );
     (party_one_master_key, party_two_master_key)
 }
+
+
+fn compute_hmac(key: &BigInt, input: &str) -> BigInt {
+    //init key
+    let mut key_bytes: Vec<u8> = key.into();
+    let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
+
+    //hash input
+    ctx.update(input.as_ref());
+    key_bytes.zeroize();
+    BigInt::from(ctx.finalize().into_bytes().as_ref())
+}
+
+#[test]
+fn test_hd_multipath_derivation() {
+
+
+    // compute master keys:
+    let (party_one_master_key, party_two_master_key) = test_key_gen();
+    let pub_key_bi = party_one_master_key.public.q.bytes_compressed_to_big_int();
+
+
+    let new_party_two_master_key =
+        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
+    let new_party_one_master_key =
+        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
+
+    //make sure that keys are not the same after the multipath derivation run only by one party
+    assert_ne!(
+        new_party_one_master_key.public.q,
+        new_party_two_master_key.public.q
+    );
+    //derive the proper path for the server as the client did
+    //the path is expected to be in BigInts, so the way we achieve that is hmac(key,input) to a BigInt. Anything like
+    //a good collision hash function works . We used hmac keyed with the public key as a domain separator.
+    let new_party_one_master_key =
+        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
+
+//make sure that the public keys are equal
+    assert_eq!(
+        new_party_one_master_key.public.q,
+        new_party_two_master_key.public.q
+    );
+
+
+    //test signing:
+    let message = BigInt::from(1234);
+    let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
+        MasterKey2::sign_first_message();
+    let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
+    let sign_party_two_second_message = party_two_master_key.sign_second_message(
+        &eph_ec_key_pair_party2,
+        eph_comm_witness,
+        &sign_party_one_first_message,
+        &message,
+    );
+    let sign_party_one_second_message = party_one_master_key.sign_second_message(
+        &sign_party_two_second_message,
+        &sign_party_two_first_message,
+        &eph_ec_key_pair_party1,
+        &message,
+    );
+    sign_party_one_second_message.expect("bad signature");
+
+    // test sign for child
+    let message = BigInt::from(1234);
+    let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
+        MasterKey2::sign_first_message();
+    let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
+    let sign_party_two_second_message = new_party_two_master_key.sign_second_message(
+        &eph_ec_key_pair_party2,
+        eph_comm_witness,
+        &sign_party_one_first_message,
+        &message,
+    );
+    let sign_party_one_second_message = new_party_one_master_key.sign_second_message(
+        &sign_party_two_second_message,
+        &sign_party_two_first_message,
+        &eph_ec_key_pair_party1,
+        &message,
+    );
+    sign_party_one_second_message.expect("bad signature");
+}
+
+pub fn test_rotation(
+    party_one_master_key: MasterKey1,
+    party_two_master_key: MasterKey2,
+) -> (MasterKey1, MasterKey2) {
+    //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
+    //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
+
+    let (party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+    let party2_first_message = Rotation2::key_rotate_first_message(&party1_first_message);
+    let (party1_second_message, mut random1) =
+        Rotation1::key_rotate_second_message(&party2_first_message, &m1, &r1);
+
+    //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
+    //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
+    let mut temp_random = random1.clone();
+    let mut p1fm_r: coin_flip_optimal_rounds::Party1FirstMessage = party1_first_message.clone() ;
+    let mut p1sm_r: coin_flip_optimal_rounds::Party1SecondMessage = party1_second_message.clone();
+
+    let mut m1_r: Secp256k1Scalar;
+    let mut r1_r: Secp256k1Scalar;
+
+    let mut p2fm_r:coin_flip_optimal_rounds::Party2FirstMessage = party2_first_message.clone();
+
+    while (Party1Private::check_rotated_key_bounds(&party_one_master_key.private, &temp_random.rotation.to_big_int())) {
+         (p1fm_r, m1_r, r1_r) = Rotation1::key_rotate_first_message();
+         p2fm_r = Rotation2::key_rotate_first_message(&p1fm_r);
+         (p1sm_r, temp_random) =
+            Rotation1::key_rotate_second_message(&p2fm_r, &m1_r, &r1_r);
+        // temp_random = random1.clone();
+    }
+
+    let random2 = Rotation2::key_rotate_second_message(
+        &p1sm_r,
+        &p2fm_r,
+        &p1fm_r,
+    );
+
+
+
+    //rotation:
+    let (rotation_party_one_first_message, party_one_master_key_rotated) =
+        party_one_master_key.rotation_first_message(&temp_random);
+
+    let result_rotate_party_two =
+        party_two_master_key.rotate_first_message(&random2, &rotation_party_one_first_message);
+
+
+    (
+        party_one_master_key_rotated,
+        result_rotate_party_two.unwrap(),
+    )
+}
+
