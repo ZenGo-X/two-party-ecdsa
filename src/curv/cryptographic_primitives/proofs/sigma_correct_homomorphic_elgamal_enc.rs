@@ -13,6 +13,7 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::FE;
 use crate::curv::GE;
 use zeroize::Zeroize;
+use serde::{Serialize,Deserialize};
 
 /// This is a proof of knowledge that a pair of group elements {D, E}
 /// form a valid homomorphic ElGamal encryption (”in the exponent”) using public key Y .

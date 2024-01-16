@@ -24,6 +24,7 @@ use crate::curv::arithmetic::traits::Converter;
 use crate::bulletproofs::proofs::range_proof::{RangeProof,generate_random_point};
 use super::segmentation::Msegmentation;
 use crate::centipede::Errors::{self, ErrorProving};
+use serde::{Serialize,Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Helgamal {
