@@ -538,13 +538,13 @@ pub fn test_rotation(
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
     let mut temp_random = random1.clone();
-    let mut p1fm_r: coin_flip_optimal_rounds::Party1FirstMessage = party1_first_message.clone() ;
-    let mut p1sm_r: coin_flip_optimal_rounds::Party1SecondMessage = party1_second_message.clone();
+    let mut p1fm_r: coin_flip_optimal_rounds::CoinFlipParty1FirstMessage = party1_first_message.clone() ;
+    let mut p1sm_r: coin_flip_optimal_rounds::CoinFlipParty1SecondMessage = party1_second_message.clone();
 
     let mut m1_r: Secp256k1Scalar;
     let mut r1_r: Secp256k1Scalar;
 
-    let mut p2fm_r:coin_flip_optimal_rounds::Party2FirstMessage = party2_first_message.clone();
+    let mut p2fm_r:coin_flip_optimal_rounds::CoinFlipParty2FirstMessage = party2_first_message.clone();
 
     while (Party1Private::check_rotated_key_bounds(&party_one_master_key.private, &temp_random.rotation.to_big_int())) {
          (p1fm_r, m1_r, r1_r) = Rotation1::key_rotate_first_message();
