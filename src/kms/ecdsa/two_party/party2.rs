@@ -143,12 +143,6 @@ impl MasterKey2 {
             &party_one_second_message.range_proof,
         );
 
-        let (pdl_first_message, pdl_chal) = party_two_paillier.pdl_challenge(
-            &party_one_second_message
-                .ecdh_second_message
-                .comm_witness
-                .public_share,
-        );
 
         let correct_key_verify = party_one_second_message
             .correct_key_proof
@@ -159,6 +153,13 @@ impl MasterKey2 {
             ek: party_one_second_message.old_ek.clone(),
             encrypted_secret_share: party_one_second_message.old_c_key.clone(),
         };
+
+        let (pdl_first_message, pdl_chal) = party_two_paillier_old.pdl_challenge(
+            &party_one_second_message
+                .ecdh_second_message
+                .comm_witness
+                .public_share,
+        );
 
         match range_proof_verify {
             Ok(_proof) => match correct_key_verify {
