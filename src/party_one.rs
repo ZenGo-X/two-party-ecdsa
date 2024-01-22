@@ -569,7 +569,7 @@ impl PaillierKeyPair {
         let ab_concat = a.clone() + b.clone().shl(a.bit_length());
         let c_tag_tag_test =
             HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
-        let ax1 = a * party_one_private.x1_minus_q_thirds.to_big_int();
+        let ax1 = a * party_one_private.x1.to_big_int();
         let alpha_test = ax1 + b;
         if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
             Ok(PDLSecondMessage {

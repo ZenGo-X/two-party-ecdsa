@@ -144,7 +144,7 @@ impl MasterKey1 {
 
         let party_two_paillier = party_two::PaillierPublic {
             ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone(),
         };
 
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
