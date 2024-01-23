@@ -28,7 +28,7 @@ pub mod zk_paillier;
 pub mod kms;
 
 mod test;
-mod typetags;
+pub mod typetags; // for std::any::Any and downcast_ref functionality
 
 use serde::{Serialize,Deserialize};
 
