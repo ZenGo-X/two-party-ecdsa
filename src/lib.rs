@@ -28,6 +28,7 @@ pub mod zk_paillier;
 pub mod kms;
 
 mod test;
+mod typetags;
 
 use serde::{Serialize,Deserialize};
 

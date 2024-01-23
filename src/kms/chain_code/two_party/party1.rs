@@ -8,30 +8,14 @@ use crate::curv::cryptographic_primitives::{
     },
 };
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, GE};
-use crate::party_one::{PDLdecommit, v, Value};
+use crate::party_one::{PDLdecommit, v};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct ChainCode1 {
     pub chain_code: BigInt,
 }
-#[typetag::serde]
-impl Value for ChainCode1 {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "ChainCode1"
-    }
 
 
-}
-
-impl Display for ChainCode1 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 impl ChainCode1 {
     pub fn chain_code_first_message() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPairDHPoK) {
         Party1FirstMessage::create_commitments()

@@ -25,28 +25,11 @@ use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
 use serde::{Serialize,Deserialize};
-use crate::party_one::Value;
-use crate::party_two::PDLFirstMessage;
+
 
 const SECURITY_BITS: usize = 256;
 
 
-#[typetag::serde]
-impl Value for EcKeyPairDHPoK {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "EcKeyPairDHPoK"
-    }
-}
-
-impl Display for EcKeyPairDHPoK {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EcKeyPairDHPoK {
@@ -62,39 +45,7 @@ pub struct CommWitnessDHPoK {
     pub d_log_proof: DLogProof,
 }
 
-#[typetag::serde]
-impl Value for CommWitnessDHPoK {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 
-    fn type_name(&self) -> &str {
-        "CommWitnessDHPoK"
-    }
-}
-
-impl Display for CommWitnessDHPoK {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[typetag::serde]
-impl Value for Party1FirstMessage {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "Party1FirstMessage"
-    }
-}
-
-impl Display for Party1FirstMessage {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1FirstMessage {

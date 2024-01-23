@@ -7,7 +7,6 @@ use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
 use crate::{paillier::EncryptionKey, party_one, party_two};
 use crate::kms::chain_code::two_party::party1::ChainCode1;
-use crate::party_one::Value;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Party1Public {
@@ -25,22 +24,8 @@ pub struct MasterKey1 {
     pub private: party_one::Party1Private,
     chain_code: BigInt,
 }
-#[typetag::serde]
-impl Value for MasterKey1 {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 
-    fn type_name(&self) -> &str {
-        "MasterKey1"
-    }
-}
 
-impl Display for MasterKey1 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Party2Public {

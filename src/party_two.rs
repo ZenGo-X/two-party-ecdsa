@@ -37,7 +37,7 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
+use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
@@ -79,22 +79,7 @@ pub struct PartialSig {
 pub struct Party2Private {
     x2: FE,
 }
-#[typetag::serde]
-impl Value for EphEcKeyPair2 {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 
-    fn type_name(&self) -> &str {
-        "EphEcKeyPair2"
-    }
-}
-
-impl Display for EphEcKeyPair2 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphEcKeyPair2 {
     pub public_share: GE,
@@ -116,22 +101,6 @@ pub struct EphKeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
-#[typetag::serde]
-impl Value for EphKeyGenFirstMsg {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "EphKeyGenFirstMsg"
-    }
-}
-
-impl Display for EphKeyGenFirstMsg {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphKeyGenSecondMsg {
@@ -145,23 +114,6 @@ pub struct PDLFirstMessage {
 }
 
 
-#[typetag::serde]
-impl Value for PDLFirstMessage {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "PDLFirstMessage"
-    }
-}
-
-impl Display for PDLFirstMessage {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDL2decommit {
     pub a: BigInt,
@@ -170,44 +122,11 @@ pub struct PDL2decommit {
 }
 
 
-#[typetag::serde]
-impl Value for PDL2decommit {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "PDL2decommit"
-    }
-}
-
-impl Display for PDL2decommit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
     pub decommit: PDL2decommit,
 }
 
-
-#[typetag::serde]
-impl Value for PDLSecondMessage {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "PDLSecondMessage"
-    }
-}
-impl Display for PDLSecondMessage {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 
 #[derive(Debug)]
