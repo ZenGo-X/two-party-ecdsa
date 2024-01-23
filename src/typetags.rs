@@ -7,6 +7,7 @@ use crate::kms::ecdsa::two_party::MasterKey1;
 use crate::party_one::{CommWitness, EcKeyPair, EphEcKeyPair, HDPos, KeyGenFirstMsg, PaillierKeyPair, Party1Private, PDLdecommit, v};
 use crate::party_two::{EphEcKeyPair2, EphKeyGenFirstMsg, PDL2decommit, PDLFirstMessage, PDLSecondMessage};
 use crate::{Secp256k1Point, Secp256k1Scalar};
+use crate::kms::rotation::two_party::Rotation;
 
 
 #[typetag::serde]
@@ -59,6 +60,8 @@ typetag_value!(Party1FirstMessage);
 typetag_value!(ChainCode1);
 typetag_value!(MasterKey1);
 typetag_value!(CoinFlipParty1FirstMessage);
+typetag_value!(Rotation);
+
 
 
 
