@@ -1,11 +1,12 @@
 use std::any::Any;
 use std::fmt::{Display, Formatter};
+use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds::CoinFlipParty1FirstMessage;
 use crate::curv::cryptographic_primitives::twoparty::dh_key_exchange_variant_with_pok_comm::{CommWitnessDHPoK, EcKeyPairDHPoK, Party1FirstMessage};
 use crate::kms::chain_code::two_party::party1::ChainCode1;
 use crate::kms::ecdsa::two_party::MasterKey1;
 use crate::party_one::{CommWitness, EcKeyPair, EphEcKeyPair, HDPos, KeyGenFirstMsg, PaillierKeyPair, Party1Private, PDLdecommit, v};
 use crate::party_two::{EphEcKeyPair2, EphKeyGenFirstMsg, PDL2decommit, PDLFirstMessage, PDLSecondMessage};
-use crate::Secp256k1Point;
+use crate::{Secp256k1Point, Secp256k1Scalar};
 
 
 #[typetag::serde]
@@ -37,6 +38,7 @@ macro_rules! typetag_value {
 }
 
 typetag_value!(Secp256k1Point);
+typetag_value!(Secp256k1Scalar);
 typetag_value!(HDPos);
 typetag_value!(KeyGenFirstMsg);
 typetag_value!(CommWitness);
@@ -56,7 +58,8 @@ typetag_value!(CommWitnessDHPoK);
 typetag_value!(Party1FirstMessage);
 typetag_value!(ChainCode1);
 typetag_value!(MasterKey1);
-
+typetag_value!(CoinFlipParty1FirstMessage);
+typetag_value!(CoinFlipParty1FirstMessage);
 
 
 
