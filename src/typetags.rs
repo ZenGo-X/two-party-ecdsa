@@ -59,7 +59,6 @@ typetag_value!(Party1FirstMessage);
 typetag_value!(ChainCode1);
 typetag_value!(MasterKey1);
 typetag_value!(CoinFlipParty1FirstMessage);
-typetag_value!(CoinFlipParty1FirstMessage);
 
 
 
