@@ -27,14 +27,14 @@ pub struct Party2SecondMessage {
 
 impl MasterKey2 {
     pub fn rotate(self, cf: &Rotation, new_paillier: &party_two::PaillierPublic) -> MasterKey2 {
-        let rand_str_invert_fe = cf.rotation.invert();
+        let rand_str_invert_fe = cf.scalar.invert();
         let c_key_new = new_paillier.encrypted_secret_share.clone();
 
         //TODO: use proper set functions
         let public = Party2Public {
             q: self.public.q,
-            p1: self.public.p1.clone() * &cf.rotation,
-            p2: &self.public.p2 * &cf.rotation.invert(),
+            p1: self.public.p1.clone() * &cf.scalar,
+            p2: &self.public.p2 * &cf.scalar.invert(),
             paillier_pub: new_paillier.ek.clone(),
             c_key: c_key_new,
         };

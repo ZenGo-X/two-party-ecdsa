@@ -46,8 +46,8 @@ impl MasterKey1 {
     ) -> MasterKey1 {
         let public = Party1Public {
             q: self.public.q,
-            p1: &self.public.p1 * &cf.rotation,
-            p2: &self.public.p2 * &cf.rotation.invert(),
+            p1: &self.public.p1 * &cf.scalar,
+            p2: &self.public.p2 * &cf.scalar.invert(),
             paillier_pub: ek_new.clone(),
             c_key: c_key_new.clone(),
         };
@@ -246,7 +246,7 @@ impl MasterKey1 {
             new_private,
             correct_key_proof,
             range_proof
-        ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
+        ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.scalar.to_big_int());
         let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
         (
             RotationParty1Message1 {
