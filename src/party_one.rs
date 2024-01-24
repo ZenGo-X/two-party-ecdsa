@@ -255,9 +255,9 @@ pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
     pub encrypted_share: BigInt,
-    pub encrypted_share_minus_q_thirds: BigInt,
+    pub encrypted_share_minus_q_thirds: Option<BigInt>,
     randomness: BigInt,
-    randomness_q: BigInt,
+    randomness_q: Option<BigInt>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -276,7 +276,7 @@ pub struct Signature {
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct Party1Private {
     x1: FE,
-    x1_minus_q_thirds: FE,
+    x1_minus_q_thirds: Option<FE>,
     paillier_priv: DecryptionKey,
     c_key_randomness: BigInt,
 }
@@ -437,7 +437,7 @@ impl Party1Private {
         let factor_fe: FE = ECScalar::from(factor);
         let x1_new: FE = factor_fe * party_one_private.x1;
 
-        (x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3)))
+        x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3))
     }
 
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
@@ -452,7 +452,7 @@ impl Party1Private {
         let x1_minus_lower_bound_fe: FE = ECScalar::from(&x1_minus_lower_bound);
         Party1Private {
             x1: ec_key.secret_share,
-            x1_minus_q_thirds: x1_minus_lower_bound_fe,
+            x1_minus_q_thirds: Some(x1_minus_lower_bound_fe),
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
@@ -508,9 +508,9 @@ impl PaillierKeyPair {
             ek,
             dk,
             encrypted_share,
-            encrypted_share_minus_q_thirds,
+            encrypted_share_minus_q_thirds: Some(encrypted_share_minus_q_thirds),
             randomness: randomness.0,
-            randomness_q: randomness_q.0,
+            randomness_q: Some(randomness_q.0),
         }
     }
 
@@ -518,12 +518,15 @@ impl PaillierKeyPair {
         paillier_context: &PaillierKeyPair,
         party_one_private: &Party1Private,
     ) -> RangeProofNi {
+        let x1_minus_q_thirds = party_one_private.x1_minus_q_thirds.as_ref().expect("x1_minus_q_thirds").to_big_int();
+        let encrypted_share_minus_q_thirds = paillier_context.encrypted_share_minus_q_thirds.as_ref().expect("encrypted_share_minus_q_thirds").clone();
+        let randomness_q = paillier_context.randomness_q.as_ref().expect("randomness_q");
         RangeProofNi::prove(
             &paillier_context.ek,
             &FE::q(),
-            &paillier_context.encrypted_share_minus_q_thirds.clone(),
-            &party_one_private.x1_minus_q_thirds.to_big_int(),
-            &paillier_context.randomness_q,
+            &encrypted_share_minus_q_thirds,
+            &x1_minus_q_thirds,
+            randomness_q,
         )
     }
 

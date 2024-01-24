@@ -60,7 +60,7 @@ mod tests {
 
         let party_two_paillier = party_two::PaillierPublic {
             ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
         };
 
         // zk proof of correct paillier key
