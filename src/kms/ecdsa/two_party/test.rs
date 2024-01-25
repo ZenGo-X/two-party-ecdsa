@@ -530,44 +530,44 @@ pub fn test_rotation(
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
 
-    let (party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
-    let party2_first_message = Rotation2::key_rotate_first_message(&party1_first_message);
-    let (party1_second_message, mut random1) =
-        Rotation1::key_rotate_second_message(&party2_first_message, &m1, &r1);
+    let (coin_flip_party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+    let coin_flip_party2_first_message = Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
+    let (coin_flip_party1_second_message, mut rotation1) =
+        Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &m1, &r1);
 
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
-    let mut random1_clone = random1.clone();
-    let mut party1_first_message_clone: coin_flip_optimal_rounds::CoinFlipParty1FirstMessage = party1_first_message.clone() ;
-    let mut party1_second_message_clone: coin_flip_optimal_rounds::CoinFlipParty1SecondMessage = party1_second_message.clone();
+    let mut rotation1_clone = rotation1.clone();
+    let mut coin_flip_party1_first_message_clone: coin_flip_optimal_rounds::CoinFlipParty1FirstMessage = coin_flip_party1_first_message.clone() ;
+    let mut coin_flip_party1_second_message_clone: coin_flip_optimal_rounds::CoinFlipParty1SecondMessage = coin_flip_party1_second_message.clone();
 
     let mut m1_clone: Secp256k1Scalar;
     let mut r1_clone: Secp256k1Scalar;
 
-    let mut party2_first_message_clone:coin_flip_optimal_rounds::CoinFlipParty2FirstMessage = party2_first_message.clone();
+    let mut coin_flip_party2_first_message_clone:coin_flip_optimal_rounds::CoinFlipParty2FirstMessage = coin_flip_party2_first_message.clone();
 
-    while (Party1Private::check_rotated_key_bounds(&party_one_master_key.private, &random1_clone.rotation.to_big_int())) {
-         (party1_first_message_clone, m1_clone, r1_clone) = Rotation1::key_rotate_first_message();
-         party2_first_message_clone = Rotation2::key_rotate_first_message(&party1_first_message_clone);
-         (party1_second_message_clone, random1_clone) =
-            Rotation1::key_rotate_second_message(&party2_first_message_clone, &m1_clone, &r1_clone);
+    while (Party1Private::check_rotated_key_bounds(&party_one_master_key.private, &rotation1_clone.rotation.to_big_int())) {
+         (coin_flip_party1_first_message_clone, m1_clone, r1_clone) = Rotation1::key_rotate_first_message();
+         coin_flip_party2_first_message_clone = Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
+         (coin_flip_party1_second_message_clone, rotation1_clone) =
+            Rotation1::key_rotate_second_message(&coin_flip_party2_first_message_clone, &m1_clone, &r1_clone);
         // temp_random = random1.clone();
     }
 
-    let random2 = Rotation2::key_rotate_second_message(
-        &party1_second_message_clone,
-        &party2_first_message_clone,
-        &party1_first_message_clone,
+    let rotation2 = Rotation2::key_rotate_second_message(
+        &coin_flip_party1_second_message_clone,
+        &coin_flip_party2_first_message_clone,
+        &coin_flip_party1_first_message_clone,
     );
 
 
 
     //rotation:
     let (rotation_party_one_first_message, party_one_private_new) =
-        party_one_master_key.clone().rotation_first_message(&random1_clone);
+        party_one_master_key.clone().rotation_first_message(&rotation1_clone);
 
     let result_rotate_party_one_first_message =
-        party_two_master_key.clone().rotate_first_message(&random2, &rotation_party_one_first_message);
+        party_two_master_key.clone().rotate_first_message(&rotation2, &rotation_party_one_first_message);
     assert!(result_rotate_party_one_first_message.is_ok());
 
     let (rotation_party_two_first_message, party_two_pdl_chal, party_two_paillier) =
@@ -583,7 +583,7 @@ pub fn test_rotation(
     let result_rotate_party_two_second_message = party_one_master_key.clone().rotation_third_message(
         &rotation_party_one_first_message,
         party_one_private_new.clone(),
-        &random1,
+        &rotation1,
         &rotation_party_two_first_message,
         &rotation_party_two_second_message,
         party_one_pdl_decommit.clone(),
@@ -594,7 +594,7 @@ pub fn test_rotation(
         result_rotate_party_two_second_message.unwrap();
 
     let result_rotate_party_one_third_message = party_two_master_key.clone().rotate_third_message(
-        &random2,
+        &rotation2,
         &party_two_paillier,
         &party_two_pdl_chal,
         &rotation_party_one_second_message,
