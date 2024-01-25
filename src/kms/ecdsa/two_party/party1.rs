@@ -17,6 +17,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use crate::curv::elliptic::curves::traits::ECScalar;
 use crate::kms::rotation::two_party::Rotation;
+use crate::party_one::Party1Private;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenParty1Message2 {
@@ -239,7 +240,7 @@ impl MasterKey1 {
             alpha,
         )
     }
-    pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, MasterKey1) {
+    pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
         let (
             ek_new,
             c_key_new,
@@ -247,7 +248,7 @@ impl MasterKey1 {
             correct_key_proof,
             range_proof
         ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
-        let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
+        // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
         (
             RotationParty1Message1 {
                 ek_new,
@@ -255,7 +256,45 @@ impl MasterKey1 {
                 correct_key_proof,
                 range_proof,
             },
-            master_key_new,
+            new_private.clone(),
         )
+    }
+    pub fn rotation_second_message(
+        rotate_party_two_message_one: &Party2PDLFirstMsg,
+        party_one_private: &party_one::Party1Private,
+    ) -> (party_one::PDLFirstMessage, party_one::PDLdecommit, BigInt) {
+        party_one::PaillierKeyPair::pdl_first_stage(
+            &party_one_private,
+            &rotate_party_two_message_one,
+        )
+    }
+
+    pub fn rotation_third_message(
+        self,
+        rotation_first_message: &RotationParty1Message1,
+        party_one_private_new: party_one::Party1Private,
+        cf: &Rotation,
+        rotate_party_two_first_message: &Party2PDLFirstMsg,
+        rotate_party_two_second_message: &Party2PDLSecondMsg,
+        pdl_decommit: party_one::PDLdecommit,
+        alpha: BigInt,
+    ) -> Result<((party_one::PDLSecondMessage, MasterKey1)), ()> {
+        let rotate_party_one_third_message = party_one::PaillierKeyPair::pdl_second_stage(
+            rotate_party_two_first_message,
+            rotate_party_two_second_message,
+            party_one_private_new.clone(),
+            pdl_decommit,
+            alpha,
+        );
+        let master_key_new = self.rotate(
+            cf,
+            party_one_private_new,
+            &rotation_first_message.ek_new,
+            &rotation_first_message.c_key_new,
+        );
+        match rotate_party_one_third_message {
+            Ok(x) => Ok((x, master_key_new)),
+            Err(_) => Err(()),
+        }
     }
 }

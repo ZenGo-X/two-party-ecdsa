@@ -47,7 +47,7 @@ pub struct Party2Public {
     pub c_key: BigInt,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone,Debug,Serialize, Deserialize)]
 pub struct MasterKey2 {
     pub public: Party2Public,
     pub private: party_two::Party2Private,

@@ -563,16 +563,52 @@ pub fn test_rotation(
 
 
     //rotation:
-    let (rotation_party_one_first_message, party_one_master_key_rotated) =
-        party_one_master_key.rotation_first_message(&temp_random);
+    let (rotation_party_one_first_message, party_one_private_new) =
+        party_one_master_key.clone().rotation_first_message(&temp_random);
 
-    let result_rotate_party_two =
-        party_two_master_key.rotate_first_message(&random2, &rotation_party_one_first_message);
+    let result_rotate_party_one_first_message =
+        party_two_master_key.clone().rotate_first_message(&random2, &rotation_party_one_first_message);
+    assert!(result_rotate_party_one_first_message.is_ok());
 
+    let (rotation_party_two_first_message, party_two_pdl_chal, party_two_paillier) =
+        result_rotate_party_one_first_message.unwrap();
+    let (rotation_party_one_second_message, party_one_pdl_decommit, alpha) =
+        MasterKey1::rotation_second_message(
+            &rotation_party_two_first_message,
+            &party_one_private_new,
+        );
+    let rotation_party_two_second_message =
+        MasterKey2::rotate_second_message(&party_two_pdl_chal);
 
-    (
-        party_one_master_key_rotated,
-        result_rotate_party_two.unwrap(),
-    )
+    let result_rotate_party_two_second_message = party_one_master_key.clone().rotation_third_message(
+        &rotation_party_one_first_message,
+        party_one_private_new.clone(),
+        &random1,
+        &rotation_party_two_first_message,
+        &rotation_party_two_second_message,
+        party_one_pdl_decommit.clone(),
+        alpha,
+    );
+    assert!(result_rotate_party_two_second_message.is_ok());
+    let (rotation_party_one_third_message, party_one_master_key_rotated) =
+        result_rotate_party_two_second_message.unwrap();
+
+    let result_rotate_party_one_third_message = party_two_master_key.clone().rotate_third_message(
+        &random2,
+        &party_two_paillier,
+        &party_two_pdl_chal,
+        &rotation_party_one_second_message,
+        &rotation_party_one_third_message,
+    );
+    assert!(result_rotate_party_one_third_message.is_ok());
+
+    let party_two_master_key_rotated = result_rotate_party_one_third_message.unwrap();
+
+    (party_one_master_key_rotated, party_two_master_key_rotated)
+
+    // (
+    //     party_one_master_key_rotated,
+    //     result_rotate_party_one_first_message.unwrap(),
+    // )
 }
 
