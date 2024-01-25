@@ -1,6 +1,5 @@
 use std::any::Any;
 use std::fmt::{Display, Formatter};
-use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds::{CoinFlipParty1FirstMsg, CoinFlipParty2FirstMsg};
 use crate::curv::cryptographic_primitives::twoparty::dh_key_exchange_variant_with_pok_comm::{CommWitnessDHPoK, EcKeyPairDHPoK, Party1FirstMessage};
 use crate::kms::chain_code::two_party::party1::ChainCode1;
 use crate::kms::ecdsa::two_party::MasterKey1;
@@ -59,8 +58,6 @@ typetag_value!(CommWitnessDHPoK);
 typetag_value!(Party1FirstMessage);
 typetag_value!(ChainCode1);
 typetag_value!(MasterKey1);
-typetag_value!(CoinFlipParty1FirstMsg);
-typetag_value!(CoinFlipParty2FirstMsg);
 typetag_value!(Rotation);
 
 

@@ -7,5 +7,5 @@ pub mod test;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rotation {
-    pub scalar: FE,
+    pub rotation: FE,
 }

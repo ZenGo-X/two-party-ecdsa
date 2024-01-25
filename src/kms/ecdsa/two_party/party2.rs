@@ -27,14 +27,14 @@ pub struct Party2SecondMessage {
 
 impl MasterKey2 {
     pub fn rotate(self, cf: &Rotation, new_paillier: &party_two::PaillierPublic) -> MasterKey2 {
-        let rand_str_invert_fe = cf.scalar.invert();
+        let rand_str_invert_fe = cf.rotation.invert();
         let c_key_new = new_paillier.encrypted_secret_share.clone();
 
         //TODO: use proper set functions
         let public = Party2Public {
             q: self.public.q,
-            p1: self.public.p1.clone() * &cf.scalar,
-            p2: &self.public.p2 * &cf.scalar.invert(),
+            p1: self.public.p1.clone() * &cf.rotation,
+            p2: &self.public.p2 * &cf.rotation.invert(),
             paillier_pub: new_paillier.ek.clone(),
             c_key: c_key_new,
         };
@@ -231,7 +231,14 @@ impl MasterKey2 {
     pub fn rotate_first_message(
         self,
         cf: &Rotation,
-        party_one_rotation_first_message: &RotationParty1Message1) -> Result<MasterKey2, ()> {
+        party_one_rotation_first_message: &RotationParty1Message1) -> Result<
+        (
+            party_two::PDLFirstMessage,
+            party_two::PDLchallenge,
+            party_two::PaillierPublic,
+        ),
+        (),
+    > {
         let party_two_paillier = party_two::PaillierPublic {
             ek: party_one_rotation_first_message.ek_new.clone(),
             encrypted_secret_share: party_one_rotation_first_message.c_key_new.clone(),
@@ -250,14 +257,42 @@ impl MasterKey2 {
 
         println!("correct_key_verify = {:?}",correct_key_verify);
 
-        let master_key = self.rotate(cf, &party_two_paillier);
+        // let master_key = self.rotate(cf, &party_two_paillier);
+        let (pdl_first_message, pdl_chal) =
+            party_two_paillier.pdl_challenge(&(&self.public.p1 * &cf.rotation));
 
         match range_proof_verify {
             Ok(_proof) => match correct_key_verify {
-                Ok(_proof) => Ok(master_key),
+                Ok(_proof) => Ok((pdl_first_message, pdl_chal, party_two_paillier)),
                 Err(_correct_key_error) => Err(()),
             },
             Err(_range_proof_error) => Err(()),
+        }
+    }
+    pub fn rotate_second_message(
+        pdl_chal: &party_two::PDLchallenge,
+    ) -> party_two::PDLSecondMessage {
+        party_two::PaillierPublic::pdl_decommit_c_tag_tag(&pdl_chal)
+    }
+
+    pub fn rotate_third_message(
+        self,
+        cf: &Rotation,
+        party_two_paillier: &party_two::PaillierPublic,
+        pdl_chal: &party_two::PDLchallenge,
+        party_one_pdl_first_message: &Party1PDLFirstMsg,
+        party_one_pdl_second_message: &Party1PDLSecondMsg,
+    ) -> Result<MasterKey2, ()> {
+        match party_two::PaillierPublic::verify_pdl(
+            pdl_chal,
+            party_one_pdl_first_message,
+            party_one_pdl_second_message,
+        ) {
+            Ok(_) => {
+                let master_key = self.rotate(cf, party_two_paillier);
+                Ok(master_key)
+            }
+            Err(_) => Err(()),
         }
     }
 }
