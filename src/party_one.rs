@@ -18,11 +18,11 @@ use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use std::cmp;
-use std::ops::Shl;
+use std::ops::{Mul, Shl};
 use std::fmt::{Debug, Display, Formatter};
 use serde::{Serialize, Deserialize};
 
-use super::SECURITY_BITS;
+use super::{party_one, SECURITY_BITS};
 pub use crate::curv::arithmetic::traits::*;
 
 use crate::curv::elliptic::curves::traits::*;
@@ -46,7 +46,8 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use std::any::{Any, TypeId};
+use std::any::{Any};
+use secp256k1::Secp256k1;
 
 use crate::Error::{self, InvalidSig};
 
@@ -254,7 +255,9 @@ pub struct PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
     pub encrypted_share: BigInt,
+    pub encrypted_share_minus_q_thirds: Option<BigInt>,
     randomness: BigInt,
+    randomness_q: Option<BigInt>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -273,6 +276,7 @@ pub struct Signature {
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct Party1Private {
     x1: FE,
+    x1_minus_q_thirds: Option<FE>,
     paillier_priv: DecryptionKey,
     c_key_randomness: BigInt,
 }
@@ -314,13 +318,21 @@ pub struct EphKeyGenSecondMsg {}
 //****************** End: Party One structs ******************//
 
 impl KeyGenFirstMsg {
+    //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
+    pub fn get_lindell_secret_share_bounds() -> (BigInt, BigInt) {
+        let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
+        let upper_bound: BigInt = lower_bound.clone().mul(&BigInt::from(2));
+        (lower_bound, upper_bound)
+    }
+
+    pub fn get_secret_share_in_range(lower_bound: &BigInt, upper_bound: &BigInt) -> FE {
+        ECScalar::from(&BigInt::sample_range(&lower_bound, &upper_bound))
+    }
+
     pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
         let base: GE = ECPoint::generator();
-
-        let secret_share: FE = ECScalar::new_random();
-        //in Lindell's protocol range proof works only for x1<q/3
-        let secret_share: FE =
-            ECScalar::from(&secret_share.to_big_int().div_floor(&BigInt::from(3)));
+        let bounds = Self::get_lindell_secret_share_bounds();
+        let secret_share: FE = Self::get_secret_share_in_range(&bounds.0, &bounds.1);
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -361,10 +373,9 @@ impl KeyGenFirstMsg {
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
     ) -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
-        //in Lindell's protocol range proof works only for x1<q/3
-        let sk_bigint = secret_share.to_big_int();
-        let q_third = FE::q();
-        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3)));
+        let bounds: (BigInt, BigInt) = Self::get_lindell_secret_share_bounds();
+        assert!(secret_share.to_big_int().gt(&bounds.0) && secret_share.to_big_int().lt(&bounds.1));
+
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -419,9 +430,29 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 }
 
 impl Party1Private {
+    pub fn check_rotated_key_bounds(
+        party_one_private: &Party1Private,
+        factor: &BigInt,
+    ) -> bool {
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new: FE = factor_fe * party_one_private.x1;
+
+        x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3))
+    }
+
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
+        let order = FE::q();
+        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
+        //x1-q/3
+        let x1_minus_lower_bound = BigInt::mod_sub(
+            &ec_key.secret_share.to_big_int().clone(),
+            &lower_bound,
+            &order,
+        );
+        let x1_minus_lower_bound_fe: FE = ECScalar::from(&x1_minus_lower_bound);
         Party1Private {
             x1: ec_key.secret_share,
+            x1_minus_q_thirds: Some(x1_minus_lower_bound_fe),
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
@@ -442,8 +473,18 @@ impl Party1Private {
 impl PaillierKeyPair {
     pub fn generate_keypair_and_encrypted_share(keygen: &EcKeyPair) -> PaillierKeyPair {
         let (ek, dk) = Paillier::keypair().keys();
+        let order = FE::q();
+        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
+        //x1-q/3
+        let x1_minus_lower_bound = BigInt::mod_sub(
+            &keygen.secret_share.to_big_int().clone(),
+            &lower_bound,
+            &order,
+        );
+
         let randomness = Randomness::sample(&ek);
 
+        //encrypt x1
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
             &ek,
             RawPlaintext::from(keygen.secret_share.to_big_int()),
@@ -452,11 +493,24 @@ impl PaillierKeyPair {
             .0
             .into_owned();
 
+        //encrypt x1-q/3
+        let randomness_q = Randomness::sample(&ek);
+
+        let encrypted_share_minus_q_thirds = Paillier::encrypt_with_chosen_randomness(
+            &ek,
+            RawPlaintext::from(x1_minus_lower_bound.clone()),
+            &randomness_q,
+        )
+        .0
+        .into_owned();
+
         PaillierKeyPair {
             ek,
             dk,
             encrypted_share,
+            encrypted_share_minus_q_thirds: Some(encrypted_share_minus_q_thirds),
             randomness: randomness.0,
+            randomness_q: Some(randomness_q.0),
         }
     }
 
@@ -464,12 +518,15 @@ impl PaillierKeyPair {
         paillier_context: &PaillierKeyPair,
         party_one_private: &Party1Private,
     ) -> RangeProofNi {
+        let x1_minus_q_thirds = party_one_private.x1_minus_q_thirds.as_ref().expect("x1_minus_q_thirds").to_big_int();
+        let encrypted_share_minus_q_thirds = paillier_context.encrypted_share_minus_q_thirds.as_ref().expect("encrypted_share_minus_q_thirds").clone();
+        let randomness_q = paillier_context.randomness_q.as_ref().expect("randomness_q");
         RangeProofNi::prove(
             &paillier_context.ek,
             &FE::q(),
-            &paillier_context.encrypted_share.clone(),
-            &party_one_private.x1.to_big_int(),
-            &paillier_context.randomness,
+            &encrypted_share_minus_q_thirds,
+            &x1_minus_q_thirds,
+            randomness_q,
         )
     }
 

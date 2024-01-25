@@ -9,16 +9,17 @@ use crate::curv::BigInt;
 
 use super::traits::KeyedHash;
 use crate::curv::arithmetic::traits::Converter;
-use zeroize::Zeroize;
-use sha2::Sha512;
 use hmac::{Hmac, Mac};
+use sha2::Sha512;
+use zeroize::Zeroize;
 pub struct HMacSha512;
 
 impl KeyedHash for HMacSha512 {
     fn create_hmac(key: &BigInt, data: &[&BigInt]) -> BigInt {
         let mut key_bytes: Vec<u8> = key.into();
 
-        let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
+        let mut ctx =
+            Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
         for value in data {
             ctx.update(&BigInt::to_vec(value));
         }

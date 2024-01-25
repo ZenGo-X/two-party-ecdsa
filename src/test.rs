@@ -2,12 +2,10 @@
 
 #[cfg(test)]
 mod tests {
-
-    use crate::curv::arithmetic::traits::Samplable;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
+    use crate::party_one::Party1Private;
     use crate::*;
-
     #[test]
     fn test_d_log_proof_party_two_party_one() {
         let (party_one_first_message, comm_witness, _ec_key_pair_party1) =
@@ -30,9 +28,11 @@ mod tests {
     #[test]
 
     fn test_full_key_gen() {
+        let bounds = party_one::KeyGenFirstMsg::get_lindell_secret_share_bounds();
         let (party_one_first_message, comm_witness, ec_key_pair_party1) =
             party_one::KeyGenFirstMsg::create_commitments_with_fixed_secret_share(ECScalar::from(
-                &BigInt::sample(253),
+                &party_one::KeyGenFirstMsg::get_secret_share_in_range(&bounds.0, &bounds.1)
+                    .to_big_int(),
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
             party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
@@ -56,21 +56,20 @@ mod tests {
             party_one::PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
 
         let party_one_private =
-            party_one::Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
+            Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
 
         let party_two_paillier = party_two::PaillierPublic {
             ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
         };
 
+        // zk proof of correct paillier key
         let correct_key_proof =
             party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
 
         correct_key_proof
             .verify(&party_two_paillier.ek)
             .expect("bad paillier key");
-
-        // zk proof of correct paillier key
 
         // zk range proof
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(

@@ -15,17 +15,50 @@ use crate::{
 };
 
 use serde::{Deserialize, Serialize};
+use crate::curv::elliptic::curves::traits::ECScalar;
+use crate::kms::rotation::two_party::Rotation;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenParty1Message2 {
     pub ecdh_second_message: party_one::KeyGenSecondMsg,
     pub ek: EncryptionKey,
     pub c_key: BigInt,
+    pub old_ek: EncryptionKey,
+    pub old_c_key: BigInt,
+    pub correct_key_proof: NICorrectKeyProof,
+    pub range_proof: RangeProofNi,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RotationParty1Message1 {
+    pub ek_new: EncryptionKey,
+    pub c_key_new: BigInt,
     pub correct_key_proof: NICorrectKeyProof,
     pub range_proof: RangeProofNi,
 }
 
 impl MasterKey1 {
+    // before rotation make sure both parties have the same key
+    pub fn rotate(
+        self,
+        cf: &Rotation,
+        party_one_private: party_one::Party1Private,
+        ek_new: &EncryptionKey,
+        c_key_new: &BigInt,
+    ) -> MasterKey1 {
+        let public = Party1Public {
+            q: self.public.q,
+            p1: &self.public.p1 * &cf.rotation,
+            p2: &self.public.p2 * &cf.rotation.invert(),
+            paillier_pub: ek_new.clone(),
+            c_key: c_key_new.clone(),
+        };
+        MasterKey1 {
+            public,
+            private: party_one_private,
+            chain_code: self.chain_code,
+        }
+    }
     pub fn get_child(&self, location_in_hir: Vec<BigInt>) -> MasterKey1 {
         let (public_key_new_child, f_l_new, cc_new) =
             hd_key(location_in_hir, &self.public.q, &self.chain_code);
@@ -109,6 +142,11 @@ impl MasterKey1 {
         let party_one_private =
             party_one::Party1Private::set_private_key(ec_key_pair_party1, &paillier_key_pair);
 
+        let party_two_paillier = party_two::PaillierPublic {
+            ek: paillier_key_pair.ek.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+        };
+
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
             &party_one_private,
@@ -118,12 +156,14 @@ impl MasterKey1 {
         (
             KeyGenParty1Message2 {
                 ecdh_second_message: key_gen_second_message,
-                ek: paillier_key_pair.ek.clone(),
-                c_key: paillier_key_pair.encrypted_share.clone(),
+                ek: party_two_paillier.ek.clone(),
+                c_key: party_two_paillier.encrypted_secret_share.clone(),
+                old_ek: paillier_key_pair.ek.clone(),
+                old_c_key: paillier_key_pair.encrypted_share.clone(),
                 correct_key_proof,
                 range_proof,
             },
-            paillier_key_pair,
+            paillier_key_pair.clone(),
             party_one_private,
         )
     }
