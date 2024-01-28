@@ -133,8 +133,6 @@ pub struct PDLFirstMessage {
     pub c_hat: BigInt,
 }
 
-typetag_value!(PDLFirstMessage);
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PDLdecommit {
     pub q_hat: GE,
