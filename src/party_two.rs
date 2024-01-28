@@ -131,6 +131,8 @@ pub struct PDLSecondMessage {
     pub decommit: PDL2decommit,
 }
 
+typetag_value!(PDLSecondMessage);
+
 #[derive(Debug)]
 pub struct PDLchallenge {
     pub c_tag: BigInt,
