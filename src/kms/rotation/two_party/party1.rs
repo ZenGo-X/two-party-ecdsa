@@ -2,7 +2,6 @@ use super::Rotation;
 use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::secp256_k1::{Secp256k1Scalar, GE};
 
-
 pub struct Rotation1 {}
 
 impl Rotation1 {

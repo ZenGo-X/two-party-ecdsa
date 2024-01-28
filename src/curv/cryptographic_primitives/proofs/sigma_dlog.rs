@@ -5,18 +5,20 @@
     License MIT: https://github.com/KZen-networks/curv/blob/master/LICENSE
 */
 
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 use super::ProofError;
 use crate::curv::FE;
 use crate::curv::GE;
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 use crate::curv::elliptic::curves::traits::*;
 
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
+use crate::typetag_value;
+use crate::typetags::Value;
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-use serde::{Serialize,Deserialize};
 
 /// This is implementation of Schnorr's identification protocol for elliptic curve groups or a
 /// sigma protocol for Proof of knowledge of the discrete log of an Elliptic-curve point:
@@ -35,7 +37,7 @@ pub struct DLogProof {
     pub challenge_response: FE,
 }
 
-
+typetag_value!(DLogProof);
 
 pub trait ProveDLog {
     fn prove(sk: &FE) -> DLogProof;

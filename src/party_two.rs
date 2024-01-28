@@ -13,10 +13,10 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 use crate::curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
 use crate::curv::cryptographic_primitives::commitments::traits::Commitment;
@@ -37,15 +37,18 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg};
+use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
+use serde::{Deserialize, Serialize};
 use std::ops::Shl;
-use serde::{Serialize,Deserialize};
+
+use crate::typetag_value;
+use crate::typetags::Value;
 
 //****************** Begin: Party Two structs ******************//
 
@@ -101,6 +104,7 @@ pub struct EphKeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
+typetag_value!(EphKeyGenFirstMsg);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EphKeyGenSecondMsg {
@@ -113,6 +117,7 @@ pub struct PDLFirstMessage {
     pub c_tag_tag: BigInt,
 }
 
+typetag_value!(PDLFirstMessage);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDL2decommit {
@@ -121,13 +126,10 @@ pub struct PDL2decommit {
     pub blindness: BigInt,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
     pub decommit: PDL2decommit,
 }
-
-
 
 #[derive(Debug)]
 pub struct PDLchallenge {

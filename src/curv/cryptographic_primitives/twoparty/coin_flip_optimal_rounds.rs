@@ -5,15 +5,13 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 use crate::curv::cryptographic_primitives::proofs::sigma_valid_pedersen::PedersenProof;
 use crate::curv::cryptographic_primitives::proofs::sigma_valid_pedersen::ProvePederesen;
 use crate::curv::cryptographic_primitives::proofs::sigma_valid_pedersen_blind::PedersenBlindingProof;
 use crate::curv::cryptographic_primitives::proofs::sigma_valid_pedersen_blind::ProvePederesenBlind;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::{FE, GE};
-use serde::{Serialize,Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// based on How To Simulate It – A Tutorial on the Simulation
 /// Proof Technique. protocol 7.3: Multiple coin tossing. which provide simulatble constant round

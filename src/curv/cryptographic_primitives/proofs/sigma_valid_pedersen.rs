@@ -12,8 +12,8 @@ use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::{FE, GE};
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-use serde::{Serialize,Deserialize};
 
 /// protocol for proving that Pedersen commitment c was constructed correctly which is the same as
 /// proof of knowledge of (m,r) such that c = mG + rH.

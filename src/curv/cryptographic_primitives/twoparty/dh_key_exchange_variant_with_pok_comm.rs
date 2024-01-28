@@ -5,8 +5,6 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 /// in ECDH Alice chooses at random a secret "a" and sends Bob public key A = aG
 /// Bob chooses at random a secret "b" and sends to Alice B = bG.
 /// Both parties can compute a joint secret: C =aB = bA = abG which cannot be computed by
@@ -24,18 +22,21 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use serde::{Serialize,Deserialize};
-
+use crate::typetag_value;
+use crate::typetags::Value;
+use serde::{Deserialize, Serialize};
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 const SECURITY_BITS: usize = 256;
-
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct EcKeyPairDHPoK {
     pub public_share: GE,
     secret_share: FE,
 }
+
+typetag_value!(EcKeyPairDHPoK);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitnessDHPoK {
@@ -45,13 +46,16 @@ pub struct CommWitnessDHPoK {
     pub d_log_proof: DLogProof,
 }
 
-
+typetag_value!(CommWitnessDHPoK);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1FirstMessage {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
 }
+
+typetag_value!(Party1FirstMessage);
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party2FirstMessage {
     pub d_log_proof: DLogProof,
@@ -178,7 +182,9 @@ impl Party2FirstMessage {
         )
     }
 
-    pub fn create_with_fixed_secret_share(secret_share: FE) -> (Party2FirstMessage, EcKeyPairDHPoK) {
+    pub fn create_with_fixed_secret_share(
+        secret_share: FE,
+    ) -> (Party2FirstMessage, EcKeyPairDHPoK) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);

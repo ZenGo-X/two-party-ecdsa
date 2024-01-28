@@ -17,12 +17,12 @@ use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
+use serde::{Deserialize, Serialize};
 use std::cmp;
-use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
-use serde::{Serialize, Deserialize};
+use std::ops::Shl;
 
-use super::{party_one, SECURITY_BITS};
+use super::{party_one, typetag_value, SECURITY_BITS};
 pub use crate::curv::arithmetic::traits::*;
 
 use crate::curv::elliptic::curves::traits::*;
@@ -46,21 +46,23 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use std::any::{Any, TypeId};
 
+use crate::typetags::Value;
 use crate::Error::{self, InvalidSig};
-
-
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct HDPos {
     pub pos: u32,
 }
 
+typetag_value!(HDPos);
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct v {
     pub value: String,
 }
+
+typetag_value!(v);
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -69,6 +71,7 @@ pub struct EcKeyPair {
     secret_share: FE,
 }
 
+typetag_value!(EcKeyPair);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitness {
@@ -78,6 +81,7 @@ pub struct CommWitness {
     pub d_log_proof: DLogProof,
 }
 
+typetag_value!(CommWitness);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyGenFirstMsg {
@@ -85,6 +89,7 @@ pub struct KeyGenFirstMsg {
     pub zk_pok_commitment: BigInt,
 }
 
+typetag_value!(KeyGenFirstMsg);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenSecondMsg {
@@ -98,6 +103,8 @@ pub struct PaillierKeyPair {
     pub encrypted_share: BigInt,
     randomness: BigInt,
 }
+
+typetag_value!(PaillierKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
@@ -119,11 +126,14 @@ pub struct Party1Private {
     c_key_randomness: BigInt,
 }
 
+typetag_value!(Party1Private);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLFirstMessage {
     pub c_hat: BigInt,
 }
+
+typetag_value!(PDLFirstMessage);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PDLdecommit {
@@ -131,6 +141,7 @@ pub struct PDLdecommit {
     pub blindness: BigInt,
 }
 
+typetag_value!(PDLdecommit);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
@@ -142,6 +153,8 @@ pub struct EphEcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
+
+typetag_value!(EphEcKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EphKeyGenFirstMsg {
@@ -261,10 +274,7 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 }
 
 impl Party1Private {
-    pub fn check_rotated_key_bounds(
-        party_one_private: &Party1Private,
-        factor: &BigInt,
-    ) -> bool {
+    pub fn check_rotated_key_bounds(party_one_private: &Party1Private, factor: &BigInt) -> bool {
         let factor_fe: FE = ECScalar::from(factor);
         let x1_new: FE = factor_fe * party_one_private.x1;
 
@@ -278,7 +288,7 @@ impl Party1Private {
         BigInt,
         Party1Private,
         NICorrectKeyProof,
-        RangeProofNi
+        RangeProofNi,
     ) {
         let (ek_new, dk_new) = Paillier::keypair().keys();
         let randomness = Randomness::sample(&ek_new.clone());
@@ -289,8 +299,8 @@ impl Party1Private {
             RawPlaintext::from(x1_new.to_big_int()),
             &randomness,
         )
-            .0
-            .into_owned();
+        .0
+        .into_owned();
 
         let party_one_private_new = Party1Private {
             x1: x1_new.clone(),
@@ -304,9 +314,7 @@ impl Party1Private {
             encrypted_share: c_key_new.clone(),
             randomness: randomness.0.clone(),
         };
-        let correct_key_proof =
-            PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
-
+        let correct_key_proof = PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
 
         let range_proof = party_one::PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
@@ -317,7 +325,7 @@ impl Party1Private {
             c_key_new.clone(),
             party_one_private_new,
             correct_key_proof,
-            range_proof
+            range_proof,
         )
     }
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
@@ -350,8 +358,8 @@ impl PaillierKeyPair {
             RawPlaintext::from(keygen.secret_share.to_big_int()),
             &randomness,
         )
-            .0
-            .into_owned();
+        .0
+        .into_owned();
 
         PaillierKeyPair {
             ek,

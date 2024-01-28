@@ -1,23 +1,24 @@
 use super::hd_key;
 use super::party2::SignMessage;
 use super::{MasterKey1, MasterKey2, Party1Public};
-use crate::kms::Errors::{self, SignError};
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
+use crate::kms::Errors::{self, SignError};
 use crate::party_two::{
     PDLFirstMessage as Party2PDLFirstMsg, PDLSecondMessage as Party2PDLSecondMsg,
 };
+use crate::typetags::Value;
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use crate::{
     party_one,
     party_two::{self, EphKeyGenFirstMsg},
-    EncryptionKey,
+    typetag_value, EncryptionKey,
 };
 
-use serde::{Deserialize, Serialize};
 use crate::curv::elliptic::curves::traits::ECScalar;
 use crate::kms::rotation::two_party::Rotation;
 use crate::party_one::Party1Private;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenParty1Message2 {
@@ -35,6 +36,8 @@ pub struct RotationParty1Message1 {
     pub correct_key_proof: NICorrectKeyProof,
     pub range_proof: RangeProofNi,
 }
+
+typetag_value!(RotationParty1Message1);
 
 impl MasterKey1 {
     // before rotation make sure both parties have the same key
@@ -176,7 +179,7 @@ impl MasterKey1 {
                 eph_key_gen_first_message_party_two,
                 &party_two_sign_message.second_message,
             )
-                .is_ok();
+            .is_ok();
 
         let signature_with_recid = party_one::Signature::compute_with_recid(
             &self.private,
@@ -195,14 +198,19 @@ impl MasterKey1 {
             s: signature_with_recid.s.clone(),
         };
 
-
         let verify = party_one::verify(&signature, &self.public.q, message).is_ok();
         if verify {
             if verify_party_two_second_message {
                 Ok(signature_with_recid)
             } else {
-                println!("Invalid commitments:{:?}", eph_key_gen_first_message_party_two);
-                println!("party_two_sign_message.second_message:{:?}", party_two_sign_message.second_message);
+                println!(
+                    "Invalid commitments:{:?}",
+                    eph_key_gen_first_message_party_two
+                );
+                println!(
+                    "party_two_sign_message.second_message:{:?}",
+                    party_two_sign_message.second_message
+                );
                 println!("sig_r: {}", signature.r);
                 println!("sig_s: {}", signature.s);
                 Err(SignError)
@@ -241,13 +249,8 @@ impl MasterKey1 {
         )
     }
     pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
-        let (
-            ek_new,
-            c_key_new,
-            new_private,
-            correct_key_proof,
-            range_proof
-        ) = party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
+        let (ek_new, c_key_new, new_private, correct_key_proof, range_proof) =
+            party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
         // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
         (
             RotationParty1Message1 {

@@ -1,17 +1,17 @@
 use super::{hd_key, party1::KeyGenParty1Message2, MasterKey1, MasterKey2, Party2Public};
 
-use serde::{Deserialize, Serialize};
 use crate::curv::{
     elliptic::curves::traits::{ECPoint, ECScalar},
     BigInt, FE, GE,
 };
+use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
+use crate::kms::rotation::two_party::Rotation;
 use crate::party_one::{
     EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, KeyGenFirstMsg as Party1KeyGenFirstMsg,
     PDLFirstMessage as Party1PDLFirstMsg, PDLSecondMessage as Party1PDLSecondMsg,
 };
 use crate::{party_one, party_two};
-use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
-use crate::kms::rotation::two_party::Rotation;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignMessage {
@@ -209,7 +209,7 @@ impl MasterKey2 {
             eph_comm_witness,
             eph_party1_first_message,
         )
-            .expect("");
+        .expect("");
 
         let partial_sig = party_two::PartialSig::compute(
             &self.public.paillier_pub,
@@ -231,7 +231,8 @@ impl MasterKey2 {
     pub fn rotate_first_message(
         self,
         cf: &Rotation,
-        party_one_rotation_first_message: &RotationParty1Message1) -> Result<
+        party_one_rotation_first_message: &RotationParty1Message1,
+    ) -> Result<
         (
             party_two::PDLFirstMessage,
             party_two::PDLchallenge,
@@ -249,13 +250,13 @@ impl MasterKey2 {
             &party_one_rotation_first_message.range_proof,
         );
 
-        println!("range_proof_verify = {:?}",range_proof_verify);
+        println!("range_proof_verify = {:?}", range_proof_verify);
 
         let correct_key_verify = party_one_rotation_first_message
             .correct_key_proof
             .verify(&party_two_paillier.ek);
 
-        println!("correct_key_verify = {:?}",correct_key_verify);
+        println!("correct_key_verify = {:?}", correct_key_verify);
 
         // let master_key = self.rotate(cf, &party_two_paillier);
         let (pdl_first_message, pdl_chal) =

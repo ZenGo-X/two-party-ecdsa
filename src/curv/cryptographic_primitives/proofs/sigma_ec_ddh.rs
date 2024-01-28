@@ -10,8 +10,8 @@ use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::{FE, GE};
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-use serde::{Serialize,Deserialize};
 
 /// This protocol is the elliptic curve form of the protocol from :
 ///  D. Chaum, T. P. Pedersen. Transferred cash grows in size. In Advances in Cryptology, EUROCRYPT , volume 658 of Lecture Notes in Computer Science, pages 390 - 407, 1993.

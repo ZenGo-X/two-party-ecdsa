@@ -12,21 +12,21 @@
 #![allow(non_snake_case)]
 #![cfg(test)]
 
+use hmac::{Hmac, Mac};
+use sha2::Sha512;
 use std::cell::RefCell;
 use std::sync::Arc;
-use sha2::Sha512;
-use hmac::{Hmac, Mac};
 use zeroize::Zeroize;
 
 pub struct HMacSha512;
 
 use super::{MasterKey1, MasterKey2};
-use crate::kms::chain_code::two_party::{party1, party2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::arithmetic::traits::Converter;
+use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
-use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
+use crate::kms::chain_code::two_party::{party1, party2};
 pub use crate::kms::rotation::two_party::party1::Rotation1;
 pub use crate::kms::rotation::two_party::party2::Rotation2;
 pub use crate::kms::rotation::two_party::Rotation;
@@ -440,11 +440,11 @@ pub fn test_key_gen() -> (MasterKey1, MasterKey2) {
     (party_one_master_key, party_two_master_key)
 }
 
-
 fn compute_hmac(key: &BigInt, input: &str) -> BigInt {
     //init key
     let mut key_bytes: Vec<u8> = key.into();
-    let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
+    let mut ctx =
+        Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
 
     //hash input
     ctx.update(input.as_ref());
@@ -454,15 +454,17 @@ fn compute_hmac(key: &BigInt, input: &str) -> BigInt {
 
 #[test]
 fn test_hd_multipath_derivation() {
-
-
     // compute master keys:
     let (party_one_master_key, party_two_master_key) = test_key_gen();
     let pub_key_bi = party_one_master_key.public.q.bytes_compressed_to_big_int();
 
-
-    let new_party_two_master_key =
-        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
+    let new_party_two_master_key = party_two_master_key.get_child(vec![
+        BigInt::from(10),
+        BigInt::from(5),
+        compute_hmac(&pub_key_bi, "vault"),
+        compute_hmac(&pub_key_bi, "friends"),
+        compute_hmac(&pub_key_bi, "Max"),
+    ]);
     let new_party_one_master_key =
         party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
 
@@ -474,15 +476,19 @@ fn test_hd_multipath_derivation() {
     //derive the proper path for the server as the client did
     //the path is expected to be in BigInts, so the way we achieve that is hmac(key,input) to a BigInt. Anything like
     //a good collision hash function works . We used hmac keyed with the public key as a domain separator.
-    let new_party_one_master_key =
-        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5), compute_hmac(&pub_key_bi, "vault"), compute_hmac(&pub_key_bi, "friends"), compute_hmac(&pub_key_bi, "Max")]);
+    let new_party_one_master_key = party_one_master_key.get_child(vec![
+        BigInt::from(10),
+        BigInt::from(5),
+        compute_hmac(&pub_key_bi, "vault"),
+        compute_hmac(&pub_key_bi, "friends"),
+        compute_hmac(&pub_key_bi, "Max"),
+    ]);
 
-//make sure that the public keys are equal
+    //make sure that the public keys are equal
     assert_eq!(
         new_party_one_master_key.public.q,
         new_party_two_master_key.public.q
     );
-
 
     //test signing:
     let message = BigInt::from(1234);
@@ -531,26 +537,39 @@ pub fn test_rotation(
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
 
     let (coin_flip_party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
-    let coin_flip_party2_first_message = Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
+    let coin_flip_party2_first_message =
+        Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
     let (coin_flip_party1_second_message, mut rotation1) =
         Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &m1, &r1);
 
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
     let mut rotation1_clone = rotation1.clone();
-    let mut coin_flip_party1_first_message_clone: coin_flip_optimal_rounds::Party1FirstMessage = coin_flip_party1_first_message.clone() ;
-    let mut coin_flip_party1_second_message_clone: coin_flip_optimal_rounds::Party1SecondMessage = coin_flip_party1_second_message.clone();
+    let mut coin_flip_party1_first_message_clone: coin_flip_optimal_rounds::Party1FirstMessage =
+        coin_flip_party1_first_message.clone();
+    let mut coin_flip_party1_second_message_clone: coin_flip_optimal_rounds::Party1SecondMessage =
+        coin_flip_party1_second_message.clone();
 
     let mut m1_clone: Secp256k1Scalar;
     let mut r1_clone: Secp256k1Scalar;
 
-    let mut coin_flip_party2_first_message_clone:coin_flip_optimal_rounds::Party2FirstMessage = coin_flip_party2_first_message.clone();
+    let mut coin_flip_party2_first_message_clone: coin_flip_optimal_rounds::Party2FirstMessage =
+        coin_flip_party2_first_message.clone();
 
-    while (Party1Private::check_rotated_key_bounds(&party_one_master_key.private, &rotation1_clone.rotation.to_big_int())) {
-         (coin_flip_party1_first_message_clone, m1_clone, r1_clone) = Rotation1::key_rotate_first_message();
-         coin_flip_party2_first_message_clone = Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
-         (coin_flip_party1_second_message_clone, rotation1_clone) =
-            Rotation1::key_rotate_second_message(&coin_flip_party2_first_message_clone, &m1_clone, &r1_clone);
+    while (Party1Private::check_rotated_key_bounds(
+        &party_one_master_key.private,
+        &rotation1_clone.rotation.to_big_int(),
+    )) {
+        (coin_flip_party1_first_message_clone, m1_clone, r1_clone) =
+            Rotation1::key_rotate_first_message();
+        coin_flip_party2_first_message_clone =
+            Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
+        (coin_flip_party1_second_message_clone, rotation1_clone) =
+            Rotation1::key_rotate_second_message(
+                &coin_flip_party2_first_message_clone,
+                &m1_clone,
+                &r1_clone,
+            );
         // temp_random = random1.clone();
     }
 
@@ -560,37 +579,36 @@ pub fn test_rotation(
         &coin_flip_party1_first_message_clone,
     );
 
-
-
     //rotation:
-    let (rotation_party_one_first_message, party_one_private_new) =
-        party_one_master_key.clone().rotation_first_message(&rotation1_clone);
+    let (rotation_party_one_first_message, party_one_private_new) = party_one_master_key
+        .clone()
+        .rotation_first_message(&rotation1_clone);
 
-    let result_rotate_party_one_first_message =
-        party_two_master_key.clone().rotate_first_message(&rotation2, &rotation_party_one_first_message);
+    let result_rotate_party_one_first_message = party_two_master_key
+        .clone()
+        .rotate_first_message(&rotation2, &rotation_party_one_first_message);
     assert!(result_rotate_party_one_first_message.is_ok());
 
     let (rotation_party_two_first_message, party_two_pdl_chal, party_two_paillier) =
         result_rotate_party_one_first_message.unwrap();
-
 
     let (rotation_party_one_second_message, party_one_pdl_decommit, alpha) =
         MasterKey1::rotation_second_message(
             &rotation_party_two_first_message,
             &party_one_private_new,
         );
-    let rotation_party_two_second_message =
-        MasterKey2::rotate_second_message(&party_two_pdl_chal);
+    let rotation_party_two_second_message = MasterKey2::rotate_second_message(&party_two_pdl_chal);
 
-    let result_rotate_party_two_second_message = party_one_master_key.clone().rotation_third_message(
-        &rotation_party_one_first_message,
-        party_one_private_new.clone(),
-        &rotation1,
-        &rotation_party_two_first_message,
-        &rotation_party_two_second_message,
-        party_one_pdl_decommit.clone(),
-        alpha,
-    );
+    let result_rotate_party_two_second_message =
+        party_one_master_key.clone().rotation_third_message(
+            &rotation_party_one_first_message,
+            party_one_private_new.clone(),
+            &rotation1,
+            &rotation_party_two_first_message,
+            &rotation_party_two_second_message,
+            party_one_pdl_decommit.clone(),
+            alpha,
+        );
     assert!(result_rotate_party_two_second_message.is_ok());
     let (rotation_party_one_third_message, party_one_master_key_rotated) =
         result_rotate_party_two_second_message.unwrap();
@@ -613,4 +631,3 @@ pub fn test_rotation(
     //     result_rotate_party_one_first_message.unwrap(),
     // )
 }
-
