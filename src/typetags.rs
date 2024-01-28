@@ -6,6 +6,7 @@ use crate::kms::ecdsa::two_party::MasterKey1;
 use crate::party_one::{CommWitness, EcKeyPair, EphEcKeyPair, HDPos, KeyGenFirstMsg, PaillierKeyPair, Party1Private, PDLdecommit, v};
 use crate::party_two::{EphEcKeyPair2, EphKeyGenFirstMsg, PDL2decommit, PDLFirstMessage, PDLSecondMessage};
 use crate::{Secp256k1Point, Secp256k1Scalar};
+use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
 use crate::kms::rotation::two_party::Rotation;
 
 
@@ -17,7 +18,7 @@ pub trait Value: Sync + Send + Any {
 
 #[macro_export]
 macro_rules! typetag_value {
-    ($struct_name:ident) => {
+    ($struct_name:ty) => {
         #[typetag::serde]
         impl Value for $struct_name {
             fn as_any(&self) -> &dyn std::any::Any {
@@ -59,6 +60,8 @@ typetag_value!(Party1FirstMessage);
 typetag_value!(ChainCode1);
 typetag_value!(MasterKey1);
 typetag_value!(Rotation);
+typetag_value!(RotationParty1Message1);
+
 
 
 

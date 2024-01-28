@@ -19,44 +19,44 @@ use serde::{Serialize,Deserialize};
 /// Proof Technique. protocol 7.3: Multiple coin tossing. which provide simulatble constant round
 /// coin toss
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct CFParty1FirstMessage {
+pub struct Party1FirstMessage {
     pub proof: PedersenProof,
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct CFParty2FirstMessage {
+pub struct Party2FirstMessage {
     pub seed: FE,
 }
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct CFParty1SecondMessage {
+pub struct Party1SecondMessage {
     pub proof: PedersenBlindingProof,
     pub seed: FE,
 }
-impl CFParty1FirstMessage {
-    pub fn commit() -> (CFParty1FirstMessage, FE, FE) {
+impl Party1FirstMessage {
+    pub fn commit() -> (Party1FirstMessage, FE, FE) {
         let seed: FE = ECScalar::new_random();
         let blinding: FE = ECScalar::new_random();
         let proof = PedersenProof::prove(&seed, &blinding);
-        (CFParty1FirstMessage { proof }, seed, blinding)
+        (Party1FirstMessage { proof }, seed, blinding)
     }
 }
-impl CFParty2FirstMessage {
-    pub fn share(proof: &PedersenProof) -> CFParty2FirstMessage {
+impl Party2FirstMessage {
+    pub fn share(proof: &PedersenProof) -> Party2FirstMessage {
         PedersenProof::verify(&proof).expect("{(m,r),c} proof failed");
         let seed: FE = ECScalar::new_random();
-        CFParty2FirstMessage { seed }
+        Party2FirstMessage { seed }
     }
 }
-impl CFParty1SecondMessage {
+impl Party1SecondMessage {
     pub fn reveal(
         party2seed: &FE,
         party1seed: &FE,
         party1blinding: &FE,
-    ) -> (CFParty1SecondMessage, FE) {
+    ) -> (Party1SecondMessage, FE) {
         let proof = PedersenBlindingProof::prove(&party1seed, &party1blinding);
         let coin_flip_result = &party1seed.to_big_int() ^ &party2seed.to_big_int();
         (
-            CFParty1SecondMessage {
+            Party1SecondMessage {
                 proof,
                 seed: party1seed.clone(),
             },
@@ -78,10 +78,10 @@ mod tests {
     use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds::*;
     #[test]
     pub fn test_coin_toss() {
-        let (party1_first_message, m1, r1) = CFParty1FirstMessage::commit();
-        let party2_first_message = CFParty2FirstMessage::share(&party1_first_message.proof);
+        let (party1_first_message, m1, r1) = Party1FirstMessage::commit();
+        let party2_first_message = Party2FirstMessage::share(&party1_first_message.proof);
         let (party1_second_message, random1) =
-            CFParty1SecondMessage::reveal(&party2_first_message.seed, &m1, &r1);
+            Party1SecondMessage::reveal(&party2_first_message.seed, &m1, &r1);
         let random2 = finalize(
             &party1_second_message.proof,
             &party2_first_message.seed,
