@@ -5,7 +5,7 @@ use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
 use crate::kms::Errors::{self, SignError};
 use crate::party_two::{
-    PDLFirstMessage as Party2PDLFirstMsg, PDLSecondMessage as Party2PDLSecondMsg,
+    Party2PDLFirstMessage as Party2PDLFirstMsg, Party2PDLSecondMessage as Party2PDLSecondMsg,
 };
 use crate::typetags::Value;
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
@@ -226,7 +226,7 @@ impl MasterKey1 {
     pub fn key_gen_third_message(
         party_two_pdl_first_message: &Party2PDLFirstMsg,
         party_one_private: &party_one::Party1Private,
-    ) -> (party_one::PDLFirstMessage, party_one::PDLdecommit, BigInt) {
+    ) -> (party_one::Party1PDLFirstMessage, party_one::Party1PDLDecommit, BigInt) {
         party_one::PaillierKeyPair::pdl_first_stage(
             &party_one_private,
             &party_two_pdl_first_message,
@@ -237,9 +237,9 @@ impl MasterKey1 {
         pdl_party_two_first_message: &Party2PDLFirstMsg,
         pdl_party_two_second_message: &Party2PDLSecondMsg,
         party_one_private: party_one::Party1Private,
-        pdl_decommit: party_one::PDLdecommit,
+        pdl_decommit: party_one::Party1PDLDecommit,
         alpha: BigInt,
-    ) -> Result<party_one::PDLSecondMessage, ()> {
+    ) -> Result<party_one::Party1PDLSecondMessage, ()> {
         party_one::PaillierKeyPair::pdl_second_stage(
             pdl_party_two_first_message,
             pdl_party_two_second_message,
@@ -265,7 +265,7 @@ impl MasterKey1 {
     pub fn rotation_second_message(
         rotate_party_two_message_one: &Party2PDLFirstMsg,
         party_one_private: &party_one::Party1Private,
-    ) -> (party_one::PDLFirstMessage, party_one::PDLdecommit, BigInt) {
+    ) -> (party_one::Party1PDLFirstMessage, party_one::Party1PDLDecommit, BigInt) {
         party_one::PaillierKeyPair::pdl_first_stage(
             &party_one_private,
             &rotate_party_two_message_one,
@@ -279,9 +279,9 @@ impl MasterKey1 {
         cf: &Rotation,
         rotate_party_two_first_message: &Party2PDLFirstMsg,
         rotate_party_two_second_message: &Party2PDLSecondMsg,
-        pdl_decommit: party_one::PDLdecommit,
+        pdl_decommit: party_one::Party1PDLDecommit,
         alpha: BigInt,
-    ) -> Result<((party_one::PDLSecondMessage, MasterKey1)), ()> {
+    ) -> Result<((party_one::Party1PDLSecondMessage, MasterKey1)), ()> {
         let rotate_party_one_third_message = party_one::PaillierKeyPair::pdl_second_stage(
             rotate_party_two_first_message,
             rotate_party_two_second_message,

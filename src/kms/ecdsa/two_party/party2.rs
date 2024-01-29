@@ -8,7 +8,7 @@ use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
 use crate::kms::rotation::two_party::Rotation;
 use crate::party_one::{
     EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, KeyGenFirstMsg as Party1KeyGenFirstMsg,
-    PDLFirstMessage as Party1PDLFirstMsg, PDLSecondMessage as Party1PDLSecondMsg,
+    Party1PDLFirstMessage as Party1PDLFirstMsg, Party1PDLSecondMessage as Party1PDLSecondMsg,
 };
 use crate::{party_one, party_two};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct SignMessage {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party2SecondMessage {
     pub key_gen_second_message: party_two::KeyGenSecondMsg,
-    pub pdl_first_message: party_two::PDLFirstMessage,
+    pub pdl_first_message: party_two::Party2PDLFirstMessage,
 }
 
 impl MasterKey2 {
@@ -175,7 +175,7 @@ impl MasterKey2 {
 
     pub fn key_gen_third_message(
         pdl_chal: &party_two::PDLchallenge,
-    ) -> party_two::PDLSecondMessage {
+    ) -> party_two::Party2PDLSecondMessage {
         party_two::PaillierPublic::pdl_decommit_c_tag_tag(&pdl_chal)
     }
 
@@ -234,7 +234,7 @@ impl MasterKey2 {
         party_one_rotation_first_message: &RotationParty1Message1,
     ) -> Result<
         (
-            party_two::PDLFirstMessage,
+            party_two::Party2PDLFirstMessage,
             party_two::PDLchallenge,
             party_two::PaillierPublic,
         ),
@@ -272,7 +272,7 @@ impl MasterKey2 {
     }
     pub fn rotate_second_message(
         pdl_chal: &party_two::PDLchallenge,
-    ) -> party_two::PDLSecondMessage {
+    ) -> party_two::Party2PDLSecondMessage {
         party_two::PaillierPublic::pdl_decommit_c_tag_tag(&pdl_chal)
     }
 

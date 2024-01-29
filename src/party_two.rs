@@ -29,7 +29,7 @@ use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::curv::elliptic::curves::traits::*;
 
 use super::party_one::{
-    PDLFirstMessage as Party1PDLFirstMessage, PDLSecondMessage as Party1PDLSecondMessage,
+    Party1PDLFirstMessage as Party1PDLFirstMessage, Party1PDLSecondMessage as Party1PDLSecondMessage,
 };
 use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::BigInt;
@@ -112,26 +112,26 @@ pub struct EphKeyGenSecondMsg {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLFirstMessage {
+pub struct Party2PDLFirstMessage {
     pub c_tag: BigInt,
     pub c_tag_tag: BigInt,
 }
 
-typetag_value!(PDLFirstMessage);
+typetag_value!(Party2PDLFirstMessage);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDL2decommit {
+pub struct Party2PDLDecommit {
     pub a: BigInt,
     pub b: BigInt,
     pub blindness: BigInt,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLSecondMessage {
-    pub decommit: PDL2decommit,
+pub struct Party2PDLSecondMessage {
+    pub decommit: Party2PDLDecommit,
 }
 
-typetag_value!(PDLSecondMessage);
+typetag_value!(Party2PDLSecondMessage);
 
 #[derive(Debug)]
 pub struct PDLchallenge {
@@ -258,7 +258,7 @@ impl PaillierPublic {
         )
     }
 
-    pub fn pdl_challenge(&self, other_share_public_share: &GE) -> (PDLFirstMessage, PDLchallenge) {
+    pub fn pdl_challenge(&self, other_share_public_share: &GE) -> (Party2PDLFirstMessage, PDLchallenge) {
         let a_fe: FE = ECScalar::new_random();
         let a = a_fe.to_big_int();
         let q = FE::q();
@@ -280,7 +280,7 @@ impl PaillierPublic {
         let q_tag = other_share_public_share.clone() * a_fe + g * b_fe;
 
         (
-            PDLFirstMessage {
+            Party2PDLFirstMessage {
                 c_tag: c_tag.clone(),
                 c_tag_tag: c_tag_tag.clone(),
             },
@@ -295,13 +295,13 @@ impl PaillierPublic {
         )
     }
 
-    pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> PDLSecondMessage {
-        let decommit = PDL2decommit {
+    pub fn pdl_decommit_c_tag_tag(pdl_chal: &PDLchallenge) -> Party2PDLSecondMessage {
+        let decommit = Party2PDLDecommit {
             a: pdl_chal.a.clone(),
             b: pdl_chal.b.clone(),
             blindness: pdl_chal.blindness.clone(),
         };
-        PDLSecondMessage { decommit }
+        Party2PDLSecondMessage { decommit }
     }
 
     pub fn verify_pdl(

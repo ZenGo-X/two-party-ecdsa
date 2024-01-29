@@ -37,7 +37,7 @@ use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::party_two::EphKeyGenFirstMsg as Party2EphKeyGenFirstMessage;
 use crate::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
 use crate::party_two::{
-    PDLFirstMessage as Party2PDLFirstMessage, PDLSecondMessage as Party2PDLSecondMessage,
+    Party2PDLFirstMessage as Party2PDLFirstMessage, Party2PDLSecondMessage as Party2PDLSecondMessage,
 };
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
@@ -129,21 +129,24 @@ pub struct Party1Private {
 typetag_value!(Party1Private);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLFirstMessage {
+pub struct Party1PDLFirstMessage {
     pub c_hat: BigInt,
 }
 
+typetag_value!(Party1PDLFirstMessage);
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PDLdecommit {
+pub struct Party1PDLDecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
 }
 
-typetag_value!(PDLdecommit);
+typetag_value!(Party1PDLDecommit);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLSecondMessage {
-    pub decommit: PDLdecommit,
+pub struct Party1PDLSecondMessage {
+    pub decommit: Party1PDLDecommit,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -387,7 +390,7 @@ impl PaillierKeyPair {
     pub fn pdl_first_stage(
         party_one_private: &Party1Private,
         pdl_first_message: &Party2PDLFirstMessage,
-    ) -> (PDLFirstMessage, PDLdecommit, BigInt) {
+    ) -> (Party1PDLFirstMessage, Party1PDLDecommit, BigInt) {
         let c_tag = pdl_first_message.c_tag.clone();
         let alpha = Paillier::decrypt(
             &party_one_private.paillier_priv.clone(),
@@ -402,8 +405,8 @@ impl PaillierKeyPair {
             &blindness,
         );
         (
-            PDLFirstMessage { c_hat },
-            PDLdecommit { blindness, q_hat },
+            Party1PDLFirstMessage { c_hat },
+            Party1PDLDecommit { blindness, q_hat },
             alpha.0.into_owned(),
         )
     }
@@ -412,9 +415,9 @@ impl PaillierKeyPair {
         pdl_party_two_first_message: &Party2PDLFirstMessage,
         pdl_party_two_second_message: &Party2PDLSecondMessage,
         party_one_private: Party1Private,
-        pdl_decommit: PDLdecommit,
+        pdl_decommit: Party1PDLDecommit,
         alpha: BigInt,
-    ) -> Result<PDLSecondMessage, ()> {
+    ) -> Result<Party1PDLSecondMessage, ()> {
         let a = pdl_party_two_second_message.decommit.a.clone();
         let b = pdl_party_two_second_message.decommit.b.clone();
         let blindness = pdl_party_two_second_message.decommit.blindness.clone();
@@ -425,7 +428,7 @@ impl PaillierKeyPair {
         let ax1 = a * party_one_private.x1.to_big_int();
         let alpha_test = ax1 + b;
         if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
-            Ok(PDLSecondMessage {
+            Ok(Party1PDLSecondMessage {
                 decommit: pdl_decommit,
             })
         } else {
