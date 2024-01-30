@@ -558,9 +558,6 @@ pub fn test_rotation(
     let mut m1_clone: Secp256k1Scalar;
     let mut r1_clone: Secp256k1Scalar;
 
-    println!("m1 = {:?}", m1);
-    println!("r1 = {:?}", r1);
-
     let mut coin_flip_party2_first_message_clone: coin_flip_optimal_rounds::Party2FirstMessage =
         coin_flip_party2_first_message.clone();
 
@@ -571,8 +568,6 @@ pub fn test_rotation(
 
         (coin_flip_party1_first_message_clone, m1_clone, r1_clone) =
             Rotation1::key_rotate_first_message();
-
-        println!("m1_clone = {}\nr1_clone = {}", m1_clone, r1_clone);
 
         coin_flip_party2_first_message_clone =
             Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
