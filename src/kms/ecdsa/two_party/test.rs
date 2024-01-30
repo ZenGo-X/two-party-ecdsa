@@ -536,9 +536,14 @@ pub fn test_rotation(
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
 
+    // Server First
     let (coin_flip_party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+
+    // Client First
     let coin_flip_party2_first_message =
         Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
+
+    // Server Second
     let (coin_flip_party1_second_message, mut rotation1) =
         Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &m1, &r1);
 
@@ -553,6 +558,9 @@ pub fn test_rotation(
     let mut m1_clone: Secp256k1Scalar;
     let mut r1_clone: Secp256k1Scalar;
 
+    println!("m1 = {:?}", m1);
+    println!("r1 = {:?}", r1);
+
     let mut coin_flip_party2_first_message_clone: coin_flip_optimal_rounds::Party2FirstMessage =
         coin_flip_party2_first_message.clone();
 
@@ -560,8 +568,12 @@ pub fn test_rotation(
         &party_one_master_key.private,
         &rotation1_clone.rotation.to_big_int(),
     )) {
+
         (coin_flip_party1_first_message_clone, m1_clone, r1_clone) =
             Rotation1::key_rotate_first_message();
+
+        println!("m1_clone = {}\nr1_clone = {}", m1_clone, r1_clone);
+
         coin_flip_party2_first_message_clone =
             Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
         (coin_flip_party1_second_message_clone, rotation1_clone) =
@@ -573,6 +585,7 @@ pub fn test_rotation(
         // temp_random = random1.clone();
     }
 
+    // Client Second
     let rotation2 = Rotation2::key_rotate_second_message(
         &coin_flip_party1_second_message_clone,
         &coin_flip_party2_first_message_clone,

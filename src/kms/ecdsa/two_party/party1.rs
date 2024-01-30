@@ -42,7 +42,7 @@ typetag_value!(RotationParty1Message1);
 impl MasterKey1 {
     // before rotation make sure both parties have the same key
     pub fn rotate(
-        self,
+        &self,
         cf: &Rotation,
         party_one_private: party_one::Party1Private,
         ek_new: &EncryptionKey,
@@ -58,7 +58,7 @@ impl MasterKey1 {
         MasterKey1 {
             public,
             private: party_one_private,
-            chain_code: self.chain_code,
+            chain_code: self.chain_code.clone(),
         }
     }
     pub fn get_child(&self, location_in_hir: Vec<BigInt>) -> MasterKey1 {
@@ -248,7 +248,7 @@ impl MasterKey1 {
             alpha,
         )
     }
-    pub fn rotation_first_message(self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
+    pub fn rotation_first_message(&self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
         let (ek_new, c_key_new, new_private, correct_key_proof, range_proof) =
             party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
         // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
@@ -273,7 +273,7 @@ impl MasterKey1 {
     }
 
     pub fn rotation_third_message(
-        self,
+        &self,
         rotation_first_message: &RotationParty1Message1,
         party_one_private_new: party_one::Party1Private,
         cf: &Rotation,

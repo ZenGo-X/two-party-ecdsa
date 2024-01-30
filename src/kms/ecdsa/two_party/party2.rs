@@ -26,7 +26,7 @@ pub struct Party2SecondMessage {
 }
 
 impl MasterKey2 {
-    pub fn rotate(self, cf: &Rotation, new_paillier: &party_two::PaillierPublic) -> MasterKey2 {
+    pub fn rotate(&self, cf: &Rotation, new_paillier: &party_two::PaillierPublic) -> MasterKey2 {
         let rand_str_invert_fe = cf.rotation.invert();
         let c_key_new = new_paillier.encrypted_secret_share.clone();
 
@@ -44,7 +44,7 @@ impl MasterKey2 {
                 &self.private,
                 &rand_str_invert_fe.to_big_int(),
             ),
-            chain_code: self.chain_code,
+            chain_code: self.chain_code.clone(),
         }
     }
     pub fn get_child(&self, location_in_hir: Vec<BigInt>) -> MasterKey2 {
@@ -229,7 +229,7 @@ impl MasterKey2 {
     // is rotation and not new key gen.
     // party2 needs to verify range proof on c_key_new and correct key proof on the new paillier keys
     pub fn rotate_first_message(
-        self,
+        &self,
         cf: &Rotation,
         party_one_rotation_first_message: &RotationParty1Message1,
     ) -> Result<
@@ -277,7 +277,7 @@ impl MasterKey2 {
     }
 
     pub fn rotate_third_message(
-        self,
+        &self,
         cf: &Rotation,
         party_two_paillier: &party_two::PaillierPublic,
         pdl_chal: &party_two::PDLchallenge,
