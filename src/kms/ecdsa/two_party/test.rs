@@ -27,6 +27,7 @@ use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
 use crate::kms::chain_code::two_party::{party1, party2};
+use crate::kms::ecdsa::two_party::party1::RotateCommitMessage1;
 pub use crate::kms::rotation::two_party::party1::Rotation1;
 pub use crate::kms::rotation::two_party::party2::Rotation2;
 pub use crate::kms::rotation::two_party::Rotation;
@@ -537,7 +538,7 @@ pub fn test_rotation(
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
 
     // Server First
-    let (coin_flip_party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+    let (coin_flip_party1_first_message, rotate_commit_message) = Rotation1::key_rotate_first_message();
 
     // Client First
     let coin_flip_party2_first_message =
@@ -545,7 +546,7 @@ pub fn test_rotation(
 
     // Server Second
     let (coin_flip_party1_second_message, mut rotation1) =
-        Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &m1, &r1);
+        Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &rotate_commit_message);
 
     //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
@@ -555,8 +556,7 @@ pub fn test_rotation(
     let mut coin_flip_party1_second_message_clone: coin_flip_optimal_rounds::Party1SecondMessage =
         coin_flip_party1_second_message.clone();
 
-    let mut m1_clone: Secp256k1Scalar;
-    let mut r1_clone: Secp256k1Scalar;
+    let mut rotate_commit_message_clone: RotateCommitMessage1;
 
     let mut coin_flip_party2_first_message_clone: coin_flip_optimal_rounds::Party2FirstMessage =
         coin_flip_party2_first_message.clone();
@@ -566,7 +566,7 @@ pub fn test_rotation(
         &rotation1_clone.rotation.to_big_int(),
     )) {
 
-        (coin_flip_party1_first_message_clone, m1_clone, r1_clone) =
+        (coin_flip_party1_first_message_clone, rotate_commit_message_clone) =
             Rotation1::key_rotate_first_message();
 
         coin_flip_party2_first_message_clone =
@@ -574,8 +574,7 @@ pub fn test_rotation(
         (coin_flip_party1_second_message_clone, rotation1_clone) =
             Rotation1::key_rotate_second_message(
                 &coin_flip_party2_first_message_clone,
-                &m1_clone,
-                &r1_clone,
+                &rotate_commit_message_clone,
             );
         // temp_random = random1.clone();
     }
