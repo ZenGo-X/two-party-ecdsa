@@ -26,7 +26,8 @@ use crate::curv::arithmetic::traits::Converter;
 use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
-use crate::kms::chain_code::two_party::{party1, party2};
+use crate::kms::chain_code::two_party::party1::ChainCode1;
+use crate::kms::chain_code::two_party::party2::ChainCode2;
 pub use crate::kms::rotation::two_party::party1::{Rotation1, RotateCommitMessage1};
 pub use crate::kms::rotation::two_party::party2::Rotation2;
 pub use crate::kms::rotation::two_party::Rotation;
@@ -395,26 +396,26 @@ pub fn test_key_gen() -> (MasterKey1, MasterKey2) {
 
     // chain code
     let (cc_party_one_first_message, cc_comm_witness, cc_ec_key_pair1) =
-        party1::ChainCode1::chain_code_first_message();
+        ChainCode1::chain_code_first_message();
     let (cc_party_two_first_message, cc_ec_key_pair2) =
-        party2::ChainCode2::chain_code_first_message();
-    let cc_party_one_second_message = party1::ChainCode1::chain_code_second_message(
+        ChainCode2::chain_code_first_message();
+    let cc_party_one_second_message = ChainCode1::chain_code_second_message(
         cc_comm_witness,
         &cc_party_two_first_message.d_log_proof,
     );
 
-    let cc_party_two_second_message = party2::ChainCode2::chain_code_second_message(
+    let cc_party_two_second_message = ChainCode2::chain_code_second_message(
         &cc_party_one_first_message,
         &cc_party_one_second_message,
     );
     assert!(cc_party_two_second_message.is_ok());
 
-    let party1_cc = party1::ChainCode1::compute_chain_code(
+    let party1_cc = ChainCode1::compute_chain_code(
         &cc_ec_key_pair1,
         &cc_party_two_first_message.public_share,
     );
 
-    let party2_cc = party2::ChainCode2::compute_chain_code(
+    let party2_cc = ChainCode2::compute_chain_code(
         &cc_ec_key_pair2,
         &cc_party_one_second_message.comm_witness.public_share,
     );

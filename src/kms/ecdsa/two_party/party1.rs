@@ -4,14 +4,11 @@ use super::{MasterKey1, MasterKey2, Party1Public};
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
 use crate::kms::Errors::{self, SignError};
-use crate::party_two::{
-    Party2PDLFirstMessage as Party2PDLFirstMsg, Party2PDLSecondMessage as Party2PDLSecondMsg,
-};
-use crate::{party_one, party_two::{self, EphKeyGenFirstMsg}, EncryptionKey};
+use crate::{party_one, party_two, EncryptionKey};
 
 use crate::curv::elliptic::curves::traits::ECScalar;
-use crate::kms::rotation::two_party::{party1, Rotation};
-use crate::party_one::Party1Private;
+use crate::kms::rotation::two_party::{Rotation};
+use crate::kms::rotation::two_party::party1::RotationParty1Message1;
 
 impl MasterKey1 {
     // before rotation make sure both parties have the same key
@@ -144,7 +141,7 @@ impl MasterKey1 {
     pub fn sign_second_message(
         &self,
         party_two_sign_message: &SignMessage,
-        eph_key_gen_first_message_party_two: &EphKeyGenFirstMsg,
+        eph_key_gen_first_message_party_two: &party_two::EphKeyGenFirstMsg,
         eph_ec_key_pair_party1: &party_one::EphEcKeyPair,
         message: &BigInt,
     ) -> Result<party_one::SignatureRecid, Errors> {
@@ -198,7 +195,7 @@ impl MasterKey1 {
     }
 
     pub fn key_gen_third_message(
-        party_two_pdl_first_message: &Party2PDLFirstMsg,
+        party_two_pdl_first_message: &party_two::Party2PDLFirstMessage,
         party_one_private: &party_one::Party1Private,
     ) -> (party_one::Party1PDLFirstMessage, party_one::Party1PDLDecommit, BigInt) {
         party_one::PaillierKeyPair::pdl_first_stage(
@@ -208,8 +205,8 @@ impl MasterKey1 {
     }
 
     pub fn key_gen_fourth_message(
-        pdl_party_two_first_message: &Party2PDLFirstMsg,
-        pdl_party_two_second_message: &Party2PDLSecondMsg,
+        pdl_party_two_first_message: &party_two::Party2PDLFirstMessage,
+        pdl_party_two_second_message: &party_two::Party2PDLSecondMessage,
         party_one_private: party_one::Party1Private,
         pdl_decommit: party_one::Party1PDLDecommit,
         alpha: BigInt,
@@ -222,12 +219,12 @@ impl MasterKey1 {
             alpha,
         )
     }
-    pub fn rotation_first_message(&self, cf: &Rotation) -> (party1::RotationParty1Message1, Party1Private) {
+    pub fn rotation_first_message(&self, cf: &Rotation) -> (RotationParty1Message1, party_one::Party1Private) {
         let (ek_new, c_key_new, new_private, correct_key_proof, range_proof) =
             party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
         // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
         (
-            party1::RotationParty1Message1 {
+            RotationParty1Message1 {
                 ek_new,
                 c_key_new,
                 correct_key_proof,
@@ -237,7 +234,7 @@ impl MasterKey1 {
         )
     }
     pub fn rotation_second_message(
-        rotate_party_two_message_one: &Party2PDLFirstMsg,
+        rotate_party_two_message_one: &party_two::Party2PDLFirstMessage,
         party_one_private: &party_one::Party1Private,
     ) -> (party_one::Party1PDLFirstMessage, party_one::Party1PDLDecommit, BigInt) {
         party_one::PaillierKeyPair::pdl_first_stage(
@@ -248,11 +245,11 @@ impl MasterKey1 {
 
     pub fn rotation_third_message(
         &self,
-        rotation_first_message: &party1::RotationParty1Message1,
+        rotation_first_message: &RotationParty1Message1,
         party_one_private_new: party_one::Party1Private,
         cf: &Rotation,
-        rotate_party_two_first_message: &Party2PDLFirstMsg,
-        rotate_party_two_second_message: &Party2PDLSecondMsg,
+        rotate_party_two_first_message: &party_two::Party2PDLFirstMessage,
+        rotate_party_two_second_message: &party_two::Party2PDLSecondMessage,
         pdl_decommit: party_one::Party1PDLDecommit,
         alpha: BigInt,
     ) -> Result<(party_one::Party1PDLSecondMessage, MasterKey1), ()> {

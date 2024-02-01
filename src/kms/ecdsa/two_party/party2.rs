@@ -5,13 +5,10 @@ use crate::curv::{
     BigInt, FE, GE,
 };
 
-use crate::kms::rotation::two_party::{Rotation, party1::RotationParty1Message1};
-use crate::party_one::{
-    EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, KeyGenFirstMsg as Party1KeyGenFirstMsg,
-    Party1PDLFirstMessage as Party1PDLFirstMsg, Party1PDLSecondMessage as Party1PDLSecondMsg,
-};
+use crate::kms::rotation::two_party::{Rotation};
 use crate::{party_one, party_two};
 use serde::{Deserialize, Serialize};
+use crate::kms::rotation::two_party::party1::RotationParty1Message1;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignMessage {
@@ -114,7 +111,7 @@ impl MasterKey2 {
     }
 
     pub fn key_gen_second_message(
-        party_one_first_message: &Party1KeyGenFirstMsg,
+        party_one_first_message: &party_one::KeyGenFirstMsg,
         party_one_second_message: &party_one::KeyGenParty1Message2,
     ) -> Result<
         (
@@ -181,8 +178,8 @@ impl MasterKey2 {
 
     pub fn key_gen_fourth_message(
         pdl_chal: &party_two::PDLchallenge,
-        party_one_pdl_first_message: &Party1PDLFirstMsg,
-        party_one_pdl_second_message: &Party1PDLSecondMsg,
+        party_one_pdl_first_message: &party_one::Party1PDLFirstMessage,
+        party_one_pdl_second_message: &party_one::Party1PDLSecondMessage,
     ) -> Result<(), ()> {
         party_two::PaillierPublic::verify_pdl(
             pdl_chal,
@@ -202,7 +199,7 @@ impl MasterKey2 {
         &self,
         ec_key_pair_party2: &party_two::EphEcKeyPair2,
         eph_comm_witness: party_two::EphCommWitness,
-        eph_party1_first_message: &Party1EphKeyGenFirstMsg,
+        eph_party1_first_message: &party_one::EphKeyGenFirstMsg,
         message: &BigInt,
     ) -> SignMessage {
         let eph_key_gen_second_message = party_two::EphKeyGenSecondMsg::verify_and_decommit(
@@ -281,8 +278,8 @@ impl MasterKey2 {
         cf: &Rotation,
         party_two_paillier: &party_two::PaillierPublic,
         pdl_chal: &party_two::PDLchallenge,
-        party_one_pdl_first_message: &Party1PDLFirstMsg,
-        party_one_pdl_second_message: &Party1PDLSecondMsg,
+        party_one_pdl_first_message: &party_one::Party1PDLFirstMessage,
+        party_one_pdl_second_message: &party_one::Party1PDLSecondMessage,
     ) -> Result<MasterKey2, ()> {
         match party_two::PaillierPublic::verify_pdl(
             pdl_chal,

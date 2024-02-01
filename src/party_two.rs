@@ -25,21 +25,15 @@ use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
 use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use crate::curv::cryptographic_primitives::proofs::ProofError;
-
+use crate::party_one;
 use crate::curv::elliptic::curves::traits::*;
 
-use super::party_one::{
-    Party1PDLFirstMessage as Party1PDLFirstMessage, Party1PDLSecondMessage as Party1PDLSecondMessage,
-};
 use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg;
-use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
-use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
@@ -184,8 +178,8 @@ impl KeyGenFirstMsg {
 
 impl KeyGenSecondMsg {
     pub fn verify_commitments_and_dlog_proof(
-        party_one_first_message: &Party1KeyGenFirstMessage,
-        party_one_second_message: &Party1KeyGenSecondMessage,
+        party_one_first_message: &party_one::KeyGenFirstMsg,
+        party_one_second_message: &party_one::KeyGenSecondMsg,
     ) -> Result<KeyGenSecondMsg, ProofError> {
         let party_one_zk_pok_blind_factor =
             &party_one_second_message.comm_witness.zk_pok_blind_factor;
@@ -306,8 +300,8 @@ impl PaillierPublic {
 
     pub fn verify_pdl(
         pdl_chal: &PDLchallenge,
-        party_one_pdl_first_message: &Party1PDLFirstMessage,
-        party_one_pdl_second_message: &Party1PDLSecondMessage,
+        party_one_pdl_first_message: &party_one::Party1PDLFirstMessage,
+        party_one_pdl_second_message: &party_one::Party1PDLSecondMessage,
     ) -> Result<(), ()> {
         let c_hat = party_one_pdl_first_message.c_hat.clone();
         let q_hat = party_one_pdl_second_message.decommit.q_hat.clone();
@@ -382,7 +376,7 @@ impl EphKeyGenFirstMsg {
 impl EphKeyGenSecondMsg {
     pub fn verify_and_decommit(
         comm_witness: EphCommWitness,
-        party_one_first_message: &Party1EphKeyGenFirstMsg,
+        party_one_first_message: &party_one::EphKeyGenFirstMsg,
     ) -> Result<EphKeyGenSecondMsg, ProofError> {
         let delta = ECDDHStatement {
             g1: GE::generator(),
