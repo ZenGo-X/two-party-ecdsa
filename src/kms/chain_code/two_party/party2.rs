@@ -1,8 +1,8 @@
 use crate::curv::cryptographic_primitives::{
     proofs::ProofError,
     twoparty::dh_key_exchange_variant_with_pok_comm::{
-        compute_pubkey, EcKeyPairDHPoK, Party1FirstMessageDHPoK, Party1SecondMessageDHPoK,
-        Party2FirstMessageDHPoK, Party2SecondMessageDHPoK,
+        compute_pubkey, DHPoKEcKeyPair, DHPoKParty1FirstMessage, DHPoKParty1SecondMessage,
+        DHPoKParty2FirstMessage, DHPoKParty2SecondMessage,
     },
 };
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, GE};
@@ -14,22 +14,22 @@ pub struct ChainCode2 {
 }
 
 impl ChainCode2 {
-    pub fn chain_code_first_message() -> (Party2FirstMessageDHPoK, EcKeyPairDHPoK) {
-        Party2FirstMessageDHPoK::create()
+    pub fn chain_code_first_message() -> (DHPoKParty2FirstMessage, DHPoKEcKeyPair) {
+        DHPoKParty2FirstMessage::create()
     }
 
     pub fn chain_code_second_message(
-        party_one_first_message: &Party1FirstMessageDHPoK,
-        party_one_second_message: &Party1SecondMessageDHPoK,
-    ) -> Result<Party2SecondMessageDHPoK, ProofError> {
-        Party2SecondMessageDHPoK::verify_commitments_and_dlog_proof(
+        party_one_first_message: &DHPoKParty1FirstMessage,
+        party_one_second_message: &DHPoKParty1SecondMessage,
+    ) -> Result<DHPoKParty2SecondMessage, ProofError> {
+        DHPoKParty2SecondMessage::verify_commitments_and_dlog_proof(
             party_one_first_message,
             party_one_second_message,
         )
     }
 
     pub fn compute_chain_code(
-        ec_key_pair: &EcKeyPairDHPoK,
+        ec_key_pair: &DHPoKEcKeyPair,
         party1_second_message_public_share: &GE,
     ) -> ChainCode2 {
         ChainCode2 {

@@ -1,7 +1,7 @@
 use crate::curv::cryptographic_primitives::{
     proofs::sigma_dlog::DLogProof,
     twoparty::dh_key_exchange_variant_with_pok_comm::{
-        compute_pubkey, CommWitnessDHPoK, EcKeyPairDHPoK, Party1FirstMessageDHPoK, Party1SecondMessageDHPoK,
+        compute_pubkey, DHPoKCommWitness, DHPoKEcKeyPair, DHPoKParty1FirstMessage, DHPoKParty1SecondMessage,
     },
 };
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, GE};
@@ -19,17 +19,17 @@ pub struct ChainCode1 {
 typetag_value!(ChainCode1);
 
 impl ChainCode1 {
-    pub fn chain_code_first_message() -> (Party1FirstMessageDHPoK, CommWitnessDHPoK, EcKeyPairDHPoK) {
-        Party1FirstMessageDHPoK::create_commitments()
+    pub fn chain_code_first_message() -> (DHPoKParty1FirstMessage, DHPoKCommWitness, DHPoKEcKeyPair) {
+        DHPoKParty1FirstMessage::create_commitments()
     }
     pub fn chain_code_second_message(
-        comm_witness: CommWitnessDHPoK,
+        comm_witness: DHPoKCommWitness,
         proof: &DLogProof,
-    ) -> Party1SecondMessageDHPoK {
-        Party1SecondMessageDHPoK::verify_and_decommit(comm_witness, proof).expect("")
+    ) -> DHPoKParty1SecondMessage {
+        DHPoKParty1SecondMessage::verify_and_decommit(comm_witness, proof).expect("")
     }
     pub fn compute_chain_code(
-        ec_key_pair: &EcKeyPairDHPoK,
+        ec_key_pair: &DHPoKEcKeyPair,
         party2_first_message_public_share: &GE,
     ) -> ChainCode1 {
         ChainCode1 {
