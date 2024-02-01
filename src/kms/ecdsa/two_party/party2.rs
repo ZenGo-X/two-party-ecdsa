@@ -9,7 +9,7 @@ use crate::kms::rotation::two_party::{Rotation};
 
 use serde::{Deserialize, Serialize};
 use crate::kms::rotation::two_party::party1::RotationParty1Message1;
-use crate::party_one::{Party1EphKeyGenFirstMessage, Party1KeyGenFirstMessage, Party1KeyGenMessage2, Party1PaillierKeyPair, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private};
+use crate::party_one::{Party1EphKeyGenFirstMessage, Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1PaillierKeyPair, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private};
 use crate::party_two::{compute_pubkey, Party2EcKeyPair, Party2EphCommWitness, Party2EphEcKeyPair2, Party2EphKeyGenFirstMessage, Party2EphKeyGenSecondMessage, Party2KeyGenFirstMessage, Party2KeyGenSecondMessage, Party2PaillierPublic, Party2PartialSig, Party2PDLchallenge, Party2PDLFirstMessage, Party2PDLSecondMessage, Party2Private};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -123,7 +123,7 @@ impl MasterKey2 {
 
     pub fn key_gen_second_message(
         party_one_first_message: &Party1KeyGenFirstMessage,
-        party_one_second_message: &Party1KeyGenMessage2,
+        party_one_second_message: &Party1KeyGenSecondMessage,
     ) -> Result<
         (
             Party2SecondMessage,

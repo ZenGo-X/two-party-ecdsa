@@ -9,7 +9,7 @@ use crate::EncryptionKey;
 use crate::curv::elliptic::curves::traits::ECScalar;
 use crate::kms::rotation::two_party::{Rotation};
 use crate::kms::rotation::two_party::party1::RotationParty1Message1;
-use crate::party_one::{Party1EphKeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair, Party1EphEcKeyPair, Party1EphKeyGenSecondMessage, Party1KeyGenFirstMessage, Party1KeyGenMessage2, Party1KeyGenSecondMessage, Party1PaillierKeyPair, Party1PDLDecommit, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private, Signature, SignatureRecid, verify, compute_pubkey};
+use crate::party_one::{Party1EphKeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair, Party1EphEcKeyPair, Party1EphKeyGenSecondMessage, Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1KeyGenCommWitness, Party1PaillierKeyPair, Party1PDLDecommit, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private, Signature, SignatureRecid, verify, compute_pubkey};
 use crate::party_two::{Party2EphKeyGenFirstMessage, Party2KeyGenFirstMessage, Party2PaillierPublic, Party2PDLFirstMessage, Party2PDLSecondMessage};
 
 impl MasterKey1 {
@@ -103,12 +103,12 @@ impl MasterKey1 {
         ec_key_pair_party1: &Party1EcKeyPair,
         proof: &DLogProof,
     ) -> (
-        Party1KeyGenMessage2,
+        Party1KeyGenSecondMessage,
         Party1PaillierKeyPair,
         Party1Private,
     ) {
         let key_gen_second_message =
-            Party1KeyGenSecondMessage::verify_and_decommit(comm_witness.clone(), proof).expect("");
+            Party1KeyGenCommWitness::verify_and_decommit(comm_witness.clone(), proof).expect("");
 
         let paillier_key_pair =
             Party1PaillierKeyPair::generate_keypair_and_encrypted_share(ec_key_pair_party1);
@@ -124,7 +124,7 @@ impl MasterKey1 {
         let correct_key_proof =
             Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
         (
-            Party1KeyGenMessage2 {
+            Party1KeyGenSecondMessage {
                 ecdh_second_message: key_gen_second_message,
                 ek: paillier_key_pair.ek.clone(),
                 c_key: paillier_key_pair.encrypted_share.clone(),

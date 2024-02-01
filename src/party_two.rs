@@ -26,7 +26,7 @@ use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
 use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use crate::curv::cryptographic_primitives::proofs::ProofError;
 use crate::curv::elliptic::curves::traits::*;
-use crate::party_one::{Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1EphKeyGenFirstMessage};
+use crate::party_one::{Party1KeyGenFirstMessage, Party1KeyGenCommWitness, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1EphKeyGenFirstMessage};
 use crate::curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use crate::curv::{BigInt, FE, GE};
 use crate::paillier::traits::{Add, Encrypt, Mul};
@@ -176,7 +176,7 @@ impl Party2KeyGenFirstMessage {
 impl Party2KeyGenSecondMessage {
     pub fn verify_commitments_and_dlog_proof(
         party_one_first_message: &Party1KeyGenFirstMessage,
-        party_one_second_message: &Party1KeyGenSecondMessage,
+        party_one_second_message: &Party1KeyGenCommWitness,
     ) -> Result<Party2KeyGenSecondMessage, ProofError> {
         let party_one_zk_pok_blind_factor =
             &party_one_second_message.comm_witness.zk_pok_blind_factor;

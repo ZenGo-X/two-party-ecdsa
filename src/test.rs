@@ -13,7 +13,7 @@ mod tests {
         let (party_one_first_message, comm_witness, _ec_key_pair_party1) =
             party_one::Party1KeyGenFirstMessage::create_commitments();
         let (party_two_first_message, _ec_key_pair_party2) = party_two::Party2KeyGenFirstMessage::create();
-        let party_one_second_message = party_one::Party1KeyGenSecondMessage::verify_and_decommit(
+        let party_one_second_message = party_one::Party1KeyGenCommWitness::verify_and_decommit(
             comm_witness,
             &party_two_first_message.d_log_proof,
         )
@@ -38,7 +38,7 @@ mod tests {
             party_two::Party2KeyGenFirstMessage::create_with_fixed_secret_share(ECScalar::from(
                 &BigInt::from(10_i32),
             ));
-        let party_one_second_message = party_one::Party1KeyGenSecondMessage::verify_and_decommit(
+        let party_one_second_message = party_one::Party1KeyGenCommWitness::verify_and_decommit(
             comm_witness,
             &party_two_first_message.d_log_proof,
         )

@@ -89,7 +89,7 @@ pub struct Party1KeyGenFirstMessage {
 typetag_value!(Party1KeyGenFirstMessage);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Party1KeyGenSecondMessage {
+pub struct Party1KeyGenCommWitness {
     pub comm_witness: Party1CommWitness,
 }
 
@@ -104,8 +104,8 @@ pub struct Party1PaillierKeyPair {
 typetag_value!(Party1PaillierKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Party1KeyGenMessage2 {
-    pub ecdh_second_message: Party1KeyGenSecondMessage,
+pub struct Party1KeyGenSecondMessage {
+    pub ecdh_second_message: Party1KeyGenCommWitness,
     pub ek: EncryptionKey,
     pub c_key: BigInt,
     pub correct_key_proof: NICorrectKeyProof,
@@ -266,13 +266,13 @@ impl Party1KeyGenFirstMessage {
     }
 }
 
-impl Party1KeyGenSecondMessage {
+impl Party1KeyGenCommWitness {
     pub fn verify_and_decommit(
         comm_witness: Party1CommWitness,
         proof: &DLogProof,
-    ) -> Result<Party1KeyGenSecondMessage, ProofError> {
+    ) -> Result<Party1KeyGenCommWitness, ProofError> {
         DLogProof::verify(proof)?;
-        Ok(Party1KeyGenSecondMessage { comm_witness })
+        Ok(Party1KeyGenCommWitness { comm_witness })
     }
 }
 
