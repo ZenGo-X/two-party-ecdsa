@@ -1,11 +1,11 @@
-use super::{hd_key, party1::KeyGenParty1Message2, MasterKey1, MasterKey2, Party2Public};
+use super::{hd_key, MasterKey1, MasterKey2, Party2Public};
 
 use crate::curv::{
     elliptic::curves::traits::{ECPoint, ECScalar},
     BigInt, FE, GE,
 };
-use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
-use crate::kms::rotation::two_party::Rotation;
+
+use crate::kms::rotation::two_party::{Rotation, party1::RotationParty1Message1};
 use crate::party_one::{
     EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, KeyGenFirstMsg as Party1KeyGenFirstMsg,
     Party1PDLFirstMessage as Party1PDLFirstMsg, Party1PDLSecondMessage as Party1PDLSecondMsg,
@@ -115,7 +115,7 @@ impl MasterKey2 {
 
     pub fn key_gen_second_message(
         party_one_first_message: &Party1KeyGenFirstMsg,
-        party_one_second_message: &KeyGenParty1Message2,
+        party_one_second_message: &party_one::KeyGenParty1Message2,
     ) -> Result<
         (
             Party2SecondMessage,

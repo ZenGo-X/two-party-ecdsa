@@ -7,46 +7,11 @@ use crate::kms::Errors::{self, SignError};
 use crate::party_two::{
     Party2PDLFirstMessage as Party2PDLFirstMsg, Party2PDLSecondMessage as Party2PDLSecondMsg,
 };
-use crate::typetags::Value;
-use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
-use crate::{
-    party_one,
-    party_two::{self, EphKeyGenFirstMsg},
-    typetag_value, EncryptionKey,
-};
+use crate::{party_one, party_two::{self, EphKeyGenFirstMsg}, EncryptionKey};
 
 use crate::curv::elliptic::curves::traits::ECScalar;
-use crate::kms::rotation::two_party::Rotation;
+use crate::kms::rotation::two_party::{party1, Rotation};
 use crate::party_one::Party1Private;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct KeyGenParty1Message2 {
-    pub ecdh_second_message: party_one::KeyGenSecondMsg,
-    pub ek: EncryptionKey,
-    pub c_key: BigInt,
-    pub correct_key_proof: NICorrectKeyProof,
-    pub range_proof: RangeProofNi,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RotationParty1Message1 {
-    pub ek_new: EncryptionKey,
-    pub c_key_new: BigInt,
-    pub correct_key_proof: NICorrectKeyProof,
-    pub range_proof: RangeProofNi,
-}
-
-typetag_value!(RotationParty1Message1);
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RotateCommitMessage1 {
-    pub seed: FE,
-    pub blinding: FE
-}
-
-typetag_value!(RotateCommitMessage1);
-
 
 impl MasterKey1 {
     // before rotation make sure both parties have the same key
@@ -139,7 +104,7 @@ impl MasterKey1 {
         ec_key_pair_party1: &party_one::EcKeyPair,
         proof: &DLogProof,
     ) -> (
-        KeyGenParty1Message2,
+        party_one::KeyGenParty1Message2,
         party_one::PaillierKeyPair,
         party_one::Party1Private,
     ) {
@@ -160,7 +125,7 @@ impl MasterKey1 {
         let correct_key_proof =
             party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
         (
-            KeyGenParty1Message2 {
+            party_one::KeyGenParty1Message2 {
                 ecdh_second_message: key_gen_second_message,
                 ek: paillier_key_pair.ek.clone(),
                 c_key: paillier_key_pair.encrypted_share.clone(),
@@ -257,12 +222,12 @@ impl MasterKey1 {
             alpha,
         )
     }
-    pub fn rotation_first_message(&self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
+    pub fn rotation_first_message(&self, cf: &Rotation) -> (party1::RotationParty1Message1, Party1Private) {
         let (ek_new, c_key_new, new_private, correct_key_proof, range_proof) =
             party_one::Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
         // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
         (
-            RotationParty1Message1 {
+            party1::RotationParty1Message1 {
                 ek_new,
                 c_key_new,
                 correct_key_proof,
@@ -283,7 +248,7 @@ impl MasterKey1 {
 
     pub fn rotation_third_message(
         &self,
-        rotation_first_message: &RotationParty1Message1,
+        rotation_first_message: &party1::RotationParty1Message1,
         party_one_private_new: party_one::Party1Private,
         cf: &Rotation,
         rotate_party_two_first_message: &Party2PDLFirstMsg,

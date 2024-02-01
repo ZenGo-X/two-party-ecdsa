@@ -107,6 +107,15 @@ pub struct PaillierKeyPair {
 typetag_value!(PaillierKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct KeyGenParty1Message2 {
+    pub ecdh_second_message: KeyGenSecondMsg,
+    pub ek: EncryptionKey,
+    pub c_key: BigInt,
+    pub correct_key_proof: NICorrectKeyProof,
+    pub range_proof: RangeProofNi,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SignatureRecid {
     pub s: BigInt,
     pub r: BigInt,

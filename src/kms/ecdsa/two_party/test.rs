@@ -27,12 +27,10 @@ use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
 use crate::kms::chain_code::two_party::{party1, party2};
-use crate::kms::ecdsa::two_party::party1::RotateCommitMessage1;
-pub use crate::kms::rotation::two_party::party1::Rotation1;
+pub use crate::kms::rotation::two_party::party1::{Rotation1, RotateCommitMessage1};
 pub use crate::kms::rotation::two_party::party2::Rotation2;
 pub use crate::kms::rotation::two_party::Rotation;
 use crate::party_one::Party1Private;
-use crate::Secp256k1Scalar;
 
 #[test]
 fn test_recovery_from_openssl() {
@@ -539,6 +537,7 @@ pub fn test_rotation(
 
     // Server First
     let (coin_flip_party1_first_message, rotate_commit_message) = Rotation1::key_rotate_first_message();
+
 
     // Client First
     let coin_flip_party2_first_message =
