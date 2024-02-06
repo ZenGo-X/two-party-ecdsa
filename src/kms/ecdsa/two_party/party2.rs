@@ -25,12 +25,12 @@ pub struct Party2SecondMessage {
     pub pdl_first_message: Party2PDLFirstMessage,
 }
 
+// TODO: move back to Gotham
 #[derive(Serialize, Deserialize)]
 pub struct Party2SignSecondMessage {
     pub message: BigInt,
     pub party_two_sign_message: Party2SignFirstMessage,
-    pub x_pos_child_key: BigInt,
-    pub y_pos_child_key: BigInt,
+    pub pos_child_key: Vec<BigInt>
 }
 
 impl MasterKey2 {
