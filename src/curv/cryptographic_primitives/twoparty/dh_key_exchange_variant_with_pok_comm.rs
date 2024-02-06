@@ -5,8 +5,6 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 /// in ECDH Alice chooses at random a secret "a" and sends Bob public key A = aG
 /// Bob chooses at random a secret "b" and sends to Alice B = bG.
 /// Both parties can compute a joint secret: C =aB = bA = abG which cannot be computed by
@@ -24,99 +22,56 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use serde::{Serialize,Deserialize};
-use crate::party_one::Value;
-use crate::party_two::PDLFirstMessage;
+use crate::typetag_value;
+use crate::typetags::Value;
+use serde::{Deserialize, Serialize};
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 const SECURITY_BITS: usize = 256;
 
-
-#[typetag::serde]
-impl Value for EcKeyPairDHPoK {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "EcKeyPairDHPoK"
-    }
-}
-
-impl Display for EcKeyPairDHPoK {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EcKeyPairDHPoK {
+pub struct DHPoKEcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
 
+typetag_value!(DHPoKEcKeyPair);
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CommWitnessDHPoK {
+pub struct DHPoKCommWitness {
     pub pk_commitment_blind_factor: BigInt,
     pub zk_pok_blind_factor: BigInt,
     pub public_share: GE,
     pub d_log_proof: DLogProof,
 }
 
-#[typetag::serde]
-impl Value for CommWitnessDHPoK {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "CommWitnessDHPoK"
-    }
-}
-
-impl Display for CommWitnessDHPoK {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[typetag::serde]
-impl Value for Party1FirstMessage {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "Party1FirstMessage"
-    }
-}
-
-impl Display for Party1FirstMessage {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+typetag_value!(DHPoKCommWitness);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Party1FirstMessage {
+pub struct DHPoKParty1FirstMessage {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
 }
+
+typetag_value!(DHPoKParty1FirstMessage);
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Party2FirstMessage {
+pub struct DHPoKParty2FirstMessage {
     pub d_log_proof: DLogProof,
     pub public_share: GE,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Party1SecondMessage {
-    pub comm_witness: CommWitnessDHPoK,
+pub struct DHPoKParty1SecondMessage {
+    pub comm_witness: DHPoKCommWitness,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Party2SecondMessage {}
+pub struct DHPoKParty2SecondMessage {}
 
-impl Party1FirstMessage {
-    pub fn create_commitments() -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPairDHPoK) {
+impl DHPoKParty1FirstMessage {
+    pub fn create_commitments() -> (DHPoKParty1FirstMessage, DHPoKCommWitness, DHPoKEcKeyPair) {
         let base: GE = ECPoint::generator();
 
         let secret_share: FE = ECScalar::new_random();
@@ -138,16 +93,16 @@ impl Party1FirstMessage {
                 .bytes_compressed_to_big_int(),
             &zk_pok_blind_factor,
         );
-        let ec_key_pair = EcKeyPairDHPoK {
+        let ec_key_pair = DHPoKEcKeyPair {
             public_share,
             secret_share,
         };
         (
-            Party1FirstMessage {
+            DHPoKParty1FirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitnessDHPoK {
+            DHPoKCommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -159,7 +114,7 @@ impl Party1FirstMessage {
 
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
-    ) -> (Party1FirstMessage, CommWitnessDHPoK, EcKeyPairDHPoK) {
+    ) -> (DHPoKParty1FirstMessage, DHPoKCommWitness, DHPoKEcKeyPair) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
 
@@ -179,16 +134,16 @@ impl Party1FirstMessage {
             &zk_pok_blind_factor,
         );
 
-        let ec_key_pair = EcKeyPairDHPoK {
+        let ec_key_pair = DHPoKEcKeyPair {
             public_share,
             secret_share,
         };
         (
-            Party1FirstMessage {
+            DHPoKParty1FirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitnessDHPoK {
+            DHPoKCommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -199,27 +154,27 @@ impl Party1FirstMessage {
     }
 }
 
-impl Party1SecondMessage {
+impl DHPoKParty1SecondMessage {
     pub fn verify_and_decommit(
-        comm_witness: CommWitnessDHPoK,
+        comm_witness: DHPoKCommWitness,
         proof: &DLogProof,
-    ) -> Result<Party1SecondMessage, ProofError> {
+    ) -> Result<DHPoKParty1SecondMessage, ProofError> {
         DLogProof::verify(proof)?;
-        Ok(Party1SecondMessage { comm_witness })
+        Ok(DHPoKParty1SecondMessage { comm_witness })
     }
 }
-impl Party2FirstMessage {
-    pub fn create() -> (Party2FirstMessage, EcKeyPairDHPoK) {
+impl DHPoKParty2FirstMessage {
+    pub fn create() -> (DHPoKParty2FirstMessage, DHPoKEcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
         let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
-        let ec_key_pair = EcKeyPairDHPoK {
+        let ec_key_pair = DHPoKEcKeyPair {
             public_share,
             secret_share,
         };
         (
-            Party2FirstMessage {
+            DHPoKParty2FirstMessage {
                 d_log_proof,
                 public_share,
             },
@@ -227,16 +182,18 @@ impl Party2FirstMessage {
         )
     }
 
-    pub fn create_with_fixed_secret_share(secret_share: FE) -> (Party2FirstMessage, EcKeyPairDHPoK) {
+    pub fn create_with_fixed_secret_share(
+        secret_share: FE,
+    ) -> (DHPoKParty2FirstMessage, DHPoKEcKeyPair) {
         let base: GE = ECPoint::generator();
         let public_share = base * secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
-        let ec_key_pair = EcKeyPairDHPoK {
+        let ec_key_pair = DHPoKEcKeyPair {
             public_share,
             secret_share,
         };
         (
-            Party2FirstMessage {
+            DHPoKParty2FirstMessage {
                 d_log_proof,
                 public_share,
             },
@@ -245,11 +202,11 @@ impl Party2FirstMessage {
     }
 }
 
-impl Party2SecondMessage {
+impl DHPoKParty2SecondMessage {
     pub fn verify_commitments_and_dlog_proof(
-        party_one_first_message: &Party1FirstMessage,
-        party_one_second_message: &Party1SecondMessage,
-    ) -> Result<Party2SecondMessage, ProofError> {
+        party_one_first_message: &DHPoKParty1FirstMessage,
+        party_one_second_message: &DHPoKParty1SecondMessage,
+    ) -> Result<DHPoKParty2SecondMessage, ProofError> {
         let party_one_pk_commitment = &party_one_first_message.pk_commitment;
         let party_one_zk_pok_commitment = &party_one_first_message.zk_pok_commitment;
         let party_one_zk_pok_blind_factor =
@@ -283,10 +240,10 @@ impl Party2SecondMessage {
 
         assert!(flag);
         DLogProof::verify(&party_one_d_log_proof)?;
-        Ok(Party2SecondMessage {})
+        Ok(DHPoKParty2SecondMessage {})
     }
 }
-pub fn compute_pubkey(local_share: &EcKeyPairDHPoK, other_share_public_share: &GE) -> GE {
+pub fn compute_pubkey(local_share: &DHPoKEcKeyPair, other_share_public_share: &GE) -> GE {
     other_share_public_share * &local_share.secret_share
 }
 
@@ -297,15 +254,15 @@ mod tests {
     #[test]
     fn test_dh_key_exchange() {
         let (kg_party_one_first_message, kg_comm_witness, kg_ec_key_pair_party1) =
-            Party1FirstMessage::create_commitments();
-        let (kg_party_two_first_message, kg_ec_key_pair_party2) = Party2FirstMessage::create();
-        let kg_party_one_second_message = Party1SecondMessage::verify_and_decommit(
+            DHPoKParty1FirstMessage::create_commitments();
+        let (kg_party_two_first_message, kg_ec_key_pair_party2) = DHPoKParty2FirstMessage::create();
+        let kg_party_one_second_message = DHPoKParty1SecondMessage::verify_and_decommit(
             kg_comm_witness,
             &kg_party_two_first_message.d_log_proof,
         )
         .expect("failed to verify and decommit");
 
-        let _kg_party_two_second_message = Party2SecondMessage::verify_commitments_and_dlog_proof(
+        let _kg_party_two_second_message = DHPoKParty2SecondMessage::verify_commitments_and_dlog_proof(
             &kg_party_one_first_message,
             &kg_party_one_second_message,
         )

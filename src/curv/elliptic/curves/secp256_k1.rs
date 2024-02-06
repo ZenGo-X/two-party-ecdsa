@@ -16,13 +16,14 @@
 // The Public Key codec: Point <> SecretKey
 //
 
-use std::any::Any;
 use super::traits::{ECPoint, ECScalar};
 use crate::curv::arithmetic::traits::{Converter, Modulo};
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::BigInt;
 use crate::curv::ErrorKey;
+use crate::typetag_value;
+use crate::typetags::Value;
 use rand::{thread_rng, Rng};
 use secp256k1::constants::{
     CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
@@ -33,13 +34,13 @@ use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeStruct;
 use serde::ser::{Serialize, Serializer};
 use serde::{Deserialize, Deserializer};
+use std::any::Any;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, Mul};
 use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
-use crate::party_one::{Value};
 
 pub type SK = SecretKey;
 pub type PK = PublicKey;
@@ -50,28 +51,15 @@ pub struct Secp256k1Scalar {
     fe: SK,
 }
 
+typetag_value!(Secp256k1Scalar);
+
 #[derive(Clone, Debug, Copy)]
 pub struct Secp256k1Point {
     purpose: &'static str,
     ge: PK,
 }
 
-#[typetag::serde]
-impl Value for Secp256k1Point {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "Secp256k1Point"
-    }
-}
-
-impl Display for Secp256k1Point {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+typetag_value!(Secp256k1Point);
 
 pub type GE = Secp256k1Point;
 pub type FE = Secp256k1Scalar;
@@ -246,8 +234,8 @@ impl<'o> Add<&'o Secp256k1Scalar> for Secp256k1Scalar {
 
 impl Serialize for Secp256k1Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -255,8 +243,8 @@ impl Serialize for Secp256k1Scalar {
 
 impl<'de> Deserialize<'de> for Secp256k1Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Secp256k1Scalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256k1ScalarVisitor)
     }
@@ -525,8 +513,8 @@ impl<'o> Add<&'o Secp256k1Point> for &'o Secp256k1Point {
 
 impl Serialize for Secp256k1Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let mut state = serializer.serialize_struct("Secp256k1Point", 2)?;
         state.serialize_field("x", &self.x_coor().unwrap().to_hex())?;
@@ -537,8 +525,8 @@ impl Serialize for Secp256k1Point {
 
 impl<'de> Deserialize<'de> for Secp256k1Point {
     fn deserialize<D>(deserializer: D) -> Result<Secp256k1Point, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let fields = &["x", "y"];
         deserializer.deserialize_struct("Secp256k1Point", fields, Secp256k1PointVisitor)

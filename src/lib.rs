@@ -21,15 +21,16 @@ const SECURITY_BITS: usize = 256;
 pub mod bulletproofs;
 pub mod centipede;
 pub mod curv;
+pub mod kms;
 pub mod paillier;
 pub mod party_one;
 pub mod party_two;
 pub mod zk_paillier;
-pub mod kms;
 
 mod test;
+pub mod typetags; // for std::any::Any and downcast_ref functionality
 
-use serde::{Serialize,Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub use crate::centipede::juggling::proof_system::{Helgamal, Helgamalsegmented, Witness};
 pub use crate::curv::cryptographic_primitives::proofs::{sigma_ec_ddh::ECDDHProof, ProofError};

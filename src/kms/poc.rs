@@ -16,12 +16,12 @@
 #![allow(non_snake_case)]
 #![cfg(test)]
 
-use crate::kms::ecdsa::two_party::{MasterKey1 as EcdsaMasterKey1, MasterKey2 as EcdsaMasterKey2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::{
     elliptic::curves::traits::{ECPoint, ECScalar},
     FE, GE,
 };
+use crate::kms::ecdsa::two_party::{MasterKey1 as EcdsaMasterKey1, MasterKey2 as EcdsaMasterKey2};
 
 #[test]
 fn poc_schnorr_ecdsa() {

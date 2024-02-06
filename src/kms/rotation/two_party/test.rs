@@ -7,10 +7,10 @@ mod tests {
     #[test]
     fn test_coin_flip() {
         //coin flip:
-        let (party1_first_message, m1, r1) = Rotation1::key_rotate_first_message();
+        let (party1_first_message, rotate_commit_message) = Rotation1::key_rotate_first_message();
         let party2_first_message = Rotation2::key_rotate_first_message(&party1_first_message);
         let (party1_second_message, random1) =
-            Rotation1::key_rotate_second_message(&party2_first_message, &m1, &r1);
+            Rotation1::key_rotate_second_message(&party2_first_message, &rotate_commit_message);
         let random2 = Rotation2::key_rotate_second_message(
             &party1_second_message,
             &party2_first_message,

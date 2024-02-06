@@ -17,12 +17,12 @@ use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
+use serde::{Deserialize, Serialize};
 use std::cmp;
-use std::ops::{Mul, Shl};
 use std::fmt::{Debug, Display, Formatter};
-use serde::{Serialize, Deserialize};
+use std::ops::Shl;
 
-use super::{party_one, SECURITY_BITS};
+use super::{typetag_value, SECURITY_BITS};
 pub use crate::curv::arithmetic::traits::*;
 
 use crate::curv::elliptic::curves::traits::*;
@@ -34,11 +34,7 @@ use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 pub use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
 use crate::curv::cryptographic_primitives::proofs::sigma_ec_ddh::*;
 use crate::curv::cryptographic_primitives::proofs::ProofError;
-use crate::party_two::EphKeyGenFirstMsg as Party2EphKeyGenFirstMessage;
-use crate::party_two::EphKeyGenSecondMsg as Party2EphKeyGenSecondMessage;
-use crate::party_two::{
-    PDLFirstMessage as Party2PDLFirstMessage, PDLSecondMessage as Party2PDLSecondMessage,
-};
+use crate::party_two::{Party2EphKeyGenFirstMessage, Party2EphKeyGenSecondMessage, Party2PDLFirstMessage, Party2PDLSecondMessage};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
@@ -46,218 +42,74 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use std::any::{Any};
-use secp256k1::Secp256k1;
 
+use crate::typetags::Value;
 use crate::Error::{self, InvalidSig};
 
-#[typetag::serde]
-pub trait Value: Sync + Send + Any {
-    fn as_any(&self) -> &dyn Any;
-    fn type_name(&self) -> &str;
-}
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct HDPos {
+pub struct Party1HDPos {
     pub pos: u32,
 }
+
+typetag_value!(Party1HDPos);
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct v {
     pub value: String,
 }
 
-#[typetag::serde]
-impl Value for HDPos {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "HDPos"
-    }
-}
-
-#[typetag::serde]
-impl Value for KeyGenFirstMsg {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "KeyGenFirstMsg"
-    }
-}
-
-#[typetag::serde]
-impl Value for CommWitness {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "CommWitness"
-    }
-}
-
-#[typetag::serde]
-impl Value for EcKeyPair {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "EcKeyPair"
-    }
-}
-
-#[typetag::serde]
-impl Value for v {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "v"
-    }
-}
-
-#[typetag::serde]
-impl Value for PaillierKeyPair {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "PaillierKeyPair"
-    }
-}
-
-#[typetag::serde]
-impl Value for Party1Private {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "Party1Private"
-    }
-}
-
-#[typetag::serde]
-impl Value for PDLdecommit {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "PDLdecommit"
-    }
-}
-
-#[typetag::serde]
-impl Value for EphEcKeyPair {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "EphEcKeyPair"
-    }
-}
-
-impl Display for EphEcKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for v {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for CommWitness {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-
-impl Display for PDLdecommit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for KeyGenFirstMsg {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for EcKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for PaillierKeyPair {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for Party1Private {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Display for HDPos {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+typetag_value!(v);
 
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EcKeyPair {
+pub struct Party1EcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
 
+typetag_value!(Party1EcKeyPair);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CommWitness {
+pub struct Party1CommWitness {
     pub pk_commitment_blind_factor: BigInt,
     pub zk_pok_blind_factor: BigInt,
     pub public_share: GE,
     pub d_log_proof: DLogProof,
 }
 
+typetag_value!(Party1CommWitness);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct KeyGenFirstMsg {
+pub struct Party1KeyGenFirstMessage {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
 }
 
+typetag_value!(Party1KeyGenFirstMessage);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct KeyGenSecondMsg {
-    pub comm_witness: CommWitness,
+pub struct Party1KeyGenCommWitness {
+    pub comm_witness: Party1CommWitness,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PaillierKeyPair {
+pub struct Party1PaillierKeyPair {
     pub ek: EncryptionKey,
     dk: DecryptionKey,
     pub encrypted_share: BigInt,
-    pub encrypted_share_minus_q_thirds: Option<BigInt>,
     randomness: BigInt,
-    randomness_q: Option<BigInt>,
+}
+
+typetag_value!(Party1PaillierKeyPair);
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Party1KeyGenSecondMessage {
+    pub ecdh_second_message: Party1KeyGenCommWitness,
+    pub ek: EncryptionKey,
+    pub c_key: BigInt,
+    pub correct_key_proof: NICorrectKeyProof,
+    pub range_proof: RangeProofNi,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -276,63 +128,61 @@ pub struct Signature {
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct Party1Private {
     x1: FE,
-    x1_minus_q_thirds: Option<FE>,
     paillier_priv: DecryptionKey,
     c_key_randomness: BigInt,
 }
 
+typetag_value!(Party1Private);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLFirstMessage {
+pub struct Party1PDLFirstMessage {
     pub c_hat: BigInt,
 }
 
+typetag_value!(Party1PDLFirstMessage);
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PDLdecommit {
+pub struct Party1PDLDecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
 }
 
+typetag_value!(Party1PDLDecommit);
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PDLSecondMessage {
-    pub decommit: PDLdecommit,
+pub struct Party1PDLSecondMessage {
+    pub decommit: Party1PDLDecommit,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EphEcKeyPair {
+pub struct Party1EphEcKeyPair {
     pub public_share: GE,
     secret_share: FE,
 }
 
+typetag_value!(Party1EphEcKeyPair);
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EphKeyGenFirstMsg {
+pub struct Party1EphKeyGenFirstMessage {
     pub d_log_proof: ECDDHProof,
     pub public_share: GE,
     pub c: GE, //c = secret_share * base_point2
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EphKeyGenSecondMsg {}
+pub struct Party1EphKeyGenSecondMessage {}
 
 //****************** End: Party One structs ******************//
 
-impl KeyGenFirstMsg {
-    //in Lindell's protocol range proof works only for x1 \in {q/3 , ... , 2q/3}
-    pub fn get_lindell_secret_share_bounds() -> (BigInt, BigInt) {
-        let lower_bound: BigInt = FE::q().div_floor(&BigInt::from(3));
-        let upper_bound: BigInt = lower_bound.clone().mul(&BigInt::from(2));
-        (lower_bound, upper_bound)
-    }
-
-    pub fn get_secret_share_in_range(lower_bound: &BigInt, upper_bound: &BigInt) -> FE {
-        ECScalar::from(&BigInt::sample_range(&lower_bound, &upper_bound))
-    }
-
-    pub fn create_commitments() -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
+impl Party1KeyGenFirstMessage {
+    pub fn create_commitments() -> (Party1KeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair) {
         let base: GE = ECPoint::generator();
-        let bounds = Self::get_lindell_secret_share_bounds();
-        let secret_share: FE = Self::get_secret_share_in_range(&bounds.0, &bounds.1);
+
+        let secret_share: FE = ECScalar::new_random();
+        //in Lindell's protocol range proof works only for x1<q/3
+        let secret_share: FE =
+            ECScalar::from(&secret_share.to_big_int().div_floor(&BigInt::from(3)));
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -351,16 +201,16 @@ impl KeyGenFirstMsg {
                 .bytes_compressed_to_big_int(),
             &zk_pok_blind_factor,
         );
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = Party1EcKeyPair {
             public_share,
             secret_share,
         };
         (
-            KeyGenFirstMsg {
+            Party1KeyGenFirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitness {
+            Party1CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -372,10 +222,11 @@ impl KeyGenFirstMsg {
 
     pub fn create_commitments_with_fixed_secret_share(
         secret_share: FE,
-    ) -> (KeyGenFirstMsg, CommWitness, EcKeyPair) {
-        let bounds: (BigInt, BigInt) = Self::get_lindell_secret_share_bounds();
-        assert!(secret_share.to_big_int().gt(&bounds.0) && secret_share.to_big_int().lt(&bounds.1));
-
+    ) -> (Party1KeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair) {
+        //in Lindell's protocol range proof works only for x1<q/3
+        let sk_bigint = secret_share.to_big_int();
+        let q_third = FE::q();
+        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3)));
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -395,16 +246,16 @@ impl KeyGenFirstMsg {
             &zk_pok_blind_factor,
         );
 
-        let ec_key_pair = EcKeyPair {
+        let ec_key_pair = Party1EcKeyPair {
             public_share,
             secret_share,
         };
         (
-            KeyGenFirstMsg {
+            Party1KeyGenFirstMessage {
                 pk_commitment,
                 zk_pok_commitment,
             },
-            CommWitness {
+            Party1CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
                 public_share: ec_key_pair.public_share,
@@ -415,13 +266,13 @@ impl KeyGenFirstMsg {
     }
 }
 
-impl KeyGenSecondMsg {
+impl Party1KeyGenCommWitness {
     pub fn verify_and_decommit(
-        comm_witness: CommWitness,
+        comm_witness: Party1CommWitness,
         proof: &DLogProof,
-    ) -> Result<KeyGenSecondMsg, ProofError> {
+    ) -> Result<Party1KeyGenCommWitness, ProofError> {
         DLogProof::verify(proof)?;
-        Ok(KeyGenSecondMsg { comm_witness })
+        Ok(Party1KeyGenCommWitness { comm_witness })
     }
 }
 
@@ -430,29 +281,63 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 }
 
 impl Party1Private {
-    pub fn check_rotated_key_bounds(
-        party_one_private: &Party1Private,
-        factor: &BigInt,
-    ) -> bool {
+    pub fn check_rotated_key_bounds(party_one_private: &Party1Private, factor: &BigInt) -> bool {
         let factor_fe: FE = ECScalar::from(factor);
         let x1_new: FE = factor_fe * party_one_private.x1;
 
         x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3))
     }
+    pub fn refresh_private_key(
+        party_one_private: &Party1Private,
+        factor: &BigInt,
+    ) -> (
+        EncryptionKey,
+        BigInt,
+        Party1Private,
+        NICorrectKeyProof,
+        RangeProofNi,
+    ) {
+        let (ek_new, dk_new) = Paillier::keypair().keys();
+        let randomness = Randomness::sample(&ek_new.clone());
+        let factor_fe: FE = ECScalar::from(factor);
+        let x1_new: FE = *&party_one_private.x1 * factor_fe;
+        let c_key_new = Paillier::encrypt_with_chosen_randomness(
+            &ek_new.clone(),
+            RawPlaintext::from(x1_new.to_big_int()),
+            &randomness,
+        )
+        .0
+        .into_owned();
 
-    pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
-        let order = FE::q();
-        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
-        //x1-q/3
-        let x1_minus_lower_bound = BigInt::mod_sub(
-            &ec_key.secret_share.to_big_int().clone(),
-            &lower_bound,
-            &order,
+        let party_one_private_new = Party1Private {
+            x1: x1_new.clone(),
+            paillier_priv: dk_new.clone(),
+            c_key_randomness: randomness.0.clone(),
+        };
+
+        let paillier_key_pair = Party1PaillierKeyPair {
+            ek: ek_new.clone(),
+            dk: dk_new.clone(),
+            encrypted_share: c_key_new.clone(),
+            randomness: randomness.0.clone(),
+        };
+        let correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
+
+        let range_proof = Party1PaillierKeyPair::generate_range_proof(
+            &paillier_key_pair,
+            &party_one_private_new,
         );
-        let x1_minus_lower_bound_fe: FE = ECScalar::from(&x1_minus_lower_bound);
+        (
+            ek_new.clone(),
+            c_key_new.clone(),
+            party_one_private_new,
+            correct_key_proof,
+            range_proof,
+        )
+    }
+    pub fn set_private_key(ec_key: &Party1EcKeyPair, paillier_key: &Party1PaillierKeyPair) -> Party1Private {
         Party1Private {
             x1: ec_key.secret_share,
-            x1_minus_q_thirds: Some(x1_minus_lower_bound_fe),
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
@@ -470,74 +355,48 @@ impl Party1Private {
     }
 }
 
-impl PaillierKeyPair {
-    pub fn generate_keypair_and_encrypted_share(keygen: &EcKeyPair) -> PaillierKeyPair {
+impl Party1PaillierKeyPair {
+    pub fn generate_keypair_and_encrypted_share(keygen: &Party1EcKeyPair) -> Party1PaillierKeyPair {
         let (ek, dk) = Paillier::keypair().keys();
-        let order = FE::q();
-        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
-        //x1-q/3
-        let x1_minus_lower_bound = BigInt::mod_sub(
-            &keygen.secret_share.to_big_int().clone(),
-            &lower_bound,
-            &order,
-        );
-
         let randomness = Randomness::sample(&ek);
 
-        //encrypt x1
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
             &ek,
             RawPlaintext::from(keygen.secret_share.to_big_int()),
             &randomness,
         )
-            .0
-            .into_owned();
-
-        //encrypt x1-q/3
-        let randomness_q = Randomness::sample(&ek);
-
-        let encrypted_share_minus_q_thirds = Paillier::encrypt_with_chosen_randomness(
-            &ek,
-            RawPlaintext::from(x1_minus_lower_bound.clone()),
-            &randomness_q,
-        )
         .0
         .into_owned();
 
-        PaillierKeyPair {
+        Party1PaillierKeyPair {
             ek,
             dk,
             encrypted_share,
-            encrypted_share_minus_q_thirds: Some(encrypted_share_minus_q_thirds),
             randomness: randomness.0,
-            randomness_q: Some(randomness_q.0),
         }
     }
 
     pub fn generate_range_proof(
-        paillier_context: &PaillierKeyPair,
+        paillier_context: &Party1PaillierKeyPair,
         party_one_private: &Party1Private,
     ) -> RangeProofNi {
-        let x1_minus_q_thirds = party_one_private.x1_minus_q_thirds.as_ref().expect("x1_minus_q_thirds").to_big_int();
-        let encrypted_share_minus_q_thirds = paillier_context.encrypted_share_minus_q_thirds.as_ref().expect("encrypted_share_minus_q_thirds").clone();
-        let randomness_q = paillier_context.randomness_q.as_ref().expect("randomness_q");
         RangeProofNi::prove(
             &paillier_context.ek,
             &FE::q(),
-            &encrypted_share_minus_q_thirds,
-            &x1_minus_q_thirds,
-            randomness_q,
+            &paillier_context.encrypted_share.clone(),
+            &party_one_private.x1.to_big_int(),
+            &paillier_context.randomness,
         )
     }
 
-    pub fn generate_ni_proof_correct_key(paillier_context: &PaillierKeyPair) -> NICorrectKeyProof {
+    pub fn generate_ni_proof_correct_key(paillier_context: &Party1PaillierKeyPair) -> NICorrectKeyProof {
         NICorrectKeyProof::proof(&paillier_context.dk)
     }
 
     pub fn pdl_first_stage(
         party_one_private: &Party1Private,
         pdl_first_message: &Party2PDLFirstMessage,
-    ) -> (PDLFirstMessage, PDLdecommit, BigInt) {
+    ) -> (Party1PDLFirstMessage, Party1PDLDecommit, BigInt) {
         let c_tag = pdl_first_message.c_tag.clone();
         let alpha = Paillier::decrypt(
             &party_one_private.paillier_priv.clone(),
@@ -552,8 +411,8 @@ impl PaillierKeyPair {
             &blindness,
         );
         (
-            PDLFirstMessage { c_hat },
-            PDLdecommit { blindness, q_hat },
+            Party1PDLFirstMessage { c_hat },
+            Party1PDLDecommit { blindness, q_hat },
             alpha.0.into_owned(),
         )
     }
@@ -562,9 +421,9 @@ impl PaillierKeyPair {
         pdl_party_two_first_message: &Party2PDLFirstMessage,
         pdl_party_two_second_message: &Party2PDLSecondMessage,
         party_one_private: Party1Private,
-        pdl_decommit: PDLdecommit,
+        pdl_decommit: Party1PDLDecommit,
         alpha: BigInt,
-    ) -> Result<PDLSecondMessage, ()> {
+    ) -> Result<Party1PDLSecondMessage, ()> {
         let a = pdl_party_two_second_message.decommit.a.clone();
         let b = pdl_party_two_second_message.decommit.b.clone();
         let blindness = pdl_party_two_second_message.decommit.blindness.clone();
@@ -575,7 +434,7 @@ impl PaillierKeyPair {
         let ax1 = a * party_one_private.x1.to_big_int();
         let alpha_test = ax1 + b;
         if alpha_test == alpha && pdl_party_two_first_message.c_tag_tag.clone() == c_tag_tag_test {
-            Ok(PDLSecondMessage {
+            Ok(Party1PDLSecondMessage {
                 decommit: pdl_decommit,
             })
         } else {
@@ -584,8 +443,8 @@ impl PaillierKeyPair {
     }
 }
 
-impl EphKeyGenFirstMsg {
-    pub fn create() -> (EphKeyGenFirstMsg, EphEcKeyPair) {
+impl Party1EphKeyGenFirstMessage {
+    pub fn create() -> (Party1EphKeyGenFirstMessage, Party1EphEcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
         let public_share = base * secret_share;
@@ -599,12 +458,12 @@ impl EphKeyGenFirstMsg {
             h2: c,
         };
         let d_log_proof = ECDDHProof::prove(&w, &delta);
-        let ec_key_pair = EphEcKeyPair {
+        let ec_key_pair = Party1EphEcKeyPair {
             public_share,
             secret_share,
         };
         (
-            EphKeyGenFirstMsg {
+            Party1EphKeyGenFirstMessage {
                 d_log_proof,
                 public_share,
                 c,
@@ -614,11 +473,11 @@ impl EphKeyGenFirstMsg {
     }
 }
 
-impl EphKeyGenSecondMsg {
+impl Party1EphKeyGenSecondMessage {
     pub fn verify_commitments_and_dlog_proof(
         party_two_first_message: &Party2EphKeyGenFirstMessage,
         party_two_second_message: &Party2EphKeyGenSecondMessage,
-    ) -> Result<EphKeyGenSecondMsg, ProofError> {
+    ) -> Result<Party1EphKeyGenSecondMessage, ProofError> {
         let party_two_zk_pok_blind_factor =
             &party_two_second_message.comm_witness.zk_pok_blind_factor;
         let party_two_public_share = &party_two_second_message.comm_witness.public_share;
@@ -647,7 +506,7 @@ impl EphKeyGenSecondMsg {
             h2: party_two_second_message.comm_witness.c,
         };
         party_two_d_log_proof.verify(&delta)?;
-        Ok(EphKeyGenSecondMsg {})
+        Ok(Party1EphKeyGenSecondMessage {})
     }
 }
 
@@ -655,7 +514,7 @@ impl Signature {
     pub fn compute(
         party_one_private: &Party1Private,
         partial_sig_c3: &BigInt,
-        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_local_share: &Party1EphEcKeyPair,
         ephemeral_other_public_share: &GE,
     ) -> Signature {
         //compute r = k2* R1
@@ -680,7 +539,7 @@ impl Signature {
     pub fn compute_with_recid(
         party_one_private: &Party1Private,
         partial_sig_c3: &BigInt,
-        ephemeral_local_share: &EphEcKeyPair,
+        ephemeral_local_share: &Party1EphEcKeyPair,
         ephemeral_other_public_share: &GE,
     ) -> SignatureRecid {
         //compute r = k2* R1

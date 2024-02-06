@@ -2,23 +2,25 @@
 
 #[cfg(test)]
 mod tests {
+
+    use crate::curv::arithmetic::traits::Samplable;
     use crate::curv::elliptic::curves::traits::*;
     use crate::curv::BigInt;
-    use crate::party_one::Party1Private;
     use crate::*;
+
     #[test]
     fn test_d_log_proof_party_two_party_one() {
         let (party_one_first_message, comm_witness, _ec_key_pair_party1) =
-            party_one::KeyGenFirstMsg::create_commitments();
-        let (party_two_first_message, _ec_key_pair_party2) = party_two::KeyGenFirstMsg::create();
-        let party_one_second_message = party_one::KeyGenSecondMsg::verify_and_decommit(
+            party_one::Party1KeyGenFirstMessage::create_commitments();
+        let (party_two_first_message, _ec_key_pair_party2) = party_two::Party2KeyGenFirstMessage::create();
+        let party_one_second_message = party_one::Party1KeyGenCommWitness::verify_and_decommit(
             comm_witness,
             &party_two_first_message.d_log_proof,
         )
         .expect("failed to verify and decommit");
 
         let _party_two_second_message =
-            party_two::KeyGenSecondMsg::verify_commitments_and_dlog_proof(
+            party_two::Party2KeyGenSecondMessage::verify_commitments_and_dlog_proof(
                 &party_one_first_message,
                 &party_one_second_message,
             )
@@ -28,24 +30,22 @@ mod tests {
     #[test]
 
     fn test_full_key_gen() {
-        let bounds = party_one::KeyGenFirstMsg::get_lindell_secret_share_bounds();
         let (party_one_first_message, comm_witness, ec_key_pair_party1) =
-            party_one::KeyGenFirstMsg::create_commitments_with_fixed_secret_share(ECScalar::from(
-                &party_one::KeyGenFirstMsg::get_secret_share_in_range(&bounds.0, &bounds.1)
-                    .to_big_int(),
+            party_one::Party1KeyGenFirstMessage::create_commitments_with_fixed_secret_share(ECScalar::from(
+                &BigInt::sample(253),
             ));
         let (party_two_first_message, _ec_key_pair_party2) =
-            party_two::KeyGenFirstMsg::create_with_fixed_secret_share(ECScalar::from(
+            party_two::Party2KeyGenFirstMessage::create_with_fixed_secret_share(ECScalar::from(
                 &BigInt::from(10_i32),
             ));
-        let party_one_second_message = party_one::KeyGenSecondMsg::verify_and_decommit(
+        let party_one_second_message = party_one::Party1KeyGenCommWitness::verify_and_decommit(
             comm_witness,
             &party_two_first_message.d_log_proof,
         )
         .expect("failed to verify and decommit");
 
         let _party_two_second_message =
-            party_two::KeyGenSecondMsg::verify_commitments_and_dlog_proof(
+            party_two::Party2KeyGenSecondMessage::verify_commitments_and_dlog_proof(
                 &party_one_first_message,
                 &party_one_second_message,
             )
@@ -53,30 +53,31 @@ mod tests {
 
         // init paillier keypair:
         let paillier_key_pair =
-            party_one::PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
+            party_one::Party1PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
 
         let party_one_private =
-            Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
+            party_one::Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
 
-        let party_two_paillier = party_two::PaillierPublic {
+        let party_two_paillier = party_two::Party2PaillierPublic {
             ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+            encrypted_secret_share: paillier_key_pair.encrypted_share.clone(),
         };
 
-        // zk proof of correct paillier key
         let correct_key_proof =
-            party_one::PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
+            party_one::Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
 
         correct_key_proof
             .verify(&party_two_paillier.ek)
             .expect("bad paillier key");
 
+        // zk proof of correct paillier key
+
         // zk range proof
-        let range_proof = party_one::PaillierKeyPair::generate_range_proof(
+        let range_proof = party_one::Party1PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
             &party_one_private,
         );
-        party_two::PaillierPublic::verify_range_proof(&party_two_paillier, &range_proof)
+        party_two::Party2PaillierPublic::verify_range_proof(&party_two_paillier, &range_proof)
             .expect("range proof error");
     }
 
@@ -86,33 +87,33 @@ mod tests {
         // party1 owning private share and paillier key-pair
         // party2 owning private share and paillier encryption of party1 share
         let (_party_one_private_share_gen, _comm_witness, ec_key_pair_party1) =
-            party_one::KeyGenFirstMsg::create_commitments();
-        let (party_two_private_share_gen, ec_key_pair_party2) = party_two::KeyGenFirstMsg::create();
+            party_one::Party1KeyGenFirstMessage::create_commitments();
+        let (party_two_private_share_gen, ec_key_pair_party2) = party_two::Party2KeyGenFirstMessage::create();
 
         let keypair =
-            party_one::PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
+            party_one::Party1PaillierKeyPair::generate_keypair_and_encrypted_share(&ec_key_pair_party1);
 
         // creating the ephemeral private shares:
 
         let (eph_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
-            party_two::EphKeyGenFirstMsg::create_commitments();
+            party_two::Party2EphKeyGenFirstMessage::create_commitments();
         let (eph_party_one_first_message, eph_ec_key_pair_party1) =
-            party_one::EphKeyGenFirstMsg::create();
-        let eph_party_two_second_message = party_two::EphKeyGenSecondMsg::verify_and_decommit(
+            party_one::Party1EphKeyGenFirstMessage::create();
+        let eph_party_two_second_message = party_two::Party2EphKeyGenSecondMessage::verify_and_decommit(
             eph_comm_witness,
             &eph_party_one_first_message,
         )
         .expect("party1 DLog proof failed");
 
         let _eph_party_one_second_message =
-            party_one::EphKeyGenSecondMsg::verify_commitments_and_dlog_proof(
+            party_one::Party1EphKeyGenSecondMessage::verify_commitments_and_dlog_proof(
                 &eph_party_two_first_message,
                 &eph_party_two_second_message,
             )
             .expect("failed to verify commitments and DLog proof");
         let party2_private = party_two::Party2Private::set_private_key(&ec_key_pair_party2);
         let message = BigInt::from(1234);
-        let partial_sig = party_two::PartialSig::compute(
+        let partial_sig = party_two::Party2PartialSig::compute(
             &keypair.ek,
             &keypair.encrypted_share,
             &party2_private,
