@@ -54,13 +54,6 @@ pub struct Party1HDPos {
 
 typetag_value!(Party1HDPos);
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct v {
-    pub value: String,
-}
-
-typetag_value!(v);
-
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1EcKeyPair {
