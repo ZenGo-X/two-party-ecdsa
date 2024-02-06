@@ -1,5 +1,5 @@
 use super::hd_key;
-use super::party2::Party2SignFirstMessage;
+use super::party2::Party2SignSecondMessage;
 use super::{MasterKey1, MasterKey2, Party1Public};
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
@@ -142,7 +142,7 @@ impl MasterKey1 {
 
     pub fn sign_second_message(
         &self,
-        party_two_sign_message: &Party2SignFirstMessage,
+        party_two_sign_message: &Party2SignSecondMessage,
         eph_key_gen_first_message_party_two: &Party2EphKeyGenFirstMessage,
         eph_ec_key_pair_party1: &Party1EphEcKeyPair,
         message: &BigInt,

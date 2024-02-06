@@ -13,7 +13,7 @@ use crate::party_one::{Party1EphKeyGenFirstMessage, Party1KeyGenFirstMessage, Pa
 use crate::party_two::{compute_pubkey, Party2EcKeyPair, Party2EphCommWitness, Party2EphEcKeyPair2, Party2EphKeyGenFirstMessage, Party2EphKeyGenSecondMessage, Party2KeyGenFirstMessage, Party2KeyGenSecondMessage, Party2PaillierPublic, Party2PartialSig, Party2PDLchallenge, Party2PDLFirstMessage, Party2PDLSecondMessage, Party2Private};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Party2SignFirstMessage {
+pub struct Party2SignSecondMessage {
     pub partial_sig: Party2PartialSig,
     pub second_message: Party2EphKeyGenSecondMessage,
 }
@@ -25,13 +25,6 @@ pub struct Party2SecondMessage {
     pub pdl_first_message: Party2PDLFirstMessage,
 }
 
-// TODO: move back to Gotham
-#[derive(Serialize, Deserialize)]
-pub struct Party2SignSecondMessage {
-    pub message: BigInt,
-    pub party_two_sign_message: Party2SignFirstMessage,
-    pub pos_child_key: Vec<BigInt>
-}
 
 impl MasterKey2 {
     pub fn rotate(&self, cf: &Rotation, new_paillier: &Party2PaillierPublic) -> MasterKey2 {
@@ -212,7 +205,7 @@ impl MasterKey2 {
         eph_comm_witness: Party2EphCommWitness,
         eph_party1_first_message: &Party1EphKeyGenFirstMessage,
         message: &BigInt,
-    ) -> Party2SignFirstMessage {
+    ) -> Party2SignSecondMessage {
         let eph_key_gen_second_message = Party2EphKeyGenSecondMessage::verify_and_decommit(
             eph_comm_witness,
             eph_party1_first_message,
@@ -227,7 +220,7 @@ impl MasterKey2 {
             &eph_party1_first_message.public_share,
             message,
         );
-        Party2SignFirstMessage {
+        Party2SignSecondMessage {
             partial_sig,
             second_message: eph_key_gen_second_message,
         }
