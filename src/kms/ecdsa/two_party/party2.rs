@@ -10,6 +10,8 @@ use crate::party_one::{
     PDLFirstMessage as Party1PDLFirstMsg, PDLSecondMessage as Party1PDLSecondMsg,
 };
 use crate::{party_one, party_two};
+use crate::kms::ecdsa::two_party::party1::RotationParty1Message1;
+use crate::kms::rotation::two_party::Rotation;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignMessage {
@@ -18,13 +20,33 @@ pub struct SignMessage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-
 pub struct Party2SecondMessage {
     pub key_gen_second_message: party_two::KeyGenSecondMsg,
     pub pdl_first_message: party_two::PDLFirstMessage,
 }
 
 impl MasterKey2 {
+    pub fn rotate(self, cf: &Rotation, new_paillier: &party_two::PaillierPublic) -> MasterKey2 {
+        let rand_str_invert_fe = cf.rotation.invert();
+        let c_key_new = new_paillier.encrypted_secret_share.clone();
+
+        //TODO: use proper set functions
+        let public = Party2Public {
+            q: self.public.q,
+            p1: self.public.p1.clone() * &cf.rotation,
+            p2: &self.public.p2 * &cf.rotation.invert(),
+            paillier_pub: new_paillier.ek.clone(),
+            c_key: c_key_new,
+        };
+        MasterKey2 {
+            public,
+            private: party_two::Party2Private::update_private_key(
+                &self.private,
+                &rand_str_invert_fe.to_big_int(),
+            ),
+            chain_code: self.chain_code,
+        }
+    }
     pub fn get_child(&self, location_in_hir: Vec<BigInt>) -> MasterKey2 {
         let (public_key_new_child, f_l_new, cc_new) =
             hd_key(location_in_hir, &self.public.q, &self.chain_code);
@@ -121,16 +143,23 @@ impl MasterKey2 {
             &party_one_second_message.range_proof,
         );
 
-        let (pdl_first_message, pdl_chal) = party_two_paillier.pdl_challenge(
+
+        let correct_key_verify = party_one_second_message
+            .correct_key_proof
+            .verify(&party_two_paillier.ek);
+
+        //restore paillier old public key and ciphertext
+        let party_two_paillier_old = party_two::PaillierPublic {
+            ek: party_one_second_message.old_ek.clone(),
+            encrypted_secret_share: party_one_second_message.old_c_key.clone(),
+        };
+
+        let (pdl_first_message, pdl_chal) = party_two_paillier_old.pdl_challenge(
             &party_one_second_message
                 .ecdh_second_message
                 .comm_witness
                 .public_share,
         );
-
-        let correct_key_verify = party_one_second_message
-            .correct_key_proof
-            .verify(&party_two_paillier.ek);
 
         match range_proof_verify {
             Ok(_proof) => match correct_key_verify {
@@ -140,7 +169,7 @@ impl MasterKey2 {
                             key_gen_second_message: t,
                             pdl_first_message,
                         },
-                        party_two_paillier,
+                        party_two_paillier_old,
                         pdl_chal,
                     )),
                     Err(_verify_com_and_dlog_party_one) => Err(()),
@@ -187,7 +216,7 @@ impl MasterKey2 {
             eph_comm_witness,
             eph_party1_first_message,
         )
-        .expect("");
+            .expect("");
 
         let partial_sig = party_two::PartialSig::compute(
             &self.public.paillier_pub,
@@ -200,6 +229,42 @@ impl MasterKey2 {
         SignMessage {
             partial_sig,
             second_message: eph_key_gen_second_message,
+        }
+    }
+    // party2 receives new paillier key and new c_key = Enc(x1_new) = Enc(r*x_1).
+    // party2 can compute locally the updated Q1. This is why this set of messages
+    // is rotation and not new key gen.
+    // party2 needs to verify range proof on c_key_new and correct key proof on the new paillier keys
+    pub fn rotate_first_message(
+        self,
+        cf: &Rotation,
+        party_one_rotation_first_message: &RotationParty1Message1) -> Result<MasterKey2, ()> {
+        let party_two_paillier = party_two::PaillierPublic {
+            ek: party_one_rotation_first_message.ek_new.clone(),
+            encrypted_secret_share: party_one_rotation_first_message.c_key_new.clone(),
+        };
+
+        let range_proof_verify = party_two::PaillierPublic::verify_range_proof(
+            &party_two_paillier,
+            &party_one_rotation_first_message.range_proof,
+        );
+
+        println!("range_proof_verify = {:?}",range_proof_verify);
+
+        let correct_key_verify = party_one_rotation_first_message
+            .correct_key_proof
+            .verify(&party_two_paillier.ek);
+
+        println!("correct_key_verify = {:?}",correct_key_verify);
+
+        let master_key = self.rotate(cf, &party_two_paillier);
+
+        match range_proof_verify {
+            Ok(_proof) => match correct_key_verify {
+                Ok(_proof) => Ok(master_key),
+                Err(_correct_key_error) => Err(()),
+            },
+            Err(_range_proof_error) => Err(()),
         }
     }
 }
