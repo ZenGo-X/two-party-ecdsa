@@ -1,15 +1,16 @@
+use serde::{Deserialize, Serialize};
 use super::hd_key;
 use super::party2::Party2SignMessage;
 use super::{MasterKey1, MasterKey2, Party1Public};
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
 use crate::kms::Errors::{self, SignError};
-use crate::EncryptionKey;
+use crate::{EncryptionKey, NICorrectKeyProof, RangeProofNi};
 
 use crate::curv::elliptic::curves::traits::ECScalar;
 use crate::kms::rotation::two_party::{Rotation};
 use crate::kms::rotation::two_party::party1::RotationParty1Message1;
-use crate::party_one::{Party1EphKeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair, Party1EphEcKeyPair, Party1EphKeyGenSecondMessage, Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1KeyGenCommWitness, Party1PaillierKeyPair, Party1PDLDecommit, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private, Signature, SignatureRecid, verify, compute_pubkey};
+use crate::party_one::{Party1EphKeyGenFirstMessage, Party1CommWitness, Party1EcKeyPair, Party1EphEcKeyPair, Party1EphKeyGenSecondMessage, Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1KeyGenCommWitness, Party1PaillierKeyPair, Party1PDLDecommit, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private, Party1Signature, Party1SignatureRecid, verify, compute_pubkey};
 use crate::party_two::{Party2EphKeyGenFirstMessage, Party2KeyGenFirstMessage, Party2PaillierPublic, Party2PDLFirstMessage, Party2PDLSecondMessage};
 
 impl MasterKey1 {
@@ -117,6 +118,11 @@ impl MasterKey1 {
         let party_one_private =
             Party1Private::set_private_key(ec_key_pair_party1, &paillier_key_pair);
 
+        let party_two_paillier = Party2PaillierPublic {
+            ek: paillier_key_pair.ek.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+        };
+
         let range_proof = Party1PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
             &party_one_private,
@@ -127,7 +133,9 @@ impl MasterKey1 {
             Party1KeyGenSecondMessage {
                 ecdh_second_message: key_gen_second_message,
                 ek: paillier_key_pair.ek.clone(),
-                c_key: paillier_key_pair.encrypted_share.clone(),
+                c_key: party_two_paillier.encrypted_secret_share.clone(),
+                old_ek: paillier_key_pair.ek.clone(),
+                old_c_key: paillier_key_pair.encrypted_share.clone(),
                 correct_key_proof,
                 range_proof,
             },
@@ -146,7 +154,7 @@ impl MasterKey1 {
         eph_key_gen_first_message_party_two: &Party2EphKeyGenFirstMessage,
         eph_ec_key_pair_party1: &Party1EphEcKeyPair,
         message: &BigInt,
-    ) -> Result<SignatureRecid, Errors> {
+    ) -> Result<Party1SignatureRecid, Errors> {
         let verify_party_two_second_message =
             Party1EphKeyGenSecondMessage::verify_commitments_and_dlog_proof(
                 eph_key_gen_first_message_party_two,
@@ -154,7 +162,7 @@ impl MasterKey1 {
             )
             .is_ok();
 
-        let signature_with_recid = Signature::compute_with_recid(
+        let signature_with_recid = Party1Signature::compute_with_recid(
             &self.private,
             &party_two_sign_message.partial_sig.c3,
             eph_ec_key_pair_party1,
@@ -166,7 +174,7 @@ impl MasterKey1 {
 
         // Creating a standard signature for the verification, currently discarding recid
         // TODO: Investigate what verification could be done with recid
-        let signature = Signature {
+        let signature = Party1Signature {
             r: signature_with_recid.r.clone(),
             s: signature_with_recid.s.clone(),
         };
