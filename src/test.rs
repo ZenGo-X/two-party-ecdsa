@@ -61,9 +61,12 @@ mod tests {
         let party_one_private =
             Party1Private::set_private_key(&ec_key_pair_party1, &paillier_key_pair);
 
+        let encrypted_share_minus_q_thirds = paillier_key_pair.encrypted_share_minus_q_thirds.as_ref()
+            .expect("encrypted_share_minus_q_thirds is missing in test_full_key_gen").clone();
+
         let party_two_paillier = Party2PaillierPublic {
             ek: paillier_key_pair.ek.clone(),
-            encrypted_secret_share: paillier_key_pair.encrypted_share.clone(),
+            encrypted_secret_share: encrypted_share_minus_q_thirds,
         };
 
         let correct_key_proof =
