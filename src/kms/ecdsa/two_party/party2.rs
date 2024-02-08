@@ -12,7 +12,7 @@ use crate::kms::rotation::two_party::party1::RotationParty1Message1;
 use crate::party_one::{Party1EphKeyGenFirstMessage, Party1KeyGenFirstMessage, Party1KeyGenSecondMessage, Party1PaillierKeyPair, Party1PDLFirstMessage, Party1PDLSecondMessage, Party1Private};
 use crate::party_two::{compute_pubkey, Party2EcKeyPair, Party2EphCommWitness, Party2EphEcKeyPair2, Party2EphKeyGenFirstMessage, Party2EphKeyGenSecondMessage, Party2KeyGenFirstMessage, Party2KeyGenSecondMessage, Party2PaillierPublic, Party2PartialSig, Party2PDLchallenge, Party2PDLFirstMessage, Party2PDLSecondMessage, Party2Private};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Party2SignMessage {
     pub partial_sig: Party2PartialSig,
     pub second_message: Party2EphKeyGenSecondMessage,
@@ -25,11 +25,21 @@ pub struct Party2SecondMessage {
     pub pdl_first_message: Party2PDLFirstMessage,
 }
 
+// Used both in server and client
 #[derive(Serialize, Deserialize)]
-pub struct Party2SignSecondMessage {
+pub struct Party2SignSecondMessageVector {
     pub message: BigInt,
     pub party_two_sign_message: Party2SignMessage,
     pub pos_child_key: Vec<BigInt>,
+}
+
+// Used both in server and client
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Party2SignSecondMessage {
+    pub message: BigInt,
+    pub party_two_sign_message: Party2SignMessage,
+    pub x_pos_child_key: BigInt,
+    pub y_pos_child_key: BigInt,
 }
 
 impl MasterKey2 {
