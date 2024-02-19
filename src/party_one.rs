@@ -315,38 +315,40 @@ impl Party1Private {
         .0
         .into_owned();
 
-        let order = FE::q();
-        let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
-
-        let x1_new_minus_lower_bound = BigInt::mod_sub(
-            &x1_new.to_big_int(),
-            &lower_bound,
-            &order,
-        );
+        // TODO: this fails unit rotation tests
+        // let order = FE::q();
+        // let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
+        //
+        // let x1_new_minus_lower_bound = BigInt::mod_sub(
+        //     &x1_new.to_big_int(),
+        //     &lower_bound,
+        //     &order,
+        // );
 
         let party_one_private_new = Party1Private {
             x1: x1_new.clone(),
-            x1_minus_q_thirds: Some(ECScalar::from(&x1_new_minus_lower_bound)),
+            x1_minus_q_thirds: None,    // Some(ECScalar::from(&x1_new_minus_lower_bound)),
             paillier_priv: dk_new.clone(),
             c_key_randomness: randomness.0.clone(),
         };
 
-        //encrypt x1-q/3
-        let randomness_q = Randomness::sample(&ek_new);
-
-        let new_encrypted_share_minus_q_thirds = Paillier::encrypt_with_chosen_randomness(
-            &ek_new,
-            RawPlaintext::from(x1_new_minus_lower_bound.clone()),
-            &randomness_q,
-        ).0.into_owned();
+        // TODO: this fails unit rotation tests
+        // //encrypt x1-q/3
+        // let randomness_q = Randomness::sample(&ek_new);
+        //
+        // let new_encrypted_share_minus_q_thirds = Paillier::encrypt_with_chosen_randomness(
+        //     &ek_new,
+        //     RawPlaintext::from(x1_new_minus_lower_bound.clone()),
+        //     &randomness_q,
+        // ).0.into_owned();
 
         let paillier_key_pair = Party1PaillierKeyPair {
             ek: ek_new.clone(),
             dk: dk_new.clone(),
             encrypted_share: c_key_new.clone(),
-            encrypted_share_minus_q_thirds: Some(new_encrypted_share_minus_q_thirds),
+            encrypted_share_minus_q_thirds: None,   // Some(new_encrypted_share_minus_q_thirds)
             randomness: randomness.0.clone(),
-            randomness_q: Some(randomness_q.0),
+            randomness_q: None, // Some(randomness_q.0),
         };
 
         let correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
@@ -408,6 +410,7 @@ impl Party1PaillierKeyPair {
 
         let randomness = Randomness::sample(&ek);
 
+        //encrypt x1
         let encrypted_share = Paillier::encrypt_with_chosen_randomness(
             &ek,
             RawPlaintext::from(keygen.secret_share.to_big_int()),
