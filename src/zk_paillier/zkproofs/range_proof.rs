@@ -28,7 +28,7 @@ use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct EncryptedPairs {
     #[serde(with = "crate::zk_paillier::serialize::vecbigint")]
     pub c1: Vec<BigInt>, // TODO[Morten] should not need to be public
@@ -49,7 +49,7 @@ pub struct DataRandomnessPairs {
 pub struct ChallengeBits(Vec<u8>);
 
 // TODO[Morten] find better name
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Response {
     Open {
         #[serde(with = "crate::zk_paillier::serialize::bigint")]
@@ -76,7 +76,7 @@ pub enum Response {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Proof(Vec<Response>);
 
 impl From<Vec<u8>> for ChallengeBits {

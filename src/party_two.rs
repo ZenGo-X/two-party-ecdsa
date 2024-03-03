@@ -102,7 +102,7 @@ pub struct Party2EphKeyGenSecondMessage {
     pub comm_witness: Party2EphCommWitness,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party2PDLFirstMessage {
     pub c_tag: BigInt,
     pub c_tag_tag: BigInt,

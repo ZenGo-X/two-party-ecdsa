@@ -51,7 +51,7 @@ impl Error for RangeProofError {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RangeProofNi {
     ek: EncryptionKey,
     range: BigInt,
