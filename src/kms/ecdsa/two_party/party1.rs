@@ -118,11 +118,10 @@ impl MasterKey1 {
         let party_one_private =
             Party1Private::set_private_key(ec_key_pair_party1, &paillier_key_pair);
 
-        // TODO: reintroduce once rotation + keygen_v2 is fixed
-        // let party_two_paillier = Party2PaillierPublic {
-        //     ek: paillier_key_pair.ek.clone(),
-        //     encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
-        // };
+        let party_two_paillier = Party2PaillierPublic {
+            ek: paillier_key_pair.ek.clone(),
+            encrypted_secret_share: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+        };
 
         let range_proof = Party1PaillierKeyPair::generate_range_proof(
             &paillier_key_pair,
@@ -134,9 +133,9 @@ impl MasterKey1 {
             Party1KeyGenSecondMessage {
                 ecdh_second_message: key_gen_second_message,
                 ek: paillier_key_pair.ek.clone(),
-                c_key: paillier_key_pair.encrypted_share.clone(),   // TODO: reintroduce once rotation + keygen_v2 is fixed
-                // old_ek: paillier_key_pair.ek.clone(),
-                // old_c_key: paillier_key_pair.encrypted_share.clone(),
+                c_key: party_two_paillier.encrypted_secret_share.clone(),
+                old_ek: paillier_key_pair.ek.clone(),
+                old_c_key: paillier_key_pair.encrypted_share.clone(),
                 correct_key_proof,
                 range_proof,
             },
