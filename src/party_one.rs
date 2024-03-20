@@ -109,14 +109,14 @@ pub struct Party1KeyGenSecondMessage {
     pub range_proof: RangeProofNi,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Party1SignatureRecid {
     pub s: BigInt,
     pub r: BigInt,
     pub recid: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Party1Signature {
     pub s: BigInt,
     pub r: BigInt,
