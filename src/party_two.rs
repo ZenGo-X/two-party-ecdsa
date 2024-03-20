@@ -69,7 +69,7 @@ pub struct Party2PartialSig {
     pub c3: BigInt,
 }
 
-#[derive(Serialize, Debug, Deserialize, Clone)]
+#[derive(Serialize, Debug, Deserialize, Clone, PartialEq)]
 pub struct Party2Private {
     x2: FE,
 }

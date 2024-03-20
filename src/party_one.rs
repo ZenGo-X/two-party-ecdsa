@@ -122,7 +122,7 @@ pub struct Party1Signature {
     pub r: BigInt,
 }
 
-#[derive(Serialize, Debug, Deserialize, Clone)]
+#[derive(Serialize, Debug, Deserialize, Clone, PartialEq)]
 pub struct Party1Private {
     x1: FE,
     x1_minus_q_thirds: Option<FE>,
