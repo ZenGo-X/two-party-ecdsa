@@ -7,7 +7,7 @@ use crate::typetags::Value;
 
 pub struct Rotation1 {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotationParty1Message1 {
     pub ek_new: EncryptionKey,
     pub c_key_new: BigInt,
@@ -18,7 +18,7 @@ pub struct RotationParty1Message1 {
 typetag_value!(RotationParty1Message1);
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotateCommitMessage1 {
     pub seed: BigInt,
     pub blinding: BigInt

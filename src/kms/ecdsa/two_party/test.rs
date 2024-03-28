@@ -591,13 +591,13 @@ pub fn test_rotation(
         .clone()
         .rotation_first_message(&rotation1_clone);
 
-    let result_rotate_party_one_first_message = party_two_master_key
+    let rotation_party_two_first_message = party_two_master_key
         .clone()
         .rotate_first_message(&rotation2, &rotation_party_one_first_message);
-    assert!(result_rotate_party_one_first_message.is_ok());
+    assert!(rotation_party_two_first_message.is_ok());
 
     let (rotation_party_two_first_message, party_two_pdl_chal, party_two_paillier) =
-        result_rotate_party_one_first_message.unwrap();
+        rotation_party_two_first_message.unwrap();
 
     let (rotation_party_one_second_message, party_one_pdl_decommit, alpha) =
         MasterKey1::rotation_second_message(

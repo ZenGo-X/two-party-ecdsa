@@ -164,14 +164,13 @@ impl MasterKey2 {
             .correct_key_proof
             .verify(&party_two_paillier.ek);
 
-        // TODO: reintroduce once rotation + keygen_v2 is fixed
         //restore paillier old public key and ciphertext
-        // let party_two_paillier_old = Party2PaillierPublic {
-        //     ek: party_one_second_message.old_ek.clone(),
-        //     encrypted_secret_share: party_one_second_message.old_c_key.clone(),
-        // };
+        let party_two_paillier_old = Party2PaillierPublic {
+            ek: party_one_second_message.old_ek.clone(),
+            encrypted_secret_share: party_one_second_message.old_c_key.clone(),
+        };
 
-        let (pdl_first_message, pdl_chal) = party_two_paillier.pdl_challenge(
+        let (pdl_first_message, pdl_chal) = party_two_paillier_old.pdl_challenge(
             &party_one_second_message
                 .ecdh_second_message
                 .comm_witness
@@ -186,7 +185,7 @@ impl MasterKey2 {
                             key_gen_second_message: t,
                             pdl_first_message,
                         },
-                        party_two_paillier,
+                        party_two_paillier_old,
                         pdl_chal,
                     )),
                     Err(_verify_com_and_dlog_party_one) => Err(()),
@@ -274,13 +273,9 @@ impl MasterKey2 {
             &party_one_rotation_first_message.range_proof,
         );
 
-        println!("range_proof_verify = {:?}", range_proof_verify);
-
         let correct_key_verify = party_one_rotation_first_message
             .correct_key_proof
             .verify(&party_two_paillier.ek);
-
-        println!("correct_key_verify = {:?}", correct_key_verify);
 
         // let master_key = self.rotate(cf, &party_two_paillier);
         let (pdl_first_message, pdl_chal) =

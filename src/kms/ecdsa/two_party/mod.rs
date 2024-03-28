@@ -17,7 +17,7 @@ pub struct Party1Public {
     pub c_key: BigInt,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MasterKey1 {
     pub public: Party1Public,
     // Why is the field below public? See: https://github.com/KZen-networks/kms-secp256k1/issues/20
@@ -36,7 +36,7 @@ pub struct Party2Public {
     pub c_key: BigInt,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct MasterKey2 {
     pub public: Party2Public,
     pub private: party_two::Party2Private,
