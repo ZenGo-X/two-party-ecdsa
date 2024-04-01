@@ -11,8 +11,7 @@ pub struct Rotation1 {}
 pub struct RotationParty1Message1 {
     pub ek_new: EncryptionKey,
     pub c_key_new: BigInt,
-    pub prev_ek_new: EncryptionKey,
-    pub prev_c_key_new: BigInt,
+    pub c_key_new_minus_q_thirds: BigInt,
     pub correct_key_proof: NICorrectKeyProof,
     pub range_proof: RangeProofNi,
 }

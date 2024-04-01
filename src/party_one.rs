@@ -302,25 +302,7 @@ impl Party1Private {
         existing_party_one_private: &Party1Private,
         factor: &BigInt,
     ) -> (RotationParty1Message1, Party1Private) {
-        //
-        // println!("q = {:?}", FE::q());
-        // let q_div_3 = FE::q().div_floor(&BigInt::from(3));
-        // println!("q/3 = {:?}", q_div_3);
-        //
-        // let q_div_3_mul_2 = FE::q().div_floor(&BigInt::from(3)).mul(&BigInt::from(2));
-        // println!("2q/3 = {:?}", q_div_3_mul_2);
-        //
-        // println!("r = {:?}", factor);
-        // println!("x_1 = {:?}", party_one_private.x1.to_big_int());
-
         let factor_fe: FE = ECScalar::from(factor);
-        // let x1_tag: FE = party_one_private.x1.mul(factor_fe);
-        //
-        // println!("x'_1 = r * x_1 = {:?}", x1_tag.to_big_int());
-        //
-        // assert!(x1_tag.to_big_int().gt(&q_div_3));
-        // assert!(x1_tag.to_big_int().lt(&q_div_3_mul_2));
-
         let base: GE = ECPoint::generator();
         let secret_share: FE = existing_party_one_private.x1.mul(factor_fe);
         let public_share: GE = base.scalar_mul(&secret_share.get_element());
@@ -334,35 +316,6 @@ impl Party1Private {
 
         let party_one_private = Party1Private::set_private_key(&keygen, &paillier_key_pair);
 
-        // let (new_ek, new_dk) = Paillier::keypair().keys();
-
-
-        // Enc(x1', r_1)
-        // let randomness = Randomness::sample(&new_ek.clone());
-        // let new_encrypted_share = Paillier::encrypt_with_chosen_randomness(
-        //     &new_ek.clone(),
-        //     RawPlaintext::from(new_secret_share.to_big_int()),
-        //     &randomness,
-        // )
-        // .0
-        // .into_owned();
-
-        // //x1'-q/3
-        // let order = FE::q();
-        // let lower_bound: BigInt = order.div_floor(&BigInt::from(3));
-        // let new_x1_minus_lower_bound = BigInt::mod_sub(
-        //     &new_secret_share.to_big_int(),
-        //     &lower_bound,
-        //     &order,
-        // );
-
-        // let new_party_one_private = Party1Private {
-        //     x1: new_secret_share.clone(),
-        //     x1_minus_q_thirds: Some(ECScalar::from(&new_x1_minus_lower_bound)),
-        //     paillier_priv: new_dk.clone(),
-        //     c_key_randomness: randomness.0.clone(),
-        // };
-
         let correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
 
         let range_proof = Party1PaillierKeyPair::generate_range_proof(
@@ -371,47 +324,11 @@ impl Party1Private {
         );
 
 
-
-        // //encrypt x1-q/3
-        // let randomness_q = Randomness::sample(&new_ek);
-
-        // let new_encrypted_share_minus_q_thirds = Paillier::encrypt_with_chosen_randomness(
-        //     &new_ek,
-        //     RawPlaintext::from(new_x1_minus_lower_bound.clone()),
-        //     &randomness_q,
-        // ).0.into_owned();
-
-        // let new_paillier_key_pair = Party1PaillierKeyPair {
-        //     ek: new_ek.clone(),
-        //     dk: new_dk.clone(),
-        //     encrypted_share: new_encrypted_share.clone(),
-        //     encrypted_share_minus_q_thirds: Some(new_encrypted_share_minus_q_thirds.clone()),
-        //     randomness: randomness.0.clone(),
-        //     randomness_q: Some(randomness_q.0),
-        // };
-
-        // let new_correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&new_paillier_key_pair);
-        //
-        //
-        // let new_range_proof = Party1PaillierKeyPair::generate_range_proof(
-        //     &new_paillier_key_pair,
-        //     &new_party_one_private,
-        // );
-        // (
-        //     new_ek.clone(),
-        //     new_encrypted_share_minus_q_thirds,
-        //     new_party_one_private,
-        //     new_correct_key_proof,
-        //     new_range_proof,
-        // )
-
-
         (
             RotationParty1Message1 {
                 ek_new: paillier_key_pair.ek.clone(),
-                c_key_new: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
-                prev_ek_new: paillier_key_pair.ek,
-                prev_c_key_new: paillier_key_pair.encrypted_share,
+                c_key_new: paillier_key_pair.encrypted_share,
+                c_key_new_minus_q_thirds: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
                 correct_key_proof,
                 range_proof,
             },
