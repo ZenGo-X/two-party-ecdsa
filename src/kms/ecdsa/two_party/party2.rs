@@ -277,9 +277,15 @@ impl MasterKey2 {
             .correct_key_proof
             .verify(&party_two_paillier.ek);
 
+        //restore paillier old public key and ciphertext
+        let party_two_paillier_old = Party2PaillierPublic {
+            ek: party_one_rotation_first_message.prev_ek_new.clone(),
+            encrypted_secret_share: party_one_rotation_first_message.prev_c_key_new.clone(),
+        };
+
         // let master_key = self.rotate(cf, &party_two_paillier);
         let (pdl_first_message, pdl_chal) =
-            party_two_paillier.pdl_challenge(&(&self.public.p1 * &cf.rotation));
+            party_two_paillier_old.pdl_challenge(&(&self.public.p1 * &cf.rotation));
 
         match range_proof_verify {
             Ok(_proof) => match correct_key_verify {

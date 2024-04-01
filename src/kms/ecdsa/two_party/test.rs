@@ -15,6 +15,7 @@
 use hmac::{Hmac, Mac};
 use sha2::Sha512;
 use std::cell::RefCell;
+use std::ops::Mul;
 use std::sync::Arc;
 use zeroize::Zeroize;
 
@@ -26,6 +27,7 @@ use crate::curv::arithmetic::traits::Converter;
 use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
+use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds::{Party1FirstMessage, Party1SecondMessage, Party2FirstMessage};
 use crate::kms::chain_code::two_party::party1::ChainCode1;
 use crate::kms::chain_code::two_party::party2::ChainCode2;
 pub use crate::kms::rotation::two_party::party1::{Rotation1, RotateCommitMessage1};
@@ -537,62 +539,43 @@ pub fn test_rotation(
     //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
 
     // Server First
-    let (coin_flip_party1_first_message, rotate_commit_message) = Rotation1::key_rotate_first_message();
 
+    let mut coin_flip_party1_first_message: Party1FirstMessage;
+    let mut rotate_commit_message: RotateCommitMessage1;
+    let mut coin_flip_party2_first_message: Party2FirstMessage;
+    let mut coin_flip_party1_second_message: Party1SecondMessage;
+    let mut rotation1: Rotation;
 
-    // Client First
-    let coin_flip_party2_first_message =
-        Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
+    loop {
+        (coin_flip_party1_first_message, rotate_commit_message) = Rotation1::key_rotate_first_message();
 
-    // Server Second
-    let (coin_flip_party1_second_message, mut rotation1) =
-        Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &rotate_commit_message);
+        coin_flip_party2_first_message =
+            Rotation2::key_rotate_first_message(&coin_flip_party1_first_message);
 
-    //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
-    //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
-    let mut rotation1_clone = rotation1.clone();
-    let mut coin_flip_party1_first_message_clone: coin_flip_optimal_rounds::Party1FirstMessage =
-        coin_flip_party1_first_message.clone();
-    let mut coin_flip_party1_second_message_clone: coin_flip_optimal_rounds::Party1SecondMessage =
-        coin_flip_party1_second_message.clone();
+        (coin_flip_party1_second_message, rotation1) =
+            Rotation1::key_rotate_second_message(&coin_flip_party2_first_message, &rotate_commit_message);
 
-    let mut rotate_commit_message_clone: RotateCommitMessage1;
-
-    let mut coin_flip_party2_first_message_clone: coin_flip_optimal_rounds::Party2FirstMessage =
-        coin_flip_party2_first_message.clone();
-
-    while (Party1Private::check_rotated_key_bounds(
-        &party_one_master_key.private,
-        &rotation1_clone.rotation.to_big_int(),
-    )) {
-
-        (coin_flip_party1_first_message_clone, rotate_commit_message_clone) =
-            Rotation1::key_rotate_first_message();
-
-        coin_flip_party2_first_message_clone =
-            Rotation2::key_rotate_first_message(&coin_flip_party1_first_message_clone);
-        (coin_flip_party1_second_message_clone, rotation1_clone) =
-            Rotation1::key_rotate_second_message(
-                &coin_flip_party2_first_message_clone,
-                &rotate_commit_message_clone,
-            );
-        // temp_random = random1.clone();
+        //coin flip:there is a delicate case x1*r to be out of the range proof bounds so extra care is needed
+        //P1 should check whether x1.r <q3 after round 2. If the check is not true rerun the protocol
+        if Party1Private::check_rotated_key_bounds(
+            &party_one_master_key.private,
+            &rotation1.rotation.to_big_int(),
+        ) {
+            break;
+        }
     }
 
-    // Client Second
     let rotation2 = Rotation2::key_rotate_second_message(
-        &coin_flip_party1_second_message_clone,
-        &coin_flip_party2_first_message_clone,
-        &coin_flip_party1_first_message_clone,
+        &coin_flip_party1_second_message,
+        &coin_flip_party2_first_message,
+        &coin_flip_party1_first_message,
     );
 
     //rotation:
     let (rotation_party_one_first_message, party_one_private_new) = party_one_master_key
-        .clone()
-        .rotation_first_message(&rotation1_clone);
+        .rotation_first_message(&rotation1);
 
     let rotation_party_two_first_message = party_two_master_key
-        .clone()
         .rotate_first_message(&rotation2, &rotation_party_one_first_message);
     assert!(rotation_party_two_first_message.is_ok());
 

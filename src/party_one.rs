@@ -45,6 +45,7 @@ use crate::curv::GE;
 
 use crate::typetags::Value;
 use crate::Error::{self, InvalidSig};
+use crate::kms::rotation::two_party::party1::RotationParty1Message1;
 
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -290,38 +291,48 @@ impl Party1Private {
         let factor_fe: FE = ECScalar::from(factor);
         let x1_new: FE = factor_fe * party_one_private.x1;
 
-        // TODO: why not also check x'_1 is < 2q/3 ?
-        x1_new.to_big_int() >= FE::q().div_floor(&BigInt::from(3))
+        let q_div_3 = FE::q().div_floor(&BigInt::from(3));
+        let q_div_3_mul_2 = q_div_3.clone().mul(&BigInt::from(2));
+
+        x1_new.to_big_int() >= q_div_3 &&
+            x1_new.to_big_int() <= q_div_3_mul_2
     }
 
     pub fn refresh_private_key(
-        party_one_private: &Party1Private,
+        existing_party_one_private: &Party1Private,
         factor: &BigInt,
-    ) -> (
-        EncryptionKey,
-        BigInt,
-        Party1Private,
-        NICorrectKeyProof,
-        RangeProofNi,
-    ) {
-        let factor_fe: FE = ECScalar::from(factor);
-        let new_secret_share: FE = party_one_private.x1.mul(factor_fe);
+    ) -> (RotationParty1Message1, Party1Private) {
+        //
+        // println!("q = {:?}", FE::q());
+        // let q_div_3 = FE::q().div_floor(&BigInt::from(3));
+        // println!("q/3 = {:?}", q_div_3);
+        //
+        // let q_div_3_mul_2 = FE::q().div_floor(&BigInt::from(3)).mul(&BigInt::from(2));
+        // println!("2q/3 = {:?}", q_div_3_mul_2);
+        //
+        // println!("r = {:?}", factor);
+        // println!("x_1 = {:?}", party_one_private.x1.to_big_int());
 
-        let bounds: (BigInt, BigInt) = Party1KeyGenFirstMessage::get_lindell_secret_share_bounds();
-        // assert!(new_secret_share.to_big_int().gt(&bounds.0) && new_secret_share.to_big_int().lt(&bounds.1));
+        let factor_fe: FE = ECScalar::from(factor);
+        // let x1_tag: FE = party_one_private.x1.mul(factor_fe);
+        //
+        // println!("x'_1 = r * x_1 = {:?}", x1_tag.to_big_int());
+        //
+        // assert!(x1_tag.to_big_int().gt(&q_div_3));
+        // assert!(x1_tag.to_big_int().lt(&q_div_3_mul_2));
 
         let base: GE = ECPoint::generator();
-        let new_public_share = base.scalar_mul(&new_secret_share.get_element());
+        let secret_share: FE = existing_party_one_private.x1.mul(factor_fe);
+        let public_share: GE = base.scalar_mul(&secret_share.get_element());
 
         let keygen = Party1EcKeyPair {
-            public_share: new_public_share,
-            secret_share: new_secret_share,
+            public_share,
+            secret_share,
         };
 
-        let new_paillier_key_pair = Party1PaillierKeyPair::generate_keypair_and_encrypted_share(&keygen);
+        let paillier_key_pair = Party1PaillierKeyPair::generate_keypair_and_encrypted_share(&keygen);
 
-        let new_party_one_private = Party1Private::set_private_key(&keygen, &new_paillier_key_pair);
-
+        let party_one_private = Party1Private::set_private_key(&keygen, &paillier_key_pair);
 
         // let (new_ek, new_dk) = Paillier::keypair().keys();
 
@@ -352,20 +363,14 @@ impl Party1Private {
         //     c_key_randomness: randomness.0.clone(),
         // };
 
-        let new_correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&new_paillier_key_pair);
+        let correct_key_proof = Party1PaillierKeyPair::generate_ni_proof_correct_key(&paillier_key_pair);
 
-        let new_range_proof = Party1PaillierKeyPair::generate_range_proof(
-            &new_paillier_key_pair,
-            &new_party_one_private,
+        let range_proof = Party1PaillierKeyPair::generate_range_proof(
+            &paillier_key_pair,
+            &party_one_private,
         );
 
-        (
-            new_paillier_key_pair.ek.clone(),
-            new_paillier_key_pair.encrypted_share_minus_q_thirds.unwrap().clone(),
-            new_party_one_private,
-            new_correct_key_proof,
-            new_range_proof,
-        )
+
 
         // //encrypt x1-q/3
         // let randomness_q = Randomness::sample(&new_ek);
@@ -399,6 +404,19 @@ impl Party1Private {
         //     new_correct_key_proof,
         //     new_range_proof,
         // )
+
+
+        (
+            RotationParty1Message1 {
+                ek_new: paillier_key_pair.ek.clone(),
+                c_key_new: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+                prev_ek_new: paillier_key_pair.ek,
+                prev_c_key_new: paillier_key_pair.encrypted_share,
+                correct_key_proof,
+                range_proof,
+            },
+            party_one_private
+        )
     }
 
     pub fn set_private_key(ec_key: &Party1EcKeyPair, paillier_key: &Party1PaillierKeyPair) -> Party1Private {
@@ -481,10 +499,13 @@ impl Party1PaillierKeyPair {
     ) -> RangeProofNi {
         let x1_minus_q_thirds = party_one_private.x1_minus_q_thirds.as_ref()
             .expect("x1_minus_q_thirds is missing in party_one.generate_range_proof").to_big_int();
+
         let encrypted_share_minus_q_thirds = paillier_context.encrypted_share_minus_q_thirds.as_ref()
             .expect("encrypted_share_minus_q_thirds is missing in party_one.generate_range_proof").clone();
+
         let randomness_q = paillier_context.randomness_q.as_ref()
             .expect("randomness_q is missing in party_one.generate_range_proof");
+
         RangeProofNi::prove(
             &paillier_context.ek,
             &FE::q(),
