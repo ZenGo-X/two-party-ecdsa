@@ -263,29 +263,29 @@ impl MasterKey2 {
         ),
         (),
     > {
-        let party_two_paillier = Party2PaillierPublic {
-            ek: party_one_rotation_first_message.ek_new.clone(),
-            encrypted_secret_share: party_one_rotation_first_message.c_key_new_minus_q_thirds.clone(),
+        let party_two_paillier_minus_q_thirds = Party2PaillierPublic {
+            ek: party_one_rotation_first_message.ek.clone(),
+            encrypted_secret_share: party_one_rotation_first_message.c_key_minus_q_thirds.clone(),
         };
 
         let range_proof_verify = Party2PaillierPublic::verify_range_proof(
-            &party_two_paillier,
+            &party_two_paillier_minus_q_thirds,
             &party_one_rotation_first_message.range_proof,
         );
 
         let correct_key_verify = party_one_rotation_first_message
             .correct_key_proof
-            .verify(&party_two_paillier.ek);
+            .verify(&party_two_paillier_minus_q_thirds.ek);
 
-        //restore paillier old public key and ciphertext
-        let party_two_paillier_old = Party2PaillierPublic {
-            ek: party_one_rotation_first_message.ek_new.clone(),
-            encrypted_secret_share: party_one_rotation_first_message.c_key_new.clone(),
+        //restore paillier ciphertext
+        let party_two_paillier = Party2PaillierPublic {
+            ek: party_one_rotation_first_message.ek.clone(),
+            encrypted_secret_share: party_one_rotation_first_message.c_key.clone(),
         };
 
         // let master_key = self.rotate(cf, &party_two_paillier);
         let (pdl_first_message, pdl_chal) =
-            party_two_paillier_old.pdl_challenge(&(&self.public.p1 * &cf.rotation));
+            party_two_paillier.pdl_challenge(&(&self.public.p1 * &cf.rotation));
 
         match range_proof_verify {
             Ok(_proof) => match correct_key_verify {

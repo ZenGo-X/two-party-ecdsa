@@ -262,8 +262,8 @@ impl MasterKey1 {
         let master_key_new = self.rotate(
             cf,
             party_one_private_new,
-            &rotation_first_message.ek_new,
-            &rotation_first_message.c_key_new,
+            &rotation_first_message.ek,
+            &rotation_first_message.c_key,
         );
         match rotate_party_one_third_message {
             Ok(x) => Ok((x, master_key_new)),

@@ -291,11 +291,10 @@ impl Party1Private {
         let factor_fe: FE = ECScalar::from(factor);
         let x1_new: FE = factor_fe * party_one_private.x1;
 
-        let q_div_3 = FE::q().div_floor(&BigInt::from(3));
-        let q_div_3_mul_2 = q_div_3.clone().mul(&BigInt::from(2));
+        let (lower, upper) = Party1KeyGenFirstMessage::get_lindell_secret_share_bounds();
 
-        x1_new.to_big_int() >= q_div_3 &&
-            x1_new.to_big_int() <= q_div_3_mul_2
+        x1_new.to_big_int() >= lower &&
+            x1_new.to_big_int() <= upper
     }
 
     pub fn refresh_private_key(
@@ -326,9 +325,9 @@ impl Party1Private {
 
         (
             RotationParty1Message1 {
-                ek_new: paillier_key_pair.ek.clone(),
-                c_key_new: paillier_key_pair.encrypted_share,
-                c_key_new_minus_q_thirds: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
+                ek: paillier_key_pair.ek.clone(),
+                c_key: paillier_key_pair.encrypted_share,
+                c_key_minus_q_thirds: paillier_key_pair.encrypted_share_minus_q_thirds.clone().expect(""),
                 correct_key_proof,
                 range_proof,
             },
