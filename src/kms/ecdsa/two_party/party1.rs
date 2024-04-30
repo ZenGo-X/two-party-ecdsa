@@ -230,18 +230,7 @@ impl MasterKey1 {
         )
     }
     pub fn rotation_first_message(&self, cf: &Rotation) -> (RotationParty1Message1, Party1Private) {
-        let (ek_new, c_key_new, new_private, correct_key_proof, range_proof) =
-            Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int());
-        // let master_key_new = self.rotate(cf, new_private, &ek_new, &c_key_new);
-        (
-            RotationParty1Message1 {
-                ek_new,
-                c_key_new,
-                correct_key_proof,
-                range_proof,
-            },
-            new_private.clone(),
-        )
+        Party1Private::refresh_private_key(&self.private, &cf.rotation.to_big_int())
     }
     pub fn rotation_second_message(
         rotate_party_two_message_one: &Party2PDLFirstMessage,
@@ -273,8 +262,8 @@ impl MasterKey1 {
         let master_key_new = self.rotate(
             cf,
             party_one_private_new,
-            &rotation_first_message.ek_new,
-            &rotation_first_message.c_key_new,
+            &rotation_first_message.ek,
+            &rotation_first_message.c_key,
         );
         match rotate_party_one_third_message {
             Ok(x) => Ok((x, master_key_new)),

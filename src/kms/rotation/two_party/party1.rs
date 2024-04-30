@@ -9,8 +9,9 @@ pub struct Rotation1 {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotationParty1Message1 {
-    pub ek_new: EncryptionKey,
-    pub c_key_new: BigInt,
+    pub ek: EncryptionKey,
+    pub c_key: BigInt,
+    pub c_key_minus_q_thirds: BigInt,
     pub correct_key_proof: NICorrectKeyProof,
     pub range_proof: RangeProofNi,
 }
