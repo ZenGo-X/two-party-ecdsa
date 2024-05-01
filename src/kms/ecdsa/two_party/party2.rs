@@ -160,7 +160,6 @@ impl MasterKey2 {
             &party_one_second_message.range_proof,
         );
 
-
         let correct_key_verify = party_one_second_message
             .correct_key_proof
             .verify(&party_two_paillier.ek);
