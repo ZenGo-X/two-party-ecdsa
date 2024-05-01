@@ -19,13 +19,13 @@ pub struct RotationParty1Message1 {
 typetag_value!(RotationParty1Message1);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RotationParty1Message2 {
+pub struct RotationParty1ValidMessage1 {
     pub coin_flip_party1_second_message: Option<coin_flip_optimal_rounds::Party1SecondMessage>,
-    pub rotation_party1_prev_message: Option<RotationParty1Message1>,
+    pub rotation_party1_first_message: Option<RotationParty1Message1>,
     pub is_valid: bool
 }
 
-typetag_value!(RotationParty1Message2);
+typetag_value!(RotationParty1ValidMessage1);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotateCommitMessage1 {
