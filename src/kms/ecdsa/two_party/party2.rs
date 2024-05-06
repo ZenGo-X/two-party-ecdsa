@@ -26,7 +26,7 @@ pub struct Party2SecondMessage {
 }
 
 // Used both in server and client
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Party2SignSecondMessageVector {
     pub message: BigInt,
     pub party_two_sign_message: Party2SignMessage,
@@ -34,7 +34,7 @@ pub struct Party2SignSecondMessageVector {
 }
 
 // Used both in server and client
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Party2SignSecondMessage {
     pub message: BigInt,
     pub party_two_sign_message: Party2SignMessage,
@@ -159,7 +159,6 @@ impl MasterKey2 {
             &party_two_paillier,
             &party_one_second_message.range_proof,
         );
-
 
         let correct_key_verify = party_one_second_message
             .correct_key_proof

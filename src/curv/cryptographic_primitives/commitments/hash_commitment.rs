@@ -75,7 +75,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] //TODO: gix this
     fn test_bit_length_create_commitment_with_user_defined_randomness() {
         let message = BigInt::sample(SECURITY_BITS);
         let (_commitment, blind_factor) = HashCommitment::create_commitment(&message);
