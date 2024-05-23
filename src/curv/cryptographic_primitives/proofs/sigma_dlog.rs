@@ -15,8 +15,6 @@ use crate::curv::elliptic::curves::traits::*;
 
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
-use crate::typetag_value;
-use crate::typetags::Value;
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
@@ -37,7 +35,6 @@ pub struct DLogProof {
     pub challenge_response: FE,
 }
 
-typetag_value!(DLogProof);
 
 pub trait ProveDLog {
     fn prove(sk: &FE) -> DLogProof;

@@ -5,8 +5,6 @@ use crate::curv::cryptographic_primitives::{
     },
 };
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, GE};
-use crate::typetag_value;
-use crate::typetags::Value;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::fmt::{Display, Formatter};
@@ -16,7 +14,6 @@ pub struct ChainCode1 {
     pub chain_code: BigInt,
 }
 
-typetag_value!(ChainCode1);
 
 impl ChainCode1 {
     pub fn chain_code_first_message() -> (DHPoKParty1FirstMessage, DHPoKCommWitness, DHPoKEcKeyPair) {

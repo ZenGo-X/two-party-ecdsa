@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize};
 use super::Rotation;
 use crate::curv::cryptographic_primitives::twoparty::coin_flip_optimal_rounds;
 use crate::curv::elliptic::curves::traits::ECScalar;
-use crate::{BigInt, EncryptionKey, NICorrectKeyProof, RangeProofNi, typetag_value};
-use crate::typetags::Value;
+use crate::{BigInt, EncryptionKey, NICorrectKeyProof, RangeProofNi};
 
 pub struct Rotation1 {}
 
@@ -16,7 +15,6 @@ pub struct RotationParty1Message1 {
     pub range_proof: RangeProofNi,
 }
 
-typetag_value!(RotationParty1Message1);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotationParty1ValidMessage1 {
@@ -25,7 +23,6 @@ pub struct RotationParty1ValidMessage1 {
     pub is_valid: bool
 }
 
-typetag_value!(RotationParty1ValidMessage1);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotateCommitMessage1 {
@@ -33,7 +30,6 @@ pub struct RotateCommitMessage1 {
     pub blinding: BigInt
 }
 
-typetag_value!(RotateCommitMessage1);
 
 impl Rotation1 {
     //TODO: implmenet sid / state machine

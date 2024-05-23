@@ -22,8 +22,6 @@ use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use crate::typetag_value;
-use crate::typetags::Value;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::fmt::{Display, Formatter};
@@ -36,7 +34,6 @@ pub struct DHPoKEcKeyPair {
     secret_share: FE,
 }
 
-typetag_value!(DHPoKEcKeyPair);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DHPoKCommWitness {
@@ -46,7 +43,6 @@ pub struct DHPoKCommWitness {
     pub d_log_proof: DLogProof,
 }
 
-typetag_value!(DHPoKCommWitness);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DHPoKParty1FirstMessage {
@@ -54,7 +50,6 @@ pub struct DHPoKParty1FirstMessage {
     pub zk_pok_commitment: BigInt,
 }
 
-typetag_value!(DHPoKParty1FirstMessage);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DHPoKParty2FirstMessage {

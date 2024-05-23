@@ -22,7 +22,7 @@ use std::cmp;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Mul, Shl};
 
-use super::{typetag_value, SECURITY_BITS, Secp256k1Scalar};
+use super::{SECURITY_BITS, Secp256k1Scalar};
 pub use crate::curv::arithmetic::traits::*;
 
 use crate::curv::elliptic::curves::traits::*;
@@ -43,7 +43,7 @@ use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
 
-use crate::typetags::Value;
+
 use crate::Error::{self, InvalidSig};
 use crate::kms::rotation::two_party::party1::RotationParty1Message1;
 
@@ -53,8 +53,6 @@ pub struct Party1HDPos {
     pub pos: u32,
 }
 
-typetag_value!(Party1HDPos);
-
 //****************** Begin: Party One structs ******************//
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1EcKeyPair {
@@ -62,7 +60,6 @@ pub struct Party1EcKeyPair {
     secret_share: FE,
 }
 
-typetag_value!(Party1EcKeyPair);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1CommWitness {
@@ -72,7 +69,6 @@ pub struct Party1CommWitness {
     pub d_log_proof: DLogProof,
 }
 
-typetag_value!(Party1CommWitness);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party1KeyGenFirstMessage {
@@ -80,7 +76,7 @@ pub struct Party1KeyGenFirstMessage {
     pub zk_pok_commitment: BigInt,
 }
 
-typetag_value!(Party1KeyGenFirstMessage);
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1KeyGenCommWitness {
@@ -96,8 +92,6 @@ pub struct Party1PaillierKeyPair {
     randomness: BigInt,
     randomness_q: Option<BigInt>,
 }
-
-typetag_value!(Party1PaillierKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1KeyGenSecondMessage {
@@ -131,14 +125,12 @@ pub struct Party1Private {
     c_key_randomness: BigInt,
 }
 
-typetag_value!(Party1Private);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1PDLFirstMessage {
     pub c_hat: BigInt,
 }
 
-typetag_value!(Party1PDLFirstMessage);
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,7 +139,6 @@ pub struct Party1PDLDecommit {
     pub blindness: BigInt,
 }
 
-typetag_value!(Party1PDLDecommit);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1PDLSecondMessage {
@@ -160,7 +151,6 @@ pub struct Party1EphEcKeyPair {
     secret_share: FE,
 }
 
-typetag_value!(Party1EphEcKeyPair);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party1EphKeyGenFirstMessage {

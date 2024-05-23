@@ -28,7 +28,6 @@ pub mod party_two;
 pub mod zk_paillier;
 
 mod test;
-pub mod typetags; // for std::any::Any and downcast_ref functionality
 
 use serde::{Deserialize, Serialize};
 

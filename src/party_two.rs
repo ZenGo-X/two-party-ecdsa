@@ -38,8 +38,6 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use serde::{Deserialize, Serialize};
 use std::ops::Shl;
 
-use crate::typetag_value;
-use crate::typetags::Value;
 
 //****************** Begin: Party Two structs ******************//
 
@@ -95,7 +93,6 @@ pub struct Party2EphKeyGenFirstMessage {
     pub zk_pok_commitment: BigInt,
 }
 
-typetag_value!(Party2EphKeyGenFirstMessage);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Party2EphKeyGenSecondMessage {
@@ -108,7 +105,6 @@ pub struct Party2PDLFirstMessage {
     pub c_tag_tag: BigInt,
 }
 
-typetag_value!(Party2PDLFirstMessage);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Party2PDLDecommit {
@@ -122,7 +118,6 @@ pub struct Party2PDLSecondMessage {
     pub decommit: Party2PDLDecommit,
 }
 
-typetag_value!(Party2PDLSecondMessage);
 
 #[derive(Debug)]
 pub struct Party2PDLchallenge {

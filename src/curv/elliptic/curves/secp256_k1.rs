@@ -22,8 +22,6 @@ use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::BigInt;
 use crate::curv::ErrorKey;
-use crate::typetag_value;
-use crate::typetags::Value;
 use rand::{thread_rng, Rng};
 use secp256k1::constants::{
     CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
@@ -51,7 +49,6 @@ pub struct Secp256k1Scalar {
     fe: SK,
 }
 
-typetag_value!(Secp256k1Scalar);
 
 #[derive(Clone, Debug, Copy)]
 pub struct Secp256k1Point {
@@ -59,7 +56,6 @@ pub struct Secp256k1Point {
     ge: PK,
 }
 
-typetag_value!(Secp256k1Point);
 
 pub type GE = Secp256k1Point;
 pub type FE = Secp256k1Scalar;
