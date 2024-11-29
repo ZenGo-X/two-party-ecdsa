@@ -5,8 +5,8 @@
     License MIT: https://github.com/KZen-networks/curv/blob/master/LICENSE
 */
 
-use crate::curv::BigInt;
-use crate::curv::{FE, GE};
+use crate::curv::arithmetic::num_bigint::BigInt;
+use crate::curv::elliptic::curves::secp256_k1::{FE, GE};
 
 pub trait Hash {
     fn create_hash(big_ints: &[&BigInt]) -> BigInt;

@@ -5,6 +5,8 @@
     License MIT: https://github.com/KZen-networks/curv/blob/master/LICENSE
 */
 
+pub mod constants;
+pub mod ext;
 pub mod hash_sha256;
 pub mod hash_sha512;
 pub mod hmac_sha512;

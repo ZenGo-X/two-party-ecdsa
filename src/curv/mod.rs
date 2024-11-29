@@ -5,6 +5,8 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
+pub mod arithmetic;
+pub mod cryptographic_primitives;
 pub mod elliptic;
 
 mod secp256k1instance {
@@ -16,12 +18,4 @@ mod secp256k1instance {
 
 pub use self::secp256k1instance::*;
 
-pub mod arithmetic;
-pub use arithmetic::big_gmp::BigInt;
-
-pub mod cryptographic_primitives;
-
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
-pub enum ErrorKey {
-    InvalidPublicKey,
-}
+pub use arithmetic::num_bigint::BigInt;

@@ -14,7 +14,5 @@
     @license GPL-3.0+ <https://github.com/KZen-networks/cryptography-utils/blob/master/LICENSE>
 */
 
-const HEX_RADIX: u8 = 16;
-
-pub mod big_gmp;
+pub mod num_bigint;
 pub mod traits;

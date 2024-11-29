@@ -1,9 +1,10 @@
 //! Key generation following standard recommendations.
 
-use super::traits::*;
-use super::{BigInt, Keypair, Paillier};
+use crate::curv::arithmetic::num_bigint::BigInt;
 use crate::curv::arithmetic::traits::*;
-
+use crate::paillier::traits::*;
+use crate::paillier::{Keypair, Paillier};
+use num_traits::{One, Zero};
 impl KeyGeneration<Keypair> for Paillier {
     fn keypair_with_modulus_size(bit_length: usize) -> Keypair {
         let p = BigInt::sample_prime(bit_length / 2);
@@ -22,7 +23,6 @@ impl PrimeSampable for BigInt {
         // Applied Cryptography, Bruce Schneier.
         let one = BigInt::one();
         let two = &one + &one;
-
         loop {
             let mut candidate = Self::sample(bitsize);
             // We flip the LSB to make sure tue candidate is odd.
@@ -31,7 +31,8 @@ impl PrimeSampable for BigInt {
 
             // To ensure the appropiate size
             // we set the MSB of the candidate.
-            BitManipulation::set_bit(&mut candidate, bitsize - 1, true);
+            BigInt::set_bit(&mut candidate, bitsize - 1, true);
+
             // If no prime number is found in 500 iterations,
             // restart the loop (re-seed).
             // FIXME: Why 500?
@@ -39,7 +40,7 @@ impl PrimeSampable for BigInt {
                 if is_prime(&candidate) {
                     return candidate;
                 }
-                candidate += &two;
+                candidate = candidate + &two;
             }
         }
     }
@@ -53,8 +54,8 @@ impl PrimeSampable for BigInt {
 // 3. Run five rounds of the Miller-Rabin test on the candidate.
 fn is_prime(candidate: &BigInt) -> bool {
     // First, simple trial divide
-    for p in SMALL_PRIMES.into_iter() {
-        let prime = BigInt::from(p);
+    for p in SMALL_PRIMES.iter() {
+        let prime = BigInt::from(*p);
         let r = candidate % &prime;
         if !NumberTests::is_zero(&r) {
             continue;
@@ -110,7 +111,7 @@ fn miller_rabin(candidate: &BigInt, limit: usize) -> bool {
                 } else if y == candidate - &one {
                     break;
                 }
-                counter += BigInt::one();
+                counter = counter + BigInt::one();
             }
             return false;
         }
@@ -126,7 +127,7 @@ fn rewrite(n: &BigInt) -> (BigInt, BigInt) {
     let one = BigInt::one();
 
     while BigInt::is_even(&d) {
-        d >>= 1_usize;
+        d = d >> 1_usize;
         s = &s + &one;
     }
 
@@ -135,7 +136,7 @@ fn rewrite(n: &BigInt) -> (BigInt, BigInt) {
 
 // BoringSSL's table.
 // https://boringssl.googlesource.com/boringssl/+/master/crypto/bn/prime.c
-#[rustfmt::skip]
+#[cfg_attr(rustfmt, rustfmt_skip)]
 static SMALL_PRIMES: [u32; 2048] = [
     2,     3,     5,     7,     11,    13,    17,    19,    23,    29,    31,
     37,    41,    43,    47,    53,    59,    61,    67,    71,    73,    79,

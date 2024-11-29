@@ -10,8 +10,8 @@ use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::{FE, GE};
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-use serde::{Serialize,Deserialize};
 
 /// This protocol is the elliptic curve form of the protocol from :
 ///  D. Chaum, T. P. Pedersen. Transferred cash grows in size. In Advances in Cryptology, EUROCRYPT , volume 658 of Lecture Notes in Computer Science, pages 390 - 407, 1993.
@@ -55,11 +55,11 @@ pub trait NISigmaProof<T, W, S> {
 impl NISigmaProof<ECDDHProof, ECDDHWitness, ECDDHStatement> for ECDDHProof {
     fn prove(w: &ECDDHWitness, delta: &ECDDHStatement) -> ECDDHProof {
         let mut s: FE = ECScalar::new_random();
-        let a1 = delta.g1 * s;
-        let a2 = delta.g2 * s;
+        let a1 = &delta.g1 * &s;
+        let a2 = &delta.g2 * &s;
         let e =
             HSha256::create_hash_from_ge(&[&delta.g1, &delta.h1, &delta.g2, &delta.h2, &a1, &a2]);
-        let z = s + e * w.x;
+        let z = s.copy() + e * &w.x;
         s.zeroize();
         ECDDHProof { a1, a2, z }
     }
@@ -68,10 +68,10 @@ impl NISigmaProof<ECDDHProof, ECDDHWitness, ECDDHStatement> for ECDDHProof {
         let e = HSha256::create_hash_from_ge(&[
             &delta.g1, &delta.h1, &delta.g2, &delta.h2, &self.a1, &self.a2,
         ]);
-        let z_g1 = delta.g1 * self.z;
-        let z_g2 = delta.g2 * self.z;
-        let a1_plus_e_h1 = self.a1 + delta.h1 * e;
-        let a2_plus_e_h2 = self.a2 + delta.h2 * e;
+        let z_g1 = &delta.g1 * &self.z;
+        let z_g2 = &delta.g2 * &self.z;
+        let a1_plus_e_h1 = &self.a1 + &(&delta.h1 * &e);
+        let a2_plus_e_h2 = &self.a2 + &(&delta.h2 * &e);
         if z_g1 == a1_plus_e_h1 && z_g2 == a2_plus_e_h2 {
             Ok(())
         } else {

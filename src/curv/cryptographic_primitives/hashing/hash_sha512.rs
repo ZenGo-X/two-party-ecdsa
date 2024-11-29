@@ -22,7 +22,7 @@ impl Hash for HSha512 {
             digest.update(&BigInt::to_vec(value));
         }
 
-        BigInt::from(digest.finalize().as_ref())
+        BigInt::from_bytes(digest.finalize().as_ref())
     }
 
     fn create_hash_from_ge(ge_vec: &[&GE]) -> FE {
@@ -32,21 +32,23 @@ impl Hash for HSha512 {
             digest.update(&value.pk_to_key_slice());
         }
 
-        let result = BigInt::from(digest.finalize().as_ref());
+        let result = BigInt::from_bytes(digest.finalize().as_ref());
         ECScalar::from(&result)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use num_traits::{One, Zero};
+
     use super::HSha512;
     use super::Hash;
     use crate::curv::arithmetic::traits::Converter;
+    use crate::curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
     use crate::curv::elliptic::curves::traits::ECPoint;
     use crate::curv::elliptic::curves::traits::ECScalar;
     use crate::curv::BigInt;
     use crate::curv::{GE, SK};
-    use crate::Secp256k1Scalar;
 
     #[test]
     // Very basic test here, TODO: suggest better testing
@@ -77,7 +79,7 @@ mod tests {
     fn hard_coded_tests_bigint() {
         {
             let zero_to_ten_thousand_hash_result = "8c0cac3aaeaecb57da4d85a315d670e02b994d728b19435be8c467ec4cd1cb9e38b7570bfa57d28bc2e1aafc3839c3174faab31b926e5855c992b13028c83aa6";
-            let zero_to_ten_thousand: Vec<_> = (0..10_000i32).map(BigInt::from).collect();
+            let zero_to_ten_thousand: Vec<_> = (0..10_000u32).map(BigInt::from).collect();
             let refs: Vec<_> = zero_to_ten_thousand.iter().collect();
             let zero_to_ten_thousand_hash = HSha512::create_hash(&refs);
             assert_eq!(
@@ -87,7 +89,7 @@ mod tests {
         }
         {
             let zero_to_2_512_result = "7952581f501695b95430e447516c79682011069b44c27354f7f0dec2a25218a218316a973af527e057ba1ac1f78e09312643118cc5b0d34e45029ca21565aaa5";
-            let zero_to_2_512: Vec<_> = (0..1024usize).map(|i| BigInt::from(1) << i).collect();
+            let zero_to_2_512: Vec<_> = (0..1024usize).map(|i| BigInt::from(1_u32) << i).collect();
             let refs: Vec<_> = zero_to_2_512.iter().collect();
             let zero_to_2_512_hash = HSha512::create_hash(&refs);
             assert_eq!(zero_to_2_512_hash.to_hex(), zero_to_2_512_result);
@@ -106,14 +108,14 @@ mod tests {
                 154, 56, 207, 106, 123, 234, 190, 69, 153, 220, 145, 123, 60, 139, 218, 185, 213,
                 139, 130, 51, 101, 61, 249, 115, 151, 206, 43, 62, 90, 205, 31, 16,
             ];
-            let one_to_500: Vec<GE> = (1..500i32)
+            let one_to_500: Vec<GE> = (1..500u32)
                 .map(BigInt::from)
                 .map(bigint_to_scalar)
                 .collect();
             let refs: Vec<_> = one_to_500.iter().collect();
             let one_to_500_hash = HSha512::create_hash_from_ge(&refs);
             assert_eq!(
-                one_to_500_hash.get_element().serialize_secret(),
+                one_to_500_hash.get_element().serialize(),
                 one_to_500_hash_result
             );
         }
@@ -123,13 +125,13 @@ mod tests {
                 224, 48, 79, 212, 1, 143, 254, 146, 197, 198, 17, 194, 233, 164,
             ];
             let one_to_2_256: Vec<GE> = (0..256usize)
-                .map(|i| BigInt::from(1) << i)
+                .map(|i| BigInt::from(1_u32) << i)
                 .map(bigint_to_scalar)
                 .collect();
             let refs: Vec<_> = one_to_2_256.iter().collect();
             let one_to_2_256_hash = HSha512::create_hash_from_ge(&refs);
             assert_eq!(
-                one_to_2_256_hash.get_element().serialize_secret(),
+                one_to_2_256_hash.get_element().serialize(),
                 one_to_2_256_result
             );
         }
@@ -139,10 +141,7 @@ mod tests {
                 171, 78, 240, 12, 116, 50, 115, 140, 216, 225, 142, 253, 89,
             ];
             let empty_hash = HSha512::create_hash_from_ge(&[]);
-            assert_eq!(
-                empty_hash.get_element().serialize_secret(),
-                empty_hash_result
-            );
+            assert_eq!(empty_hash.get_element().serialize(), empty_hash_result);
         }
         {
             let gen_hash_result = [
@@ -150,7 +149,7 @@ mod tests {
                 11, 0, 138, 8, 152, 160, 100, 230, 18, 58, 88, 83, 75, 253,
             ];
             let gen_hash = HSha512::create_hash_from_ge(&[&GE::generator()]);
-            assert_eq!(gen_hash.get_element().serialize_secret(), gen_hash_result);
+            assert_eq!(gen_hash.get_element().serialize(), gen_hash_result);
         }
     }
 }

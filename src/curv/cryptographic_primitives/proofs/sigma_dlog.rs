@@ -5,19 +5,13 @@
     License MIT: https://github.com/KZen-networks/curv/blob/master/LICENSE
 */
 
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 use super::ProofError;
-use crate::curv::FE;
-use crate::curv::GE;
-
+use crate::curv::elliptic::curves::secp256_k1::{FE, GE};
 use crate::curv::elliptic::curves::traits::*;
 
 use crate::curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use zeroize::Zeroize;
-use crate::party_one::{Value};
-use serde::{Serialize,Deserialize};
 
 /// This is implementation of Schnorr's identification protocol for elliptic curve groups or a
 /// sigma protocol for Proof of knowledge of the discrete log of an Elliptic-curve point:
@@ -35,24 +29,6 @@ pub struct DLogProof {
     pub pk_t_rand_commitment: GE,
     pub challenge_response: FE,
 }
-#[typetag::serde]
-impl Value for DLogProof {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-
-    fn type_name(&self) -> &str {
-        "DLogProof"
-    }
-
-}
-
-impl Display for DLogProof {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
 
 pub trait ProveDLog {
     fn prove(sk: &FE) -> DLogProof;
@@ -89,11 +65,11 @@ impl ProveDLog for DLogProof {
         let challenge = HSha256::create_hash(&[
             &proof.pk_t_rand_commitment.bytes_compressed_to_big_int(),
             &ec_point.bytes_compressed_to_big_int(),
-            &proof.pk.bytes_compressed_to_big_int(),
+            &proof.pk.clone().bytes_compressed_to_big_int(),
         ]);
 
         let sk_challenge: FE = ECScalar::from(&challenge);
-        let pk = proof.pk;
+        let pk = proof.pk.clone();
         let pk_challenge = pk.scalar_mul(&sk_challenge.get_element());
 
         let base_point: GE = ECPoint::generator();
@@ -113,12 +89,20 @@ impl ProveDLog for DLogProof {
 #[cfg(test)]
 mod tests {
     use crate::curv::cryptographic_primitives::proofs::sigma_dlog::*;
-    use crate::curv::FE;
+    use crate::curv::elliptic::curves::secp256_k1::FE;
 
+    #[cfg(target_arch = "wasm32")]
+    use wasm_bindgen_test::*;
+
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_dlog_proof() {
         let witness: FE = ECScalar::new_random();
         let dlog_proof = DLogProof::prove(&witness);
-        DLogProof::verify(&dlog_proof).unwrap();
+        let verified = DLogProof::verify(&dlog_proof);
+        match verified {
+            Ok(_t) => assert!(true),
+            Err(_e) => assert!(false),
+        }
     }
 }

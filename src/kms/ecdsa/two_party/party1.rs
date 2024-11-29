@@ -1,17 +1,17 @@
 use super::hd_key;
 use super::party2::SignMessage;
 use super::{MasterKey1, MasterKey2, Party1Public};
-use crate::kms::Errors::{self, SignError};
 use crate::curv::cryptographic_primitives::proofs::sigma_dlog::DLogProof;
 use crate::curv::{elliptic::curves::traits::ECPoint, BigInt, FE, GE};
+use crate::kms::Errors::{self, SignError};
 use crate::party_two::{
     PDLFirstMessage as Party2PDLFirstMsg, PDLSecondMessage as Party2PDLSecondMsg,
 };
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
 use crate::{
+    paillier::EncryptionKey,
     party_one,
     party_two::{self, EphKeyGenFirstMsg},
-    EncryptionKey,
 };
 
 use serde::{Deserialize, Serialize};
@@ -32,8 +32,8 @@ impl MasterKey1 {
 
         let public = Party1Public {
             q: public_key_new_child,
-            p1: self.public.p1,
-            p2: self.public.p2 * f_l_new,
+            p1: self.public.p1.copy(),
+            p2: self.public.p2.copy() * f_l_new,
             paillier_pub: self.public.paillier_pub.clone(),
             c_key: self.public.c_key.clone(),
         };
@@ -53,8 +53,8 @@ impl MasterKey1 {
     ) -> MasterKey1 {
         let party1_public = Party1Public {
             q: party_one::compute_pubkey(&party_one_private, party2_first_message_public_share),
-            p1: *party_one_public_ec_key,
-            p2: *party2_first_message_public_share,
+            p1: party_one_public_ec_key.copy(),
+            p2: party2_first_message_public_share.copy(),
             paillier_pub: paillier_key_pair.ek.clone(),
             c_key: paillier_key_pair.encrypted_share,
         };
@@ -144,7 +144,7 @@ impl MasterKey1 {
                 eph_key_gen_first_message_party_two,
                 &party_two_sign_message.second_message,
             )
-                .is_ok();
+            .is_ok();
 
         let signature_with_recid = party_one::Signature::compute_with_recid(
             &self.private,
@@ -163,14 +163,19 @@ impl MasterKey1 {
             s: signature_with_recid.s.clone(),
         };
 
-
         let verify = party_one::verify(&signature, &self.public.q, message).is_ok();
         if verify {
             if verify_party_two_second_message {
                 Ok(signature_with_recid)
             } else {
-                println!("Invalid commitments:{:?}", eph_key_gen_first_message_party_two);
-                println!("party_two_sign_message.second_message:{:?}", party_two_sign_message.second_message);
+                println!(
+                    "Invalid commitments:{:?}",
+                    eph_key_gen_first_message_party_two
+                );
+                println!(
+                    "party_two_sign_message.second_message:{:?}",
+                    party_two_sign_message.second_message
+                );
                 println!("sig_r: {}", signature.r);
                 println!("sig_s: {}", signature.s);
                 Err(SignError)

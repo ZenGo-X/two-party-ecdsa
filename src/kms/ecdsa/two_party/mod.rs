@@ -1,13 +1,13 @@
-use std::any::Any;
-use std::fmt::{Display, Formatter};
-use serde::{Deserialize, Serialize};
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::cryptographic_primitives::hashing::{hmac_sha512, traits::KeyedHash};
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
+use crate::party_one::{BasicOps, Value};
 use crate::{paillier::EncryptionKey, party_one, party_two};
-use crate::kms::chain_code::two_party::party1::ChainCode1;
-use crate::party_one::Value;
+use num_traits::One;
+use serde::{Deserialize, Serialize};
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Party1Public {
@@ -18,7 +18,7 @@ pub struct Party1Public {
     pub c_key: BigInt,
 }
 
-#[derive(Clone,Debug,Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MasterKey1 {
     pub public: Party1Public,
     // Why is the field below public? See: https://github.com/KZen-networks/kms-secp256k1/issues/20
@@ -67,7 +67,7 @@ pub fn hd_key(
     pubkey: &GE,
     chain_code_bi: &BigInt,
 ) -> (GE, FE, GE) {
-    let mask = BigInt::from(2i32).pow(256) - BigInt::one();
+    let mask = BigInt::from(2u32).pow(256) - BigInt::one();
     // let public_key = self.public.q.clone();
 
     // calc first element:
@@ -97,7 +97,7 @@ pub fn hd_key(
                 let f_l_fe: FE = ECScalar::from(&f_l);
                 let f_r_fe: FE = ECScalar::from(&f_r);
 
-                (acc.0 * f_l_fe, f_l_fe * acc.1, acc.2 * f_r_fe)
+                (acc.0 * &f_l_fe, f_l_fe * &acc.1, acc.2 * &f_r_fe)
             });
     (public_key_new_child, f_l_new, cc_new)
 }

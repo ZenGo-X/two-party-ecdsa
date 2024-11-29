@@ -15,9 +15,11 @@
 */
 use crate::curv::arithmetic::traits::{Modulo, Samplable};
 use crate::curv::BigInt;
+use crate::num_traits::{One, Zero};
 use crate::paillier::{
     EncryptWithChosenRandomness, EncryptionKey, Paillier, Randomness, RawPlaintext,
 };
+use crate::party_one::{BasicOps, Converter};
 
 const B: usize = 256;
 /// n the case that the message space size is small (a message can be only one of a few possibilities ),
@@ -57,7 +59,7 @@ impl CorrectMessageProof {
         let ui_vec = (0..num_of_message)
             .map(|i| {
                 let gm: BigInt = (valid_messages[i].clone() * &ek.n + BigInt::one()) % &ek.nn;
-                let gm_inv = gm.invert(&ek.nn).unwrap();
+                let gm_inv = BigInt::mod_inv(&gm, &ek.nn);
                 BigInt::mod_mul(&ciphertext, &gm_inv, &ek.nn)
             })
             .collect::<Vec<BigInt>>();
@@ -79,7 +81,7 @@ impl CorrectMessageProof {
                 } else {
                     let zi_n = BigInt::mod_pow(&zi_vec[j], &ek.n, &ek.nn);
                     let ui_ei = BigInt::mod_pow(&ui_vec[i], &ei_vec[j], &ek.nn);
-                    let ui_ei_inv = ui_ei.invert(&ek.nn).unwrap();
+                    let ui_ei_inv = BigInt::mod_inv(&ui_ei, &ek.nn);
                     j += 1;
                     BigInt::mod_mul(&zi_n, &ui_ei_inv, &ek.nn)
                 }
@@ -87,13 +89,13 @@ impl CorrectMessageProof {
             .collect::<Vec<BigInt>>();
 
         let digest = super::compute_digest(ai_vec.iter());
-        let two_bn = BigInt::from(2);
+        let two_bn = BigInt::from(2_u32);
         let two_to_security_param: BigInt = two_bn.pow(B as u32);
-        let chal = BigInt::from(&digest[..]);
-        let chal = chal.modulus(&two_to_security_param);
+        let chal = BigInt::from_bytes(&digest[..]);
+        let chal = chal % &two_to_security_param;
 
         let ei_sum = ei_vec.iter().fold(BigInt::zero(), |acc, x| acc + x);
-        let ei_sum = ei_sum.modulus(&two_to_security_param);
+        let ei_sum = ei_sum % &two_to_security_param;
 
         let ei = BigInt::mod_sub(&chal, &ei_sum, &two_to_security_param);
         let ri_ei = BigInt::mod_pow(&r, &ei, &ek.n);
@@ -135,13 +137,13 @@ impl CorrectMessageProof {
     }
     pub fn verify(&self) -> Result<(), CorrectMessageProofError> {
         let num_of_message = self.valid_messages.len();
-        let two_bn = BigInt::from(2);
+        let two_bn = BigInt::from(2 as u32);
         let two_to_security_param: BigInt = two_bn.pow(B as u32);
         let digest = super::compute_digest(self.a_vec.iter());
-        let chal = BigInt::from(&digest[..]);
-        let chal = chal.modulus(&two_to_security_param);
+        let chal = BigInt::from_bytes(&digest[..]);
+        let chal = chal % &two_to_security_param;
         let ei_sum = self.e_vec.iter().fold(BigInt::zero(), |acc, x| acc + x);
-        let ei_sum = ei_sum.modulus(&two_to_security_param);
+        let ei_sum = ei_sum % &two_to_security_param;
 
         assert_eq!(chal, ei_sum);
 
@@ -150,7 +152,7 @@ impl CorrectMessageProof {
                 let gm: BigInt = (self.valid_messages[i].clone() * self.ek.n.clone()
                     + BigInt::one())
                     % &self.ek.nn;
-                let gm_inv = gm.invert(&self.ek.nn).unwrap();
+                let gm_inv = BigInt::mod_inv(&gm, &self.ek.nn);
                 BigInt::mod_mul(&self.ciphertext, &gm_inv, &self.ek.nn)
             })
             .collect::<Vec<BigInt>>();
@@ -179,12 +181,12 @@ mod tests {
     #[test]
     fn test_correct_message_zk_proof() {
         let valid_message = [
-            BigInt::from(3),
-            BigInt::from(4),
-            BigInt::from(5),
-            BigInt::from(6),
+            BigInt::from(3_u32),
+            BigInt::from(4_u32),
+            BigInt::from(5_u32),
+            BigInt::from(6_u32),
         ];
-        let message_to_encrypt = BigInt::from(4);
+        let message_to_encrypt = BigInt::from(4_u32);
         let (ek, _dk) = Paillier::keypair().keys();
         let proof = CorrectMessageProof::prove(&ek, &valid_message, &message_to_encrypt);
         assert!(proof.verify().is_ok());
@@ -194,12 +196,12 @@ mod tests {
     #[should_panic]
     fn test_bad_message_zk_proof() {
         let valid_message = [
-            BigInt::from(3),
-            BigInt::from(4),
-            BigInt::from(5),
-            BigInt::from(6),
+            BigInt::from(3_u32),
+            BigInt::from(4_u32),
+            BigInt::from(5_u32),
+            BigInt::from(6_u32),
         ];
-        let message_to_encrypt = BigInt::from(7);
+        let message_to_encrypt = BigInt::from(7_u32);
         let (ek, _dk) = Paillier::keypair().keys();
         let proof = CorrectMessageProof::prove(&ek, &valid_message, &message_to_encrypt);
         assert!(proof.verify().is_ok());

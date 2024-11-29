@@ -12,11 +12,11 @@
 #![allow(non_snake_case)]
 #![cfg(test)]
 use super::{MasterKey1, MasterKey2};
-use crate::kms::chain_code::two_party::{party1, party2};
 use crate::centipede::juggling::{proof_system::Proof, segmentation::Msegmentation};
 use crate::curv::arithmetic::traits::Converter;
 use crate::curv::elliptic::curves::traits::{ECPoint, ECScalar};
 use crate::curv::{BigInt, FE, GE};
+use crate::kms::chain_code::two_party::{party1, party2};
 
 #[test]
 fn test_recovery_from_openssl() {
@@ -40,7 +40,7 @@ fn test_recovery_from_openssl() {
     */
     let Y_hex = "2CFF67FA834F0E81E111F268624F2614C1B1E00BA93C4111773C1C248C5EA8FFF132E8EC3040D4DA67377F337D3866CB167A82AA0C4101ED\
         F5AD3F3898E7EB7C";
-    let Y_bn = BigInt::from_str_radix(Y_hex, 16).unwrap();
+    let Y_bn = BigInt::from_hex(Y_hex);
     let Y_vec = BigInt::to_vec(&Y_bn);
     let Y: GE = ECPoint::from_bytes(&Y_vec[..]).unwrap();
 
@@ -56,7 +56,7 @@ fn test_recovery_from_openssl() {
         -----END EC PRIVATE KEY-----
     */
     let y_hex = "7D086B540B6E2070BB5D1E637EB99DF2343C9860C8BF8E8330E2CFDF4A763219";
-    let y_bn = BigInt::from_str_radix(y_hex, 16).unwrap();
+    let y_bn = BigInt::from_hex(y_hex);
     let y: FE = ECScalar::from(&y_bn);
     assert_eq!(Y.clone(), G * y);
 
@@ -137,7 +137,7 @@ fn test_recovery_scenarios() {
         Msegmentation::decrypt(&encryptions_secret_party1, &G, &y, &segment_size);
 
     //test by signing:
-    let message = BigInt::from(1234i32);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -164,7 +164,7 @@ fn test_commutativity_rotate_get_child() {
 
     // child and rotate:
     //test signing:
-    let message = BigInt::from(1234_i32);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -182,8 +182,8 @@ fn test_commutativity_rotate_get_child() {
     );
     sign_party_one_second_message.expect("bad signature");
 
-    let new_party_one_master_key = party_one_master_key.get_child(vec![BigInt::from(10_i32)]);
-    let new_party_two_master_key = party_two_master_key.get_child(vec![BigInt::from(10_i32)]);
+    let new_party_one_master_key = party_one_master_key.get_child(vec![BigInt::from(10_u32)]);
+    let new_party_two_master_key = party_two_master_key.get_child(vec![BigInt::from(10_u32)]);
 
     // sign with child keys
     let sign_party_two_second_message = new_party_two_master_key.sign_second_message(
@@ -224,11 +224,11 @@ fn test_commutativity_rotate_get_child() {
         (party_one_master_key, party_two_master_key);
 
     //get child:
-    let rc_party_one_master_key = rotate_party_one_master_key.get_child(vec![BigInt::from(10_i32)]);
-    let rc_party_two_master_key = rotate_party_two_master_key.get_child(vec![BigInt::from(10_i32)]);
+    let rc_party_one_master_key = rotate_party_one_master_key.get_child(vec![BigInt::from(10_u32)]);
+    let rc_party_two_master_key = rotate_party_two_master_key.get_child(vec![BigInt::from(10_u32)]);
 
     // sign with rotated and child keys
-    let message = BigInt::from(1234_i32);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -258,16 +258,16 @@ fn test_get_child() {
     let (party_one_master_key, party_two_master_key) = test_key_gen();
 
     let new_party_two_master_key =
-        party_two_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
+        party_two_master_key.get_child(vec![BigInt::from(10_u32), BigInt::from(5_u32)]);
     let new_party_one_master_key =
-        party_one_master_key.get_child(vec![BigInt::from(10), BigInt::from(5)]);
+        party_one_master_key.get_child(vec![BigInt::from(10_u32), BigInt::from(5_u32)]);
     assert_eq!(
         new_party_one_master_key.public.q,
         new_party_two_master_key.public.q
     );
 
     //test signing:
-    let message = BigInt::from(1234);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -286,7 +286,7 @@ fn test_get_child() {
     sign_party_one_second_message.expect("bad signature");
 
     // test sign for child
-    let message = BigInt::from(1234);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -313,7 +313,7 @@ fn test_flip_masters() {
 
     //signing & verifying before rotation:
     //test signing:
-    let message = BigInt::from(1234_i32);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();
@@ -337,7 +337,7 @@ fn test_flip_masters() {
 
     // sign after rotate:
     //test signing:
-    let message = BigInt::from(1234);
+    let message = BigInt::from(1234_u32);
     let (sign_party_two_first_message, eph_comm_witness, eph_ec_key_pair_party2) =
         MasterKey2::sign_first_message();
     let (sign_party_one_first_message, eph_ec_key_pair_party1) = MasterKey1::sign_first_message();

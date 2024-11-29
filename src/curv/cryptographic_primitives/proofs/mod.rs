@@ -12,8 +12,8 @@ pub mod sigma_correct_homomorphic_elgamal_enc;
 pub mod sigma_correct_homomorphic_elgamal_encryption_of_dlog;
 pub mod sigma_dlog;
 pub mod sigma_ec_ddh;
-pub mod sigma_valid_pedersen;
-pub mod sigma_valid_pedersen_blind;
+
+pub const PROOF_ERROR_DESCRIPTION: &str = "Error while verifying";
 
 #[derive(Debug, Clone, Copy)]
 pub struct ProofError;
@@ -26,6 +26,6 @@ impl fmt::Display for ProofError {
 
 impl Error for ProofError {
     fn description(&self) -> &str {
-        "Error while verifying"
+        PROOF_ERROR_DESCRIPTION
     }
 }

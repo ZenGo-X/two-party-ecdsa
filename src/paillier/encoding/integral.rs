@@ -1,12 +1,17 @@
 //! Integral code supporting both scalars and vectors.
 
-use crate::paillier::traits::{Add, Decrypt, Encrypt, Mul, Rerandomize};
+use crate::paillier::traits::Add;
+use crate::paillier::traits::Decrypt;
+use crate::paillier::traits::Encrypt;
+use crate::paillier::traits::Mul;
+use crate::paillier::traits::Rerandomize;
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 use super::{pack, unpack, EncodedCiphertext};
+use crate::curv::arithmetic::num_bigint::BigInt;
 use crate::curv::arithmetic::traits::*;
-use crate::paillier::{BigInt, Paillier, RawCiphertext, RawPlaintext};
+use crate::paillier::{Paillier, RawCiphertext, RawPlaintext};
 
 impl<EK> Encrypt<EK, u64, EncodedCiphertext<u64>> for Paillier
 where
@@ -321,12 +326,16 @@ mod tests {
     use super::*;
     use crate::paillier::Keypair;
 
+    #[cfg(target_arch = "wasm32")]
+    use wasm_bindgen_test::*;
+
     fn test_keypair() -> Keypair {
         let p = str::parse("148677972634832330983979593310074301486537017973460461278300587514468301043894574906886127642530475786889672304776052879927627556769456140664043088700743909632312483413393134504352834240399191134336344285483935856491230340093391784574980688823380828143810804684752914935441384845195613674104960646037368551517").unwrap();
         let q = str::parse("158741574437007245654463598139927898730476924736461654463975966787719309357536545869203069369466212089132653564188443272208127277664424448947476335413293018778018615899291704693105620242763173357203898195318179150836424196645745308205164116144020613415407736216097185962171301808761138424668335445923774195463").unwrap();
         Keypair { p, q }
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_scalar_encrypt_decrypt() {
         let (ek, dk) = test_keypair().keys();
@@ -338,6 +347,7 @@ mod tests {
         assert_eq!(recovered_m, m);
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_vector_encrypt_decrypt() {
         let (ek, dk) = test_keypair().keys();
@@ -349,6 +359,7 @@ mod tests {
         assert_eq!(recovered_m, m);
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_scalar_add_plaintext_scalar() {
         let (ek, dk) = test_keypair().keys();
@@ -361,6 +372,7 @@ mod tests {
         assert_eq!(m, 30);
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_scalar_add_ciphertext_scalar() {
         let (ek, dk) = test_keypair().keys();
@@ -373,6 +385,7 @@ mod tests {
         assert_eq!(m, 30);
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_vector_add_plaintext_vector() {
         let (ek, dk) = test_keypair().keys();
@@ -387,7 +400,7 @@ mod tests {
         assert_eq!(m, vec![4, 4, 4]);
     }
 
-    // #[test]
+    // #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)] #[test]
     // fn test_add_vector_scalar() {
     //     let (ek, dk) = test_keypair().keys();
 
@@ -401,7 +414,7 @@ mod tests {
     //     assert_eq!(m, vec![2, 4, 6]);
     // }
 
-    // #[test]
+    // #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)] #[test]
     // fn test_add_scalar_vector() {
     //     let (ek, dk) = test_keypair().keys();
 
@@ -415,6 +428,7 @@ mod tests {
     //     assert_eq!(m, vec![2, 4, 6]);
     // }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_scalar_mul_plaintext_scalar() {
         let (ek, dk) = test_keypair().keys();
@@ -425,6 +439,7 @@ mod tests {
         assert_eq!(m, 200);
     }
 
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
     #[test]
     fn test_vector_mul_plaintext_scalar() {
         let (ek, dk) = test_keypair().keys();

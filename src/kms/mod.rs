@@ -1,4 +1,4 @@
-pub mod chain_code;
+// pub mod chain_code;
 pub mod ecdsa;
 
 pub mod poc;

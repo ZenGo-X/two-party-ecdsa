@@ -19,6 +19,8 @@ use super::proof_system::{Helgamal, Helgamalsegmented, Witness};
 use crate::centipede::Errors::{self, ErrorDecrypting};
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::{BigInt, FE, GE};
+use crate::party_one::BasicOps;
+use num_traits::Zero;
 use rayon::prelude::*;
 use std::ops::{Shl, Shr};
 
@@ -30,9 +32,9 @@ impl Msegmentation {
         let segment_size_u32 = *segment_size as u32;
         let msb = segment_size_u32 * (k as u32 + 1);
         let lsb = segment_size_u32 * k as u32;
-        let two_bn = BigInt::from(2);
-        let max = BigInt::pow(&two_bn, msb) - BigInt::from(1);
-        let min = BigInt::pow(&two_bn, lsb) - BigInt::from(1);
+        let two_bn = BigInt::from(2_u32);
+        let max = BigInt::pow(&two_bn, msb) - BigInt::from(1_u32);
+        let min = BigInt::pow(&two_bn, lsb) - BigInt::from(1_u32);
         let mask = max - min;
         let segment_k_bn = mask & ss_bn;
         let segment_k_bn_rotated = BigInt::shr(segment_k_bn, (k * (*segment_size) as u8) as usize);
@@ -67,7 +69,7 @@ impl Msegmentation {
 
     // TODO: find a way using generics to combine the following two fn's
     pub(crate) fn assemble_fe(segments: &[FE], segment_size: &usize) -> FE {
-        let two = BigInt::from(2);
+        let two = BigInt::from(2_u32);
         let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
         segments_2n.iter().enumerate().fold(seg1, |acc, x| {
@@ -77,14 +79,14 @@ impl Msegmentation {
                 let two_to_the_n = two.pow(*segment_size as u32);
                 let two_to_the_n_shifted = two_to_the_n.shl(x.0 * segment_size);
                 let two_to_the_n_shifted_fe: FE = ECScalar::from(&two_to_the_n_shifted);
-                let shifted_segment = *x.1 * two_to_the_n_shifted_fe;
+                let shifted_segment = x.1.copy() * two_to_the_n_shifted_fe;
                 acc + shifted_segment
             }
         })
     }
 
     pub(crate) fn assemble_ge(segments: &[GE], segment_size: &usize) -> GE {
-        let two = BigInt::from(2);
+        let two = BigInt::from(2_u32);
         let mut segments_2n = segments.to_vec();
         let seg1 = segments_2n.remove(0);
         segments_2n.iter().enumerate().fold(seg1, |acc, x| {
@@ -142,7 +144,7 @@ impl Msegmentation {
         let limit_plus_one = *limit + 1u32;
         let out_of_limit_fe: FE = ECScalar::from(&BigInt::from(limit_plus_one));
         let out_of_limit_ge: GE = G * &out_of_limit_fe;
-        let yE = DE.E * private_key;
+        let yE = DE.E.copy() * private_key;
         // handling 0 segment
         let mut D_minus_yE: GE = out_of_limit_ge;
         if yE == DE.D {
@@ -200,7 +202,7 @@ impl Msegmentation {
                     flag = false;
                     FE::zero()
                 } else {
-                    vec_secret[i].unwrap()
+                    vec_secret[i].clone().unwrap()
                 }
             })
             .collect::<Vec<FE>>();

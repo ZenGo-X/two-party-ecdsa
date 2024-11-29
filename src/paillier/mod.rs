@@ -1,31 +1,25 @@
 pub mod core;
 pub mod encoding;
-mod serialize;
-pub mod traits;
-
 pub mod keygen;
+pub mod traits;
+pub mod zkproofs;
 
-pub use self::core::*;
-pub use self::encoding::*;
-pub use self::traits::*;
-
-pub use keygen::*;
+pub use crate::paillier::core::*;
+pub use crate::paillier::encoding::*;
+pub use crate::paillier::keygen::*;
+pub use crate::paillier::traits::*;
 
 use std::borrow::Cow;
-use serde::{Serialize,Deserialize};
 
 /// Main struct onto which most operations are added.
 pub struct Paillier;
 
-pub use crate::curv::arithmetic::big_gmp::BigInt;
-
+pub use crate::curv::arithmetic::num_bigint::BigInt;
 /// Keypair from which encryption and decryption keys can be derived.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Keypair {
-    #[serde(with = "crate::paillier::serialize::bigint")]
     pub p: BigInt, // TODO[Morten] okay to make non-public?
 
-    #[serde(with = "crate::paillier::serialize::bigint")]
     pub q: BigInt, // TODO[Morten] okay to make non-public?
 }
 
@@ -34,7 +28,6 @@ pub struct Keypair {
 /// Used e.g. for serialization of `EncryptionKey`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MinimalEncryptionKey {
-    #[serde(with = "crate::paillier::serialize::bigint")]
     pub n: BigInt,
 }
 
@@ -43,10 +36,8 @@ pub struct MinimalEncryptionKey {
 /// Used e.g. for serialization of `DecryptionKey`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MinimalDecryptionKey {
-    #[serde(with = "crate::paillier::serialize::bigint")]
     pub p: BigInt,
 
-    #[serde(with = "crate::paillier::serialize::bigint")]
     pub q: BigInt,
 }
 

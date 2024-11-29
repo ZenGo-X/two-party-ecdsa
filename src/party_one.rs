@@ -13,14 +13,15 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
+use crate::num_integer::Integer;
 use crate::paillier::Paillier;
 use crate::paillier::{Decrypt, EncryptWithChosenRandomness, KeyGeneration};
 use crate::paillier::{DecryptionKey, EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
 use crate::zk_paillier::zkproofs::{NICorrectKeyProof, RangeProofNi};
+use serde::{Deserialize, Serialize};
 use std::cmp;
-use std::ops::Shl;
 use std::fmt::{Debug, Display, Formatter};
-use serde::{Serialize, Deserialize};
+use std::ops::Shl;
 
 use super::SECURITY_BITS;
 pub use crate::curv::arithmetic::traits::*;
@@ -46,7 +47,7 @@ use crate::centipede::juggling::segmentation::Msegmentation;
 use crate::curv::BigInt;
 use crate::curv::FE;
 use crate::curv::GE;
-use std::any::{Any, TypeId};
+use std::any::Any;
 
 use crate::Error::{self, InvalidSig};
 
@@ -62,7 +63,7 @@ pub struct HDPos {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct v {
+pub struct V {
     pub value: String,
 }
 
@@ -111,7 +112,7 @@ impl Value for EcKeyPair {
 }
 
 #[typetag::serde]
-impl Value for v {
+impl Value for V {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -171,7 +172,7 @@ impl Display for EphEcKeyPair {
     }
 }
 
-impl Display for v {
+impl Display for V {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -182,7 +183,6 @@ impl Display for CommWitness {
         write!(f, "{:?}", self)
     }
 }
-
 
 impl Display for PDLdecommit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -227,7 +227,6 @@ pub struct EcKeyPair {
     secret_share: FE,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CommWitness {
     pub pk_commitment_blind_factor: BigInt,
@@ -236,13 +235,11 @@ pub struct CommWitness {
     pub d_log_proof: DLogProof,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyGenFirstMsg {
     pub pk_commitment: BigInt,
     pub zk_pok_commitment: BigInt,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyGenSecondMsg {
@@ -277,7 +274,6 @@ pub struct Party1Private {
     c_key_randomness: BigInt,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLFirstMessage {
     pub c_hat: BigInt,
@@ -288,7 +284,6 @@ pub struct PDLdecommit {
     pub q_hat: GE,
     pub blindness: BigInt,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PDLSecondMessage {
@@ -320,7 +315,7 @@ impl KeyGenFirstMsg {
         let secret_share: FE = ECScalar::new_random();
         //in Lindell's protocol range proof works only for x1<q/3
         let secret_share: FE =
-            ECScalar::from(&secret_share.to_big_int().div_floor(&BigInt::from(3)));
+            ECScalar::from(&secret_share.to_big_int().div_floor(&BigInt::from(3_u32)));
 
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -351,7 +346,7 @@ impl KeyGenFirstMsg {
             CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share,
+                public_share: ec_key_pair.public_share.copy(),
                 d_log_proof,
             },
             ec_key_pair,
@@ -364,7 +359,7 @@ impl KeyGenFirstMsg {
         //in Lindell's protocol range proof works only for x1<q/3
         let sk_bigint = secret_share.to_big_int();
         let q_third = FE::q();
-        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3)));
+        assert!(sk_bigint < q_third.div_floor(&BigInt::from(3_u32)));
         let base: GE = ECPoint::generator();
         let public_share = base.scalar_mul(&secret_share.get_element());
 
@@ -396,7 +391,7 @@ impl KeyGenFirstMsg {
             CommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share,
+                public_share: ec_key_pair.public_share.copy(),
                 d_log_proof,
             },
             ec_key_pair,
@@ -421,7 +416,7 @@ pub fn compute_pubkey(party_one_private: &Party1Private, other_share_public_shar
 impl Party1Private {
     pub fn set_private_key(ec_key: &EcKeyPair, paillier_key: &PaillierKeyPair) -> Party1Private {
         Party1Private {
-            x1: ec_key.secret_share,
+            x1: ec_key.secret_share.copy(),
             paillier_priv: paillier_key.dk.clone(),
             c_key_randomness: paillier_key.randomness.clone(),
         }
@@ -449,8 +444,8 @@ impl PaillierKeyPair {
             RawPlaintext::from(keygen.secret_share.to_big_int()),
             &randomness,
         )
-            .0
-            .into_owned();
+        .0
+        .into_owned();
 
         PaillierKeyPair {
             ek,
@@ -512,7 +507,7 @@ impl PaillierKeyPair {
         let b = pdl_party_two_second_message.decommit.b.clone();
         let blindness = pdl_party_two_second_message.decommit.blindness.clone();
 
-        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
+        let ab_concat = a.clone() + b.clone().shl(a.bits());
         let c_tag_tag_test =
             HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
         let ax1 = a * party_one_private.x1.to_big_int();
@@ -531,19 +526,21 @@ impl EphKeyGenFirstMsg {
     pub fn create() -> (EphKeyGenFirstMsg, EphEcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
-        let public_share = base * secret_share;
+        let public_share = &base * &secret_share;
         let h: GE = GE::base_point2();
-        let w = ECDDHWitness { x: secret_share };
-        let c = h * secret_share;
+        let w = ECDDHWitness {
+            x: secret_share.copy(),
+        };
+        let c = &h * &secret_share;
         let delta = ECDDHStatement {
             g1: base,
-            h1: public_share,
+            h1: public_share.copy(),
             g2: h,
-            h2: c,
+            h2: c.copy(),
         };
         let d_log_proof = ECDDHProof::prove(&w, &delta);
         let ec_key_pair = EphEcKeyPair {
-            public_share,
+            public_share: public_share.copy(),
             secret_share,
         };
         (
@@ -585,9 +582,9 @@ impl EphKeyGenSecondMsg {
         }
         let delta = ECDDHStatement {
             g1: GE::generator(),
-            h1: *party_two_public_share,
+            h1: party_two_public_share.copy(),
             g2: GE::base_point2(),
-            h2: party_two_second_message.comm_witness.c,
+            h2: party_two_second_message.comm_witness.c.copy(),
         };
         party_two_d_log_proof.verify(&delta)?;
         Ok(EphKeyGenSecondMsg {})
@@ -602,15 +599,11 @@ impl Signature {
         ephemeral_other_public_share: &GE,
     ) -> Signature {
         //compute r = k2* R1
-        let mut r = *ephemeral_other_public_share;
+        let mut r = ephemeral_other_public_share.copy();
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&FE::q());
-        let k1_inv = &ephemeral_local_share
-            .secret_share
-            .to_big_int()
-            .invert(&FE::q())
-            .unwrap();
+        let k1_inv = &ephemeral_local_share.secret_share.invert().to_big_int();
         let s_tag = Paillier::decrypt(
             &party_one_private.paillier_priv,
             &RawCiphertext::from(partial_sig_c3),
@@ -627,16 +620,12 @@ impl Signature {
         ephemeral_other_public_share: &GE,
     ) -> SignatureRecid {
         //compute r = k2* R1
-        let mut r = *ephemeral_other_public_share;
+        let mut r = ephemeral_other_public_share.copy();
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&FE::q());
         let ry = r.y_coor().unwrap().mod_floor(&FE::q());
-        let k1_inv = &ephemeral_local_share
-            .secret_share
-            .to_big_int()
-            .invert(&FE::q())
-            .unwrap();
+        let k1_inv = &ephemeral_local_share.secret_share.invert().to_big_int();
         let s_tag = Paillier::decrypt(
             &party_one_private.paillier_priv,
             &RawCiphertext::from(partial_sig_c3),
@@ -650,7 +639,7 @@ impl Signature {
          1. id = R.y & 1
          2. if (s > curve.q / 2) id = id ^ 1
         */
-        let is_ry_odd = ry.tstbit(0);
+        let is_ry_odd = ry.test_bit(0);
         let mut recid = if is_ry_odd { 1 } else { 0 };
         if s_tag_tag > (FE::q() - &s_tag_tag) {
             recid ^= 1;
@@ -666,8 +655,8 @@ pub fn verify(signature: &Signature, pubkey: &GE, message: &BigInt) -> Result<()
 
     let s_inv_fe = s_fe.invert();
     let e_fe: FE = ECScalar::from(&message.mod_floor(&FE::q()));
-    let u1 = GE::generator() * e_fe * s_inv_fe;
-    let u2 = *pubkey * rx_fe * s_inv_fe;
+    let u1 = GE::generator() * &e_fe * &s_inv_fe;
+    let u2 = pubkey * &rx_fe * &s_inv_fe;
 
     // second condition is against malleability
     let rx_bytes = &BigInt::to_vec(&signature.r)[..];

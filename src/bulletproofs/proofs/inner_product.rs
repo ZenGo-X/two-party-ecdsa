@@ -22,7 +22,8 @@ use crate::curv::cryptographic_primitives::hashing::traits::*;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::BigInt;
 use crate::curv::{FE, GE};
-use serde::{Serialize,Deserialize};
+use num_traits::Zero;
+use serde::{Deserialize, Serialize};
 
 use crate::bulletproofs::Errors::{self, InnerProductError};
 
@@ -72,13 +73,13 @@ impl InnerProductArg {
             let aL_GR = (0..n)
                 .map(|i| {
                     let aLi: FE = ECScalar::from(&a_L[i]);
-                    G_R[i] * aLi
+                    &G_R[i] * &aLi
                 })
                 .fold(ux_CL, |acc, x| acc + x as GE);
             let L = (0..n)
                 .map(|i| {
                     let bRi: FE = ECScalar::from(&b_R[i]);
-                    H_L[i] * bRi
+                    &H_L[i] * &bRi
                 })
                 .fold(aL_GR, |acc, x| acc + x as GE);
 
@@ -88,13 +89,13 @@ impl InnerProductArg {
             let aR_GL = (0..n)
                 .map(|i| {
                     let aRi: FE = ECScalar::from(&a_R[i]);
-                    G_L[i] * aRi
+                    &G_L[i] * &aRi
                 })
                 .fold(ux_CR, |acc, x: GE| acc + x as GE);
             let R = (0..n)
                 .map(|i| {
                     let bLi: FE = ECScalar::from(&b_L[i]);
-                    H_R[i] * bLi
+                    &H_R[i] * &bLi
                 })
                 .fold(aR_GL, |acc, x: GE| acc + x as GE);
 
@@ -123,8 +124,8 @@ impl InnerProductArg {
 
             let G_new = (0..n)
                 .map(|i| {
-                    let GLx_inv = G_L[i] * x_inv_fe;
-                    let GRx = G_R[i] * x;
+                    let GLx_inv = &G_L[i] * &x_inv_fe;
+                    let GRx = &G_R[i] * &x;
                     GRx + GLx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -132,8 +133,8 @@ impl InnerProductArg {
 
             let H_new = (0..n)
                 .map(|i| {
-                    let HLx = H_L[i] * x;
-                    let HRx_inv = H_R[i] * x_inv_fe;
+                    let HLx = &H_L[i] * &x;
+                    let HRx_inv = &H_R[i] * &x_inv_fe;
                     HLx + HRx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -179,8 +180,8 @@ impl InnerProductArg {
 
             let G_new = (0..n)
                 .map(|i| {
-                    let GLx_inv = G_L[i] * x_inv_fe;
-                    let GRx = G_R[i] * x;
+                    let GLx_inv = &G_L[i] * &x_inv_fe;
+                    let GRx = &G_R[i] * &x;
                     GRx + GLx_inv
                 })
                 .collect::<Vec<GE>>();
@@ -188,14 +189,14 @@ impl InnerProductArg {
 
             let H_new = (0..n)
                 .map(|i| {
-                    let HLx = H_L[i] * x;
-                    let HRx_inv = H_R[i] * x_inv_fe;
+                    let HLx = &H_L[i] * &x;
+                    let HRx_inv = &H_R[i] * &x_inv_fe;
                     HLx + HRx_inv
                 })
                 .collect::<Vec<GE>>();
             //    H = &mut H_new[..];
-            let Lx_sq = self.L[0] * x_sq_fe;
-            let Rx_sq_inv = self.R[0] * x_inv_sq_fe;
+            let Lx_sq = &self.L[0] * &x_sq_fe;
+            let Rx_sq_inv = &self.R[0] * &x_inv_sq_fe;
             let P_tag = Lx_sq + Rx_sq_inv + P;
             let ip = InnerProductArg {
                 L: (&self.L[1..]).to_vec(),
@@ -209,8 +210,8 @@ impl InnerProductArg {
         let a_fe: FE = ECScalar::from(&self.a_tag);
         let b_fe: FE = ECScalar::from(&self.b_tag);
         let c = a_fe.mul(&b_fe.get_element());
-        let Ga = G[0] * a_fe;
-        let Hb = H[0] * b_fe;
+        let Ga = &G[0] * &a_fe;
+        let Hb = &H[0] * &b_fe;
         let ux_c = ux * &c;
         let P_calc = Ga + Hb + ux_c;
         if P == &P_calc {
@@ -249,7 +250,7 @@ mod tests {
 
     fn test_helper(n: usize) {
         let KZen: &[u8] = &[75, 90, 101, 110];
-        let kzen_label = BigInt::from(KZen);
+        let kzen_label = BigInt::from_bytes(KZen);
 
         let g_vec = (0..n)
             .map(|i| {
@@ -268,7 +269,7 @@ mod tests {
             })
             .collect::<Vec<GE>>();
 
-        let label = BigInt::from(1);
+        let label = BigInt::from(1_u32);
         let hash = HSha512::create_hash(&[&label]);
         let Gx = generate_random_point(&Converter::to_vec(&hash));
 

@@ -12,8 +12,8 @@ use crate::curv::cryptographic_primitives::hashing::traits::Hash;
 use crate::curv::elliptic::curves::traits::*;
 use crate::curv::FE;
 use crate::curv::GE;
+use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
-use serde::{Serialize,Deserialize};
 
 /// This is a proof of knowledge that a pair of group elements {D, E}
 /// form a valid homomorphic ElGamal encryption (”in the exponent”) using public key Y .
@@ -52,13 +52,13 @@ impl HomoELGamalDlogProof {
     ) -> HomoELGamalDlogProof {
         let mut s1: FE = ECScalar::new_random();
         let mut s2: FE = ECScalar::new_random();
-        let A1 = delta.G * s1;
-        let A2 = delta.Y * s2;
-        let A3 = delta.G * s2;
+        let A1 = delta.G.copy() * s1.copy();
+        let A2 = delta.Y.copy() * s2.copy();
+        let A3 = delta.G.copy() * s2.copy();
         let e =
             HSha256::create_hash_from_ge(&[&A1, &A2, &A3, &delta.G, &delta.Y, &delta.D, &delta.E]);
-        let z1 = s1 + e * w.x;
-        let z2 = s2 + e * w.r;
+        let z1 = s1.copy() + e.copy() * w.x.copy();
+        let z2 = s2.copy() + e.copy() * w.r.copy();
         s1.zeroize();
         s2.zeroize();
         HomoELGamalDlogProof { A1, A2, A3, z1, z2 }
@@ -68,13 +68,13 @@ impl HomoELGamalDlogProof {
         let e = HSha256::create_hash_from_ge(&[
             &self.A1, &self.A2, &self.A3, &delta.G, &delta.Y, &delta.D, &delta.E,
         ]);
-        let z1G = delta.G * self.z1;
-        let z2Y = delta.Y * self.z2;
-        let z2G = delta.G * self.z2;
-        let A1_plus_eQ = self.A1 + delta.Q * e;
-        let A3_plus_eE = self.A3 + delta.E * e;
+        let z1G = delta.G.copy() * self.z1.copy();
+        let z2Y = delta.Y.copy() * self.z2.copy();
+        let z2G = delta.G.copy() * self.z2.copy();
+        let A1_plus_eQ = self.A1.copy() + delta.Q.copy() * e.copy();
+        let A3_plus_eE = self.A3.copy() + delta.E.copy() * e.copy();
         let D_minus_Q = delta.D.sub_point(&delta.Q.get_element());
-        let A2_plus_eDmQ = self.A2 + D_minus_Q * e;
+        let A2_plus_eDmQ = self.A2.copy() + D_minus_Q * e;
         if z1G == A1_plus_eQ && z2G == A3_plus_eE && z2Y == A2_plus_eDmQ {
             Ok(())
         } else {

@@ -31,6 +31,7 @@ pub mod bigint {
 pub mod vecbigint {
 
     use crate::curv::BigInt;
+    use num_traits::Num;
     use serde::de::SeqAccess;
     use serde::ser::SerializeSeq;
     use serde::{de, ser};

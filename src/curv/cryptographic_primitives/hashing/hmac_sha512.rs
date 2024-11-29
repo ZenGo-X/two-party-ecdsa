@@ -9,26 +9,28 @@ use crate::curv::BigInt;
 
 use super::traits::KeyedHash;
 use crate::curv::arithmetic::traits::Converter;
-use zeroize::Zeroize;
-use sha2::Sha512;
 use hmac::{Hmac, Mac};
+use sha2::Sha512;
+use zeroize::Zeroize;
 pub struct HMacSha512;
 
 impl KeyedHash for HMacSha512 {
     fn create_hmac(key: &BigInt, data: &[&BigInt]) -> BigInt {
-        let mut key_bytes: Vec<u8> = key.into();
+        let mut key_bytes: Vec<u8> = key.to_bytes_be();
 
-        let mut ctx = Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
+        let mut ctx =
+            Hmac::<Sha512>::new_from_slice(&key_bytes).expect("HMAC can take key of any size");
         for value in data {
             ctx.update(&BigInt::to_vec(value));
         }
         key_bytes.zeroize();
-        BigInt::from(ctx.finalize().into_bytes().as_ref())
+        BigInt::from_bytes(ctx.finalize().into_bytes().as_ref())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use num_traits::Zero;
 
     use super::HMacSha512;
     use crate::curv::arithmetic::traits::Converter;
@@ -39,16 +41,17 @@ mod tests {
     #[test]
     fn create_hmac_test() {
         let key = BigInt::sample(512);
-        let result1 = HMacSha512::create_hmac(&key, &vec![&BigInt::from(10)]);
+        let result1 = HMacSha512::create_hmac(&key, &vec![&BigInt::from(10_u32)]);
         let key2 = BigInt::sample(512);
         // same data , different key
-        let result2 = HMacSha512::create_hmac(&key2, &vec![&BigInt::from(10)]);
+        let result2 = HMacSha512::create_hmac(&key2, &vec![&BigInt::from(10_u32)]);
         assert_ne!(result1, result2);
         // same key , different data
-        let result3 = HMacSha512::create_hmac(&key, &vec![&BigInt::from(10), &BigInt::from(11)]);
+        let result3 =
+            HMacSha512::create_hmac(&key, &vec![&BigInt::from(10_u32), &BigInt::from(11_u32)]);
         assert_ne!(result1, result3);
         // same key, same data
-        let result4 = HMacSha512::create_hmac(&key, &vec![&BigInt::from(10)]);
+        let result4 = HMacSha512::create_hmac(&key, &vec![&BigInt::from(10_u32)]);
         assert_eq!(result1, result4)
     }
 
@@ -63,12 +66,12 @@ mod tests {
 
     #[test]
     fn hard_coded_tests_bigint() {
-        let key42 = BigInt::from(42_i32);
+        let key42 = BigInt::from(42_u32);
         let key0 = BigInt::zero();
         {
             let zero_to_ten_thousand_hash_result_key42 = "a1ca4d9712b4dfc39871411edf1386ef735646a2d66e85aaa19b2236a351a8ccdfaf919b99b7bd20cfcfc69d9af776b67db4195e33fd22bdb8d5f2fdfdebec5";
             let zero_to_ten_thousand_hash_result_key0 = "ae513fc45b39fa6f5f1e969b77b5d050aaf065f2112e1ea3d402d155d5263bfb4a33880ab85cda3f9f64a0fa26bd1026489d07747515b46652dae48ccdc31d6d";
-            let zero_to_ten_thousand: Vec<_> = (0..10_000i32).map(BigInt::from).collect();
+            let zero_to_ten_thousand: Vec<_> = (0..10_000u32).map(BigInt::from).collect();
             let refs: Vec<_> = zero_to_ten_thousand.iter().collect();
             let zero_to_ten_thousand_hash_key42 = HMacSha512::create_hmac(&key42, &refs);
             let zero_to_ten_thousand_hash_key0 = HMacSha512::create_hmac(&key0, &refs);
@@ -84,7 +87,7 @@ mod tests {
         {
             let zero_to_2_512_result_key42 = "448506d680431d51e3c4b2aebe39c704c093afd15c5c98a3f2a66a9389acb749adbbd889e4cb5a3e0f798bf4b2805874c8ef243cccb6bc131ae5e331cd559808";
             let zero_to_2_512_result_key0 = "36c8f26854b6ca6fa3ec35195a41fcfc707aa748a2cc320b6553846c805c7e5530eb7ed76cb9b439b25d047eee7c9f6aab94c0c6f49ac34a1ffcb0a532c89a7e";
-            let zero_to_2_512: Vec<_> = (0..1024usize).map(|i| BigInt::from(1) << i).collect();
+            let zero_to_2_512: Vec<_> = (0..1024usize).map(|i| BigInt::from(1_u32) << i).collect();
             let refs: Vec<_> = zero_to_2_512.iter().collect();
             let zero_to_2_512_hash_key42 = HMacSha512::create_hmac(&key42, &refs);
             let zero_to_2_512_hash_key0 = HMacSha512::create_hmac(&key0, &refs);

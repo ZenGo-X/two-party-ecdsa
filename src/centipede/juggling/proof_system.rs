@@ -67,7 +67,7 @@ impl Proof {
         let nm = n * m;
         // some seed for generating g and h vectors
         let KZen: &[u8] = &[75, 90, 101, 110];
-        let kzen_label = BigInt::from(KZen);
+        let kzen_label = BigInt::from_bytes(KZen);
 
         let g_vec = (0..nm)
             .map(|i| {
@@ -93,31 +93,31 @@ impl Proof {
         let elgamal_proofs = (0..num_segments)
             .map(|i| {
                 let w = HomoElGamalWitness {
-                    r: w.r_vec[i],
-                    x: w.x_vec[i],
+                    r: w.r_vec[i].copy(),
+                    x: w.x_vec[i].copy(),
                 };
                 let delta = HomoElGamalStatement {
-                    G: *G,
-                    H: *G,
-                    Y: *Y,
-                    D: c.DE[i].D,
-                    E: c.DE[i].E,
+                    G: G.copy(),
+                    H: G.copy(),
+                    Y: Y.copy(),
+                    D: c.DE[i].D.copy(),
+                    E: c.DE[i].E.copy(),
                 };
                 HomoELGamalProof::prove(&w, &delta)
             })
             .collect::<Vec<HomoELGamalProof>>();
 
         // proof of correct ElGamal DLog
-        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D).collect();
-        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E).collect();
+        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D.copy()).collect();
+        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E.copy()).collect();
         let sum_D = Msegmentation::assemble_ge(&D_vec, segment_size);
         let sum_E = Msegmentation::assemble_ge(&E_vec, segment_size);
         let sum_r = Msegmentation::assemble_fe(&w.r_vec, segment_size);
         let sum_x = Msegmentation::assemble_fe(&w.x_vec, segment_size);
         let Q = G * &sum_x;
         let delta = HomoElGamalDlogStatement {
-            G: *G,
-            Y: *Y,
+            G: G.copy(),
+            Y: Y.copy(),
             Q,
             D: sum_D,
             E: sum_E,
@@ -149,7 +149,7 @@ impl Proof {
         let nm = n * m;
         // some seed for generating g and h vectors
         let KZen: &[u8] = &[75, 90, 101, 110];
-        let kzen_label = BigInt::from(KZen);
+        let kzen_label = BigInt::from_bytes(KZen);
 
         let g_vec = (0..nm)
             .map(|i| {
@@ -168,7 +168,7 @@ impl Proof {
             })
             .collect::<Vec<GE>>();
 
-        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D).collect();
+        let D_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].D.copy()).collect();
         let bp_ver = self
             .bulletproof
             .verify(&g_vec, &h_vec, G, Y, &D_vec, *segment_size)
@@ -177,26 +177,26 @@ impl Proof {
         let elgamal_proofs_ver = (0..num_segments)
             .map(|i| {
                 let delta = HomoElGamalStatement {
-                    G: *G,
-                    H: *G,
-                    Y: *Y,
-                    D: c.DE[i].D,
-                    E: c.DE[i].E,
+                    G: G.copy(),
+                    H: G.copy(),
+                    Y: Y.copy(),
+                    D: c.DE[i].D.copy(),
+                    E: c.DE[i].E.copy(),
                 };
                 self.elgamal_enc[i].verify(&delta).is_ok()
             })
             .collect::<Vec<bool>>();
 
-        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E).collect();
+        let E_vec: Vec<GE> = (0..num_segments).map(|i| c.DE[i].E.copy()).collect();
         let sum_D = Msegmentation::assemble_ge(&D_vec, segment_size);
         let sum_E = Msegmentation::assemble_ge(&E_vec, segment_size);
 
         let delta = HomoElGamalDlogStatement {
-            G: *G,
-            Y: *Y,
-            Q: *Q,
-            D: sum_D,
-            E: sum_E,
+            G: G.copy(),
+            Y: Y.copy(),
+            Q: Q.copy(),
+            D: sum_D.copy(),
+            E: sum_E.copy(),
         };
 
         let elgamal_dlog_proof_ver = self.elgamal_enc_dlog.verify(&delta).is_ok();

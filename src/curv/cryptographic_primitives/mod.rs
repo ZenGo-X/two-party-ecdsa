@@ -8,4 +8,4 @@
 pub mod commitments;
 pub mod hashing;
 pub mod proofs;
-pub mod twoparty;
+pub mod secret_sharing;

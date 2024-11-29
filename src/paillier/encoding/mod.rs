@@ -2,15 +2,14 @@
 
 use std::marker::PhantomData;
 
+use crate::curv::arithmetic::num_bigint::BigInt;
 use crate::curv::arithmetic::traits::ConvertFrom;
-use crate::curv::BigInt;
 pub mod integral;
-use serde::{Serialize,Deserialize};
+use num_traits::One;
 
 /// Encrypted message with type information.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EncodedCiphertext<T> {
-    #[serde(with = "super::serialize::bigint")]
     raw: BigInt,
 
     components: usize,
@@ -25,8 +24,8 @@ where
 {
     let mut packed = BigInt::from(components[0]);
     for component in &components[1..] {
-        packed <<= component_bitsize;
-        packed += BigInt::from(*component);
+        packed = packed << component_bitsize;
+        packed = packed + BigInt::from(*component);
     }
     packed
 }
@@ -51,6 +50,12 @@ where
     components
 }
 
+#[cfg(test)]
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::*;
+
+#[cfg(test)]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen_test)]
 #[test]
 fn test_pack() {
     let v: Vec<u64> = vec![1, 2, 3];
@@ -60,9 +65,9 @@ fn test_pack() {
     let packed = pack(&*v, component_bitsize);
     assert_eq!(
         packed,
-        BigInt::from(1) * (BigInt::from(1) << (2 * component_bitsize))
-            + BigInt::from(2) * (BigInt::from(1) << component_bitsize)
-            + BigInt::from(3) * BigInt::from(1)
+        BigInt::from(1 as u32) * (BigInt::from(1 as u32) << 2 * component_bitsize)
+            + BigInt::from(2 as u32) * (BigInt::from(1 as u32) << 1 * component_bitsize)
+            + BigInt::from(3 as u32) * (BigInt::from(1 as u32) << 0 * component_bitsize)
     );
 
     let unpacked: Vec<u64> = unpack(packed, component_bitsize, 3);

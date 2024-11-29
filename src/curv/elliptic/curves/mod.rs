@@ -5,6 +5,10 @@
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
 
+extern crate rand;
+
+extern crate secp256k1;
+
 pub mod secp256_k1;
 
 pub mod traits;

@@ -17,16 +17,16 @@ use crate::curv::arithmetic::traits::Samplable;
 use std::borrow::Borrow;
 use std::mem;
 
-use bit_vec::BitVec;
-use rand::prelude::*;
-use rayon::prelude::*;
-
 use super::CorrectKeyProofError;
 use crate::curv::BigInt;
+use crate::num_integer::Integer;
 use crate::paillier::EncryptWithChosenRandomness;
 use crate::paillier::Paillier;
 use crate::paillier::{EncryptionKey, Randomness, RawCiphertext, RawPlaintext};
-use serde::{Serialize,Deserialize};
+use bit_vec::BitVec;
+use rand::prelude::*;
+use rayon::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct EncryptedPairs {
@@ -134,8 +134,8 @@ impl RangeProofTrait for RangeProof {
         range: &BigInt,
         error_factor: usize,
     ) -> (EncryptedPairs, DataRandomnessPairs) {
-        let range_scaled_third = range.div_floor(&BigInt::from(3));
-        let range_scaled_two_thirds = BigInt::from(2) * &range_scaled_third;
+        let range_scaled_third = range.div_floor(&BigInt::from(3_u32));
+        let range_scaled_two_thirds = BigInt::from(2_u32) * &range_scaled_third;
 
         let mut w1: Vec<_> = (0..error_factor)
             .into_par_iter()
@@ -205,8 +205,8 @@ impl RangeProofTrait for RangeProof {
         data: &DataRandomnessPairs,
         error_factor: usize,
     ) -> Proof {
-        let range_scaled_third: BigInt = range.div_floor(&BigInt::from(3));
-        let range_scaled_two_thirds = BigInt::from(2) * &range_scaled_third;
+        let range_scaled_third: BigInt = range.div_floor(&BigInt::from(3_u32));
+        let range_scaled_two_thirds = BigInt::from(2_u32) * &range_scaled_third;
         let bits_of_e = BitVec::from_bytes(&e.0);
         let reponses: Vec<_> = (0..error_factor)
             .into_par_iter()
@@ -250,8 +250,8 @@ impl RangeProofTrait for RangeProof {
         error_factor: usize,
     ) -> Result<(), CorrectKeyProofError> {
         let cipher_x_raw = RawCiphertext::from(cipher_x);
-        let range_scaled_third: BigInt = range.div_floor(&BigInt::from(3i32));
-        let range_scaled_two_thirds: BigInt = BigInt::from(2i32) * &range_scaled_third;
+        let range_scaled_third: BigInt = range.div_floor(&BigInt::from(3_u32));
+        let range_scaled_two_thirds: BigInt = BigInt::from(2_u32) * &range_scaled_third;
 
         let bits_of_e = BitVec::from_bytes(&e.0);
         let responses = &proof.0;
@@ -317,9 +317,9 @@ impl RangeProofTrait for RangeProof {
                         let mut res = true;
 
                         let c = if *j == 1 {
-                            &encrypted_pairs.c1[i] * cipher_x_raw.0.borrow() % &ek.nn
+                            &encrypted_pairs.c1[i] * cipher_x_raw.0.as_ref() % &ek.nn
                         } else {
-                            &encrypted_pairs.c2[i] * cipher_x_raw.0.borrow() % &ek.nn
+                            &encrypted_pairs.c2[i] * cipher_x_raw.0.as_ref() % &ek.nn
                         };
 
                         let enc_zi = Paillier::encrypt_with_chosen_randomness(
@@ -376,7 +376,7 @@ mod tests {
             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
         // prover:
         let secret_r = BigInt::sample_below(&ek.n);
-        let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3)));
+        let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3_u32)));
         // common:
         let cipher_x = Paillier::encrypt_with_chosen_randomness(
             &ek,
@@ -425,8 +425,8 @@ mod tests {
         // prover:
         let secret_r = BigInt::sample_below(&ek.n);
         let secret_x = BigInt::sample_range(
-            &(BigInt::from(100i32) * &range),
-            &(BigInt::from(10000i32) * &range),
+            &(BigInt::from(100u32) * &range),
+            &(BigInt::from(10000u32) * &range),
         );
         // common:
         let cipher_x = Paillier::encrypt_with_chosen_randomness(
@@ -478,7 +478,7 @@ mod tests {
     //             RangeProof::generate_encrypted_pairs(&ek, &range, STATISTICAL_ERROR_FACTOR);
     //         // prover:
     //         let secret_r = BigInt::sample_below(&ek.n);
-    //         let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3)));
+    //         let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3_u32)));
     //         //let secret_x = BigInt::from(0xFFFFFFFi64);
     //         // common:
     //         let cipher_x = Paillier::encrypt_with_chosen_randomness(

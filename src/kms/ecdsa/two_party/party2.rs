@@ -1,6 +1,5 @@
 use super::{hd_key, party1::KeyGenParty1Message2, MasterKey1, MasterKey2, Party2Public};
 
-use serde::{Deserialize, Serialize};
 use crate::curv::{
     elliptic::curves::traits::{ECPoint, ECScalar},
     BigInt, FE, GE,
@@ -10,6 +9,7 @@ use crate::party_one::{
     PDLFirstMessage as Party1PDLFirstMsg, PDLSecondMessage as Party1PDLSecondMsg,
 };
 use crate::{party_one, party_two};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SignMessage {
@@ -31,8 +31,8 @@ impl MasterKey2 {
 
         let public = Party2Public {
             q: public_key_new_child,
-            p2: self.public.p2 * f_l_new,
-            p1: self.public.p1,
+            p2: self.public.p2.copy() * &f_l_new,
+            p1: self.public.p1.copy(),
             paillier_pub: self.public.paillier_pub.clone(),
             c_key: self.public.c_key.clone(),
         };
@@ -54,8 +54,8 @@ impl MasterKey2 {
     ) -> MasterKey2 {
         let party2_public = Party2Public {
             q: party_two::compute_pubkey(ec_key_pair_party2, party1_second_message_public_share),
-            p2: ec_key_pair_party2.public_share,
-            p1: *party1_second_message_public_share,
+            p2: ec_key_pair_party2.public_share.copy(),
+            p1: party1_second_message_public_share.copy(),
             paillier_pub: paillier_public.ek.clone(),
             c_key: paillier_public.encrypted_secret_share.clone(),
         };

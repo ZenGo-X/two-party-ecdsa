@@ -21,7 +21,8 @@ use crate::paillier::EncryptionKey;
 use std::error::Error;
 use std::fmt;
 const SECURITY_PARAMETER: usize = 128;
-use serde::{Serialize,Deserialize};
+use crate::num_integer::Integer;
+use serde::{Deserialize, Serialize};
 
 /// Zero-knowledge range proof that a value x<q/3 lies in interval [0,q].
 ///
@@ -181,7 +182,7 @@ mod tests {
         let (ek, _dk) = test_keypair().keys();
         let range = BigInt::sample(RANGE_BITS);
         let secret_r = BigInt::sample_below(&ek.n);
-        let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3)));
+        let secret_x = BigInt::sample_below(&range.div_floor(&BigInt::from(3 as u32)));
         let cipher_x = Paillier::encrypt_with_chosen_randomness(
             &ek,
             RawPlaintext::from(&secret_x),
@@ -200,8 +201,8 @@ mod tests {
         let range = BigInt::sample(RANGE_BITS);
         let secret_r = BigInt::sample_below(&ek.n);
         let secret_x = BigInt::sample_range(
-            &(BigInt::from(100i32) * &range),
-            &(BigInt::from(10000i32) * &range),
+            &(BigInt::from(100u32) * &range),
+            &(BigInt::from(10000u32) * &range),
         );
         let cipher_x = Paillier::encrypt_with_chosen_randomness(
             &ek,

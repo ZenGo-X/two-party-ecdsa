@@ -38,7 +38,8 @@ where
 {
     let mut digest = Sha256::new();
     for value in values {
-        let bytes: Vec<u8> = value.borrow().into();
+        // Assuming BigInt has a method to_bytes() to convert it to a byte vector
+        let bytes: Vec<u8> = value.borrow().to_bytes_be();
         digest.update(bytes);
     }
     digest.finalize().to_vec()

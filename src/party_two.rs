@@ -13,10 +13,12 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/multi-party-ecdsa/blob/master/LICENSE>
 */
-use std::any::Any;
-use std::fmt::{Display, Formatter};
 use super::SECURITY_BITS;
 use crate::curv::arithmetic::traits::*;
+use crate::num_integer::Integer;
+use crate::num_traits::pow;
+use std::any::Any;
+use std::fmt::{Display, Formatter};
 
 use crate::curv::cryptographic_primitives::commitments::hash_commitment::HashCommitment;
 use crate::curv::cryptographic_primitives::commitments::traits::Commitment;
@@ -37,15 +39,15 @@ use crate::curv::FE;
 use crate::curv::GE;
 use crate::paillier::traits::{Add, Encrypt, Mul};
 use crate::paillier::{EncryptionKey, Paillier, RawCiphertext, RawPlaintext};
-use crate::party_one::{ EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::party_one::KeyGenFirstMsg as Party1KeyGenFirstMessage;
 use crate::party_one::KeyGenSecondMsg as Party1KeyGenSecondMessage;
+use crate::party_one::{EphKeyGenFirstMsg as Party1EphKeyGenFirstMsg, Value};
 use crate::zk_paillier::zkproofs::{RangeProofError, RangeProofNi};
 
 use crate::centipede::juggling::proof_system::{Helgamalsegmented, Witness};
 use crate::centipede::juggling::segmentation::Msegmentation;
+use serde::{Deserialize, Serialize};
 use std::ops::Shl;
-use serde::{Serialize,Deserialize};
 
 //****************** Begin: Party Two structs ******************//
 
@@ -144,7 +146,6 @@ pub struct PDLFirstMessage {
     pub c_tag_tag: BigInt,
 }
 
-
 #[typetag::serde]
 impl Value for PDLFirstMessage {
     fn as_any(&self) -> &dyn Any {
@@ -169,7 +170,6 @@ pub struct PDL2decommit {
     pub blindness: BigInt,
 }
 
-
 #[typetag::serde]
 impl Value for PDL2decommit {
     fn as_any(&self) -> &dyn Any {
@@ -192,7 +192,6 @@ pub struct PDLSecondMessage {
     pub decommit: PDL2decommit,
 }
 
-
 #[typetag::serde]
 impl Value for PDLSecondMessage {
     fn as_any(&self) -> &dyn Any {
@@ -208,7 +207,6 @@ impl Display for PDLSecondMessage {
         write!(f, "{:?}", self)
     }
 }
-
 
 #[derive(Debug)]
 pub struct PDLchallenge {
@@ -226,10 +224,10 @@ impl KeyGenFirstMsg {
     pub fn create() -> (KeyGenFirstMsg, EcKeyPair) {
         let base: GE = ECPoint::generator();
         let secret_share: FE = ECScalar::new_random();
-        let public_share = base * secret_share;
+        let public_share = base * &secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
         let ec_key_pair = EcKeyPair {
-            public_share,
+            public_share: public_share.copy(),
             secret_share,
         };
         (
@@ -243,11 +241,11 @@ impl KeyGenFirstMsg {
 
     pub fn create_with_fixed_secret_share(secret_share: FE) -> (KeyGenFirstMsg, EcKeyPair) {
         let base: GE = ECPoint::generator();
-        let public_share = base * secret_share;
+        let public_share = base * &secret_share;
         let d_log_proof = DLogProof::prove(&secret_share);
         let ec_key_pair = EcKeyPair {
-            public_share,
-            secret_share,
+            public_share: public_share.copy(),
+            secret_share: secret_share.copy(),
         };
         (
             KeyGenFirstMsg {
@@ -301,7 +299,7 @@ pub fn compute_pubkey(local_share: &EcKeyPair, other_share_public_share: &GE) ->
 impl Party2Private {
     pub fn set_private_key(ec_key: &EcKeyPair) -> Party2Private {
         Party2Private {
-            x2: ec_key.secret_share,
+            x2: ec_key.secret_share.copy(),
         }
     }
 
@@ -339,7 +337,7 @@ impl PaillierPublic {
         let a_fe: FE = ECScalar::new_random();
         let a = a_fe.to_big_int();
         let q = FE::q();
-        let q_sq = q.pow(2);
+        let q_sq = q.pow(2_u32);
         let b = BigInt::sample_below(&q_sq);
         let b_fe: FE = ECScalar::from(&b);
         let b_enc = Paillier::encrypt(&self.ek, RawPlaintext::from(b.clone()));
@@ -349,7 +347,8 @@ impl PaillierPublic {
             RawPlaintext::from(a.clone()),
         );
         let c_tag = Paillier::add(&self.ek, ac, b_enc).0.into_owned();
-        let ab_concat = a.clone() + b.clone().shl(a.bit_length());
+        // NOT SURE ABOUT THIS ONE:
+        let ab_concat = a.clone() + b.clone().shl(a.bits());
         let blindness = BigInt::sample_below(&q);
         let c_tag_tag =
             HashCommitment::create_commitment_with_user_defined_randomness(&ab_concat, &blindness);
@@ -412,13 +411,15 @@ impl EphKeyGenFirstMsg {
         let public_share = base.scalar_mul(&secret_share.get_element());
 
         let h: GE = GE::base_point2();
-        let w = ECDDHWitness { x: secret_share };
-        let c = h * secret_share;
+        let w = ECDDHWitness {
+            x: secret_share.copy(),
+        };
+        let c = &h * &secret_share;
         let delta = ECDDHStatement {
             g1: base,
-            h1: public_share,
+            h1: public_share.copy(),
             g2: h,
-            h2: c,
+            h2: c.copy(),
         };
         let d_log_proof = ECDDHProof::prove(&w, &delta);
 
@@ -447,7 +448,7 @@ impl EphKeyGenFirstMsg {
             EphCommWitness {
                 pk_commitment_blind_factor,
                 zk_pok_blind_factor,
-                public_share: ec_key_pair.public_share,
+                public_share: ec_key_pair.public_share.copy(),
                 d_log_proof,
                 c,
             },
@@ -463,9 +464,9 @@ impl EphKeyGenSecondMsg {
     ) -> Result<EphKeyGenSecondMsg, ProofError> {
         let delta = ECDDHStatement {
             g1: GE::generator(),
-            h1: party_one_first_message.public_share,
+            h1: party_one_first_message.public_share.copy(),
             g2: GE::base_point2(),
-            h2: party_one_first_message.c,
+            h2: party_one_first_message.c.copy(),
         };
         party_one_first_message.d_log_proof.verify(&delta)?;
         Ok(EphKeyGenSecondMsg { comm_witness })
@@ -483,16 +484,12 @@ impl PartialSig {
     ) -> PartialSig {
         let q = FE::q();
         //compute r = k2* R1
-        let mut r: GE = *ephemeral_other_public_share;
+        let mut r: GE = ephemeral_other_public_share.copy();
         r = r.scalar_mul(&ephemeral_local_share.secret_share.get_element());
 
         let rx = r.x_coor().unwrap().mod_floor(&q);
-        let rho = BigInt::sample_below(&q.pow(2));
-        let k2_inv = ephemeral_local_share
-            .secret_share
-            .to_big_int()
-            .invert(&q)
-            .unwrap();
+        let rho = BigInt::sample_below(&q.pow(2_u32));
+        let k2_inv = ephemeral_local_share.secret_share.invert().to_big_int();
         let partial_sig = rho * &q + BigInt::mod_mul(&k2_inv, message, &q);
         let c1 = Paillier::encrypt(ek, RawPlaintext::from(partial_sig));
         let v = BigInt::mod_mul(
